@@ -39,7 +39,7 @@
                                 alt="{{ $photo->caption ?? 'Photo' }}"
                                 class="w-full h-48 object-cover rounded-lg">
 
-                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div class="absolute inset-0 bg-black bg-opacity-30 can-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                 <div class="flex flex-col gap-2">
                                     <div class="flex gap-2">
                                         <button wire:click="editPhoto('{{ $photo->id }}')"

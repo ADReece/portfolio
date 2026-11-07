@@ -19,12 +19,6 @@
     <div class="py-12">
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
 
-            @if(session('success'))
-                <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             @if(!auth()->user()->hasFeature('custom_templates'))
                 <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-4 py-4 rounded-lg mb-6">
                     <p class="font-medium">Template batching is a premium feature.</p>

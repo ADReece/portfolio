@@ -216,7 +216,7 @@
                             <div class="relative group">
                                 <img src="{{ $print->outputUrl() }}" alt="Generated print"
                                      class="w-full aspect-square object-cover">
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div class="absolute inset-0 bg-black/40 transition-opacity flex items-center justify-center opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                     <a href="{{ $print->outputUrl() }}" target="_blank"
                                        class="px-3 py-1.5 bg-white text-gray-900 text-xs font-medium rounded hover:bg-gray-100">
                                         Download

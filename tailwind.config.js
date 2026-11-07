@@ -1,4 +1,5 @@
 const defaultTheme = require('tailwindcss/defaultTheme');
+const plugin = require('tailwindcss/plugin');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -28,5 +29,12 @@ module.exports = {
         },
     },
 
-    plugins: [require('@tailwindcss/forms')],
+    plugins: [
+        require('@tailwindcss/forms'),
+        // `can-hover:` applies only on devices with a real hover (mouse/trackpad).
+        // Use it to hide controls until hover, so touch users still see them.
+        plugin(({ addVariant }) => {
+            addVariant('can-hover', '@media (hover: hover) and (pointer: fine)');
+        }),
+    ],
 };

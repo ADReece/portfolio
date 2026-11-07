@@ -12,12 +12,6 @@
 
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if (session('success'))
-                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded relative">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
                 <div class="p-6">
                     <form method="POST" action="{{ route('collections.update', $collection->id) }}">

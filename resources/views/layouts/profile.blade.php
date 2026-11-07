@@ -40,6 +40,7 @@
 
             <!-- Page Content -->
             <main class="portfolio-content md:ml-80 bg-gray-100 dark:bg-gray-900 overflow-x-hidden" @if(Auth::check()) style="min-height: calc(100vh - 4rem);" @endif>
+                <x-flash />
                 {{ $slot }}
             </main>
         </div>

@@ -61,7 +61,7 @@
                                 @endif
 
                                 <!-- Badges - visible on hover -->
-                                <div class="flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="flex flex-wrap gap-2 transition-opacity duration-300 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                     @if($collection->private)
                                         <span class="inline-block px-2 py-1 bg-yellow-500/90 text-yellow-900 text-xs font-semibold rounded-full">
                                             🔒 Private
