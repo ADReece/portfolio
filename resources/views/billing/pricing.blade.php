@@ -116,12 +116,12 @@
                         @else
                             <a href="{{ route('checkout', ['plan' => $plan->id, 'interval' => $interval]) }}"
                                class="block w-full text-center {{ $plan->slug === 'photographer' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
-                                {{ $plan->isFree() ? 'Switch to Free' : 'Subscribe Now' }}
+                                {{ $plan->isFree() ? 'Switch to Free' : 'Choose '.$plan->name }}
                             </a>
                         @endif
                     @else
-                        <a href="{{ route('checkout', ['plan' => $plan->id, 'interval' => $interval]) }}" class="block w-full text-center {{ $plan->slug === 'photographer' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
-                            {{ $plan->isFree() ? 'Choose Free' : 'Subscribe Now' }}
+                        <a href="{{ route('register', ['plan' => $plan->id, 'interval' => $interval]) }}" class="block w-full text-center {{ $plan->slug === 'photographer' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
+                            {{ $plan->isFree() ? 'Start free' : 'Choose '.$plan->name }}
                         </a>
                     @endauth
                 </div>

@@ -45,7 +45,7 @@
                 </p>
                 <div class="flex justify-center gap-4">
                     <a href="{{ route('register') }}" class="bg-indigo-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transform transition hover:scale-105">
-                        Start Free Trial
+                        Get started free
                     </a>
                     <a href="{{ route('pricing') }}" class="bg-white text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold border-2 border-indigo-600 hover:bg-indigo-50 transform transition hover:scale-105">
                         View Pricing
@@ -165,7 +165,7 @@
                             View Details
                         </a>
                     @else
-                        <a href="{{ route('register') }}" class="block w-full text-center {{ $plan->recommended ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
+                        <a href="{{ route('register', ['plan' => $plan->id]) }}" class="block w-full text-center {{ $plan->recommended ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
                             Get Started
                         </a>
                     @endauth
@@ -187,7 +187,7 @@
             <h2 class="text-4xl font-bold mb-4">Ready to Showcase Your Work?</h2>
             <p class="text-xl mb-8 opacity-90">Join thousands of photographers and videographers who trust {{ config('app.name') }}</p>
             <a href="{{ route('register') }}" class="bg-white text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transform transition hover:scale-105 inline-block">
-                Start Your Free Trial
+                Get started free
             </a>
         </div>
     </div>

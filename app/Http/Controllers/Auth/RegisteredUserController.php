@@ -18,9 +18,20 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        // Coming from "Choose plan" on the pricing page: remember the plan so
+        // the new account goes straight to checkout for it after sign-up.
+        $selectedPlan = null;
+        if ($request->filled('plan')) {
+            $selectedPlan = \App\Models\SubscriptionPlan::where('active', true)->find($request->query('plan'));
+            if ($selectedPlan) {
+                $interval = $request->query('interval') === 'year' ? 'year' : 'month';
+                $request->session()->put('url.intended', route('checkout', ['plan' => $selectedPlan->id, 'interval' => $interval]));
+            }
+        }
+
+        return view('auth.register', ['selectedPlan' => $selectedPlan]);
     }
 
     /**
@@ -49,6 +60,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        return redirect()->intended(RouteServiceProvider::HOME);
     }
 }

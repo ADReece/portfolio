@@ -1,4 +1,16 @@
 <x-guest-layout>
+    <div class="mb-6 space-y-1 text-center">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Create your account</h1>
+        @if($selectedPlan ?? null)
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                You're signing up for the <strong class="text-gray-900 dark:text-gray-100">{{ $selectedPlan->name }}</strong> plan.
+                {{ $selectedPlan->isFree() ? '' : "You'll add payment details next." }}
+            </p>
+        @else
+            <p class="text-sm text-gray-600 dark:text-gray-400">Free to start. Upgrade whenever you need more.</p>
+        @endif
+    </div>
+
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
