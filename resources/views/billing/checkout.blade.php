@@ -1,64 +1,56 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Checkout') }}
-        </h2>
-    </x-slot>
+@php
+    $interval = ($interval ?? request('interval', 'month')) === 'year' ? 'year' : 'month';
+    $stripePk = config('cashier.key');
+@endphp
+<x-app-layout title="Checkout">
+    <div class="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header :title="'Subscribe to '.$plan->name" :back="route('pricing', ['interval' => $interval])" back-label="Plans" />
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg p-8">
-                <h3 class="text-2xl font-bold mb-6 dark:text-white">Subscribe to {{ $plan->name }}</h3>
-
-                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-lg font-semibold dark:text-white">{{ $plan->name }} Plan</span>
-                        <span class="text-2xl font-bold dark:text-white">{{ $currencySymbol }}{{ $plan->priceFor($interval ?? request('interval','month')) }}/{{ ($interval ?? request('interval','month')) === 'year' ? 'yr' : 'mo' }}</span>
+        <div class="grid items-start gap-6 md:grid-cols-[1fr_20rem]">
+            <x-ui.card title="Payment">
+                @if(empty($stripePk))
+                    <x-ui.alert tone="amber" title="Payments aren't available right now">
+                        Please try again later or contact {{ config('app.support_email') }}.
+                        @if(config('app.debug'))<br><span class="text-xs">Developer note: set STRIPE_KEY in .env.</span>@endif
+                    </x-ui.alert>
+                @endif
+                <form id="payment-form" action="{{ route('checkout.process', $plan) }}" method="POST" class="space-y-5">
+                    @csrf
+                    <input type="hidden" name="interval" value="{{ $interval }}" />
+                    <div class="space-y-1">
+                        <span id="card-label" class="block text-sm font-medium text-gray-800 dark:text-gray-200">Card details</span>
+                        <div id="card-element" aria-labelledby="card-label"
+                             class="rounded-control border border-gray-300 bg-white px-3 py-3 shadow-xs dark:border-gray-600 dark:bg-gray-900"></div>
+                        <p id="card-errors" role="alert" class="text-sm text-red-700 dark:text-red-400"></p>
                     </div>
-                    <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                        @foreach($plan->features as $feature)
-                        <li class="flex items-start">
-                            <svg class="w-4 h-4 text-green-500 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            {{ $feature }}
-                        </li>
+                    <x-ui.button type="submit" id="submit-button" size="lg" class="w-full" icon="lock-closed" :disabled="empty($stripePk)">
+                        Pay {{ $currencySymbol }}{{ $plan->priceFor($interval) }} and subscribe
+                    </x-ui.button>
+                    <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                        Cancel any time. By subscribing you agree to our <a href="{{ route('terms') }}" class="font-medium text-brand-600 underline-offset-4 hover:underline dark:text-brand-400">Terms of Service</a>.
+                    </p>
+                </form>
+            </x-ui.card>
+
+            <x-ui.card title="Summary">
+                <div class="space-y-4">
+                    <div class="flex items-baseline justify-between gap-4">
+                        <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $plan->name }}</span>
+                        <span class="text-right">
+                            <span class="text-xl font-bold text-gray-900 tabular-nums dark:text-gray-100">{{ $currencySymbol }}{{ $plan->priceFor($interval) }}</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">/ {{ $interval }}</span>
+                        </span>
+                    </div>
+                    <ul role="list" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                        @foreach($plan->features ?? [] as $feature)
+                            <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />{{ $feature }}</li>
                         @endforeach
                     </ul>
+                    <p class="border-t border-gray-200 pt-3 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">Billed {{ $interval === 'year' ? 'yearly' : 'monthly' }} in {{ \App\Support\Currency::code() }}. Payments are processed securely by Stripe.</p>
                 </div>
-
-                @php($stripePk = config('cashier.key'))
-                @if(empty($stripePk))
-                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-sm mb-4">
-                        Stripe publishable key is not configured. Please set STRIPE_KEY=pk_test_xxx in your .env and reload this page.
-                    </div>
-                @endif
-
-                <form id="payment-form" action="{{ route('checkout.process', $plan) }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="interval" value="{{ $interval ?? request('interval','month') }}" />
-
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Card Information</label>
-                        <div id="card-element" class="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-900">
-                            <!-- Stripe Card Element will be inserted here -->
-                        </div>
-                        <div id="card-errors" class="text-red-600 dark:text-red-400 text-sm mt-2"></div>
-                    </div>
-
-                    <button type="submit" id="submit-button" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                        Subscribe Now
-                    </button>
-                </form>
-
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
-                    You can cancel anytime. By subscribing, you agree to our
-                    <a href="{{ route('terms') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</a>.
-                </p>
-            </div>
+            </x-ui.card>
         </div>
     </div>
-
     @push('scripts')
     <script src="https://js.stripe.com/v3/"></script>
     <script>
@@ -72,12 +64,11 @@
             }
 
             if (!publishableKey) {
-                showError('Payment setup incomplete: Stripe publishable key is missing.');
-                return;
+                return; // the page already explains payments aren't available
             }
 
             if (typeof window.Stripe === 'undefined') {
-                showError('Stripe.js failed to load. If you use an ad-blocker or privacy extension, please whitelist js.stripe.com and reload.');
+                showError('The secure card form didn’t load. If you use an ad blocker, allow js.stripe.com and reload the page.');
                 return;
             }
 
@@ -88,9 +79,10 @@
                     style: {
                         base: {
                             fontSize: '16px',
-                            color: '#32325d',
+                            // Match the page theme so card numbers stay readable in dark mode.
+                            color: (document.documentElement.classList.contains('dark') || (!document.documentElement.classList.contains('light') && window.matchMedia('(prefers-color-scheme: dark)').matches)) ? '#f3f4f6' : '#111827',
                             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                            '::placeholder': { color: '#aab7c4' }
+                            '::placeholder': { color: '#9ca3af' }
                         },
                         invalid: { color: '#fa755a', iconColor: '#fa755a' }
                     }
@@ -114,7 +106,8 @@
                 form.addEventListener('submit', async function(event) {
                     event.preventDefault();
                     submitButton.disabled = true;
-                    submitButton.textContent = 'Processing...';
+                    submitButton.dataset.label = submitButton.innerHTML;
+                    submitButton.textContent = 'Processing…';
 
                     const { paymentMethod, error } = await stripe.createPaymentMethod({
                         type: 'card',
@@ -125,7 +118,7 @@
                     if (error) {
                         showError(error.message);
                         submitButton.disabled = false;
-                        submitButton.textContent = 'Subscribe Now';
+                        submitButton.innerHTML = submitButton.dataset.label;
                     } else {
                         const hiddenInput = document.createElement('input');
                         hiddenInput.type = 'hidden';
