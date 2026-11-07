@@ -98,7 +98,7 @@ class ManageSets extends Component
 
         return view('livewire.manage-sets', [
             'collection' => $collection,
-            'sets' => $collection->sets()->withCount('photos')->get(),
+            'sets' => $collection->sets()->with('photos')->get(),
         ]);
     }
 }

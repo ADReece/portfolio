@@ -113,7 +113,7 @@ class CollectionWizard extends Component
             return;
         }
 
-        $collection = Collection::findOrFail($this->collectionId);
+        $collection = auth()->user()->collections()->findOrFail($this->collectionId);
 
         if ($collection->user_id !== auth()->id()) {
             abort(403);
@@ -181,6 +181,12 @@ class CollectionWizard extends Component
 
     public function finishAndRedirect()
     {
+        // Land in the new collection so the next step (uploading photos) is right there.
+        if ($this->collectionId) {
+            return redirect()->route('collections.edit', $this->collectionId)
+                ->with('success', 'Collection created. Next, upload photos to each set.');
+        }
+
         return redirect()->route('collections.index');
     }
 
@@ -190,7 +196,7 @@ class CollectionWizard extends Component
         $sets = collect();
 
         if ($this->collectionId) {
-            $collection = Collection::findOrFail($this->collectionId);
+            $collection = auth()->user()->collections()->findOrFail($this->collectionId);
 
             if ($collection->user_id !== auth()->id()) {
                 abort(403);

@@ -203,7 +203,7 @@ class CollectionCreationTest extends TestCase
     }
 
     /** @test */
-    public function can_redirect_to_collections_on_finish()
+    public function finishing_the_wizard_opens_the_new_collection()
     {
         $this->actingAs($this->user);
 
@@ -212,11 +212,8 @@ class CollectionCreationTest extends TestCase
 
         // Livewire tests return the redirect response, which Livewire client would handle
         Livewire::test('collection-wizard', ['collectionId' => $collection->id])
-            ->call('finishAndRedirect');
-
-        // Verify the route would work by directly testing it
-        $response = $this->actingAs($this->user)->get(route('collections.index'));
-        $response->assertStatus(200);
+            ->call('finishAndRedirect')
+            ->assertRedirect(route('collections.edit', $collection->id));
     }
 
     /** @test */
