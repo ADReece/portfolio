@@ -20,8 +20,8 @@
     <link rel="icon" type="image/png" href="{{ $favicon }}" />
     @include('partials.portfolio-styles', ['user' => $user ?? null])
 </head>
-<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900">
-<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+<body class="font-sans antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+<div class="min-h-screen">
     <!-- Page Heading -->
     @if (isset($header))
         <header class="bg-white dark:bg-gray-800 shadow-sm">
@@ -32,7 +32,7 @@
     @endif
 
     <!-- Page Content -->
-    <main>
+    <main class="portfolio-content">
         {{ $slot }}
     </main>
 </div>
