@@ -77,7 +77,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <a href="{{ route('admin.plans.edit', $plan) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">Edit</a>
                                     @if($plan->users()->count() === 0)
-                                        <form action="{{ route('admin.plans.destroy', $plan) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this plan?');">
+                                        <form action="{{ route('admin.plans.destroy', $plan) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this plan?" data-confirm-title="Delete this plan?" data-confirm-button="Delete plan" data-confirm-danger>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>

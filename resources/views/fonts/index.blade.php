@@ -90,7 +90,7 @@
                                     <p class="text-xs text-gray-400">{{ $font->filename }} &nbsp;·&nbsp; uploaded {{ $font->created_at->diffForHumans() }}</p>
                                 </div>
                                 <form method="POST" action="{{ route('fonts.destroy', $font) }}"
-                                      onsubmit="return confirm('Delete this font? Templates using it will fall back to the default font.')">
+                                      data-confirm="Delete this font? Templates using it will fall back to the default font." data-confirm-title="Delete this font?" data-confirm-button="Delete font" data-confirm-danger>
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-xs text-red-500 hover:text-red-700">Delete</button>

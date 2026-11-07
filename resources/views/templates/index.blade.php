@@ -81,7 +81,7 @@
                                             Edit
                                         </a>
                                         <form method="POST" action="{{ route('templates.destroy', $template) }}"
-                                              onsubmit="return confirm('Delete this template? Existing generated prints will not be affected.')">
+                                              data-confirm="Delete this template? Existing generated prints will not be affected." data-confirm-title="Delete this template?" data-confirm-button="Delete template" data-confirm-danger>
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"

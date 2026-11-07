@@ -196,4 +196,9 @@ Route::post('/admin/stop-impersonating', [AdminUsersController::class, 'stopImpe
     ->middleware('auth')
     ->name('admin.users.stop-impersonating');
 
+// Component reference page for developers (local only).
+if (app()->environment('local')) {
+    Route::view('/dev/ui', 'dev.ui')->middleware('auth')->name('dev.ui');
+}
+
 require __DIR__.'/auth.php';

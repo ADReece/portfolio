@@ -113,7 +113,7 @@
                                         <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Resume</button>
                                     </form>
                                 @else
-                                    <form action="{{ route('subscription.cancel') }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel your subscription?');">
+                                    <form action="{{ route('subscription.cancel') }}" method="POST" data-confirm="You'll keep your current plan until the end of this billing period. You can resume any time before then." data-confirm-title="Cancel your subscription?" data-confirm-button="Cancel subscription" data-confirm-danger>
                                         @csrf
                                         <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Cancel</button>
                                     </form>

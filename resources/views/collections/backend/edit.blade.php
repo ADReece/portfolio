@@ -289,14 +289,20 @@
         });
 
         function deleteCollection() {
-            if (confirm('Are you sure you want to delete this collection? This will permanently delete all sets and photos within it.')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route("collections.destroy", $collection) }}';
-                form.innerHTML = '@csrf @method("DELETE")';
-                document.body.appendChild(form);
-                form.submit();
-            }
+            window.confirmAction({
+                title: 'Delete this collection?',
+                message: 'This permanently deletes the collection and every set and photo in it. Clients will no longer be able to open its link.',
+                confirmText: 'Delete collection',
+                isDanger: true,
+                onConfirm: () => {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("collections.destroy", $collection) }}';
+                    form.innerHTML = '@csrf @method("DELETE")';
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+            });
         }
 
         function copyLink(event) {

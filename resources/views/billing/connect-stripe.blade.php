@@ -31,7 +31,7 @@
                         </ul>
                     </div>
 
-                    <form action="{{ route('connect.stripe.disconnect') }}" method="POST" onsubmit="return confirm('Are you sure you want to disconnect your Stripe account? You will not be able to receive payments.');">
+                    <form action="{{ route('connect.stripe.disconnect') }}" method="POST" data-confirm="You won't receive payouts for print sales until you connect Stripe again." data-confirm-title="Disconnect Stripe?" data-confirm-button="Disconnect" data-confirm-danger>
                         @csrf
                         <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
                             Disconnect Stripe Account

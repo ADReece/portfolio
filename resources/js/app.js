@@ -58,15 +58,12 @@ window.showInfoToast = (message) => window.showToast(message, 'info');
 
 // fslightbox automatically provides refreshFsLightbox() - don't override it
 
-// Livewire 3 bundles Alpine. Import both from Livewire's ESM build so there's
-// exactly one Alpine, register plugins, then start. Pages without Livewire
+// Livewire 3 bundles Alpine (with the focus/x-trap, collapse, intersect and
+// anchor plugins). Import both from Livewire's ESM build so there's exactly
+// one Alpine, then start. Pages without Livewire
 // components work the same way, so every page gets Alpine.
 import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
-import intersect from '@alpinejs/intersect';
-import collapse from '@alpinejs/collapse';
 
-Alpine.plugin(intersect);
-Alpine.plugin(collapse);
 window.Alpine = Alpine;
 
 Livewire.start();
