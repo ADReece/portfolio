@@ -81,14 +81,26 @@ Portfol.io enables creatives to build public or private portfolios, manage clien
 
 ---
 ### Technical Stack
-- Framework: Laravel + Sail (Dockerized dev environment)
-- Frontend: Blade, Tailwind CSS, Alpine.js, Livewire (interactive components), Vite bundler
-- Payments: Stripe (Cashier + Connect)
-- Background Jobs: Queued archive generation (placeholder job references)
-- Storage: AWS S3 (photos, archives) – via configured filesystem driver
-- Database: MySQL (uuid primary keys for users & collections)
+- Backend: Laravel 12 (PHP 8.2+), Laravel Cashier 15 (Stripe), Sanctum 4
+- Frontend: Blade, Livewire 3 (bundles Alpine.js), Tailwind CSS 4, Vite 8
+- Icons: Heroicons via `blade-ui-kit/blade-heroicons` (`<x-ui.icon name="photo" />`)
+- Storage: AWS S3 (images, thumbnails, watermarked copies, archives)
+- Queue: database (configurable)
 
----
+### Design system
+- Tokens live in `resources/css/app.css` (`@theme`): `brand-*` colour scale, `rounded-control`, `rounded-card`, font. Use `brand-*` rather than raw `indigo-*`.
+- Components live in `resources/views/components/ui` (button, input, select, textarea, checkbox, field, card, page-header, empty-state, badge, alert, icon). In local development, `/dev/ui` shows them all.
+- Dark mode follows the visitor's system setting; adding `dark` or `light` to `<html>` overrides it (the sidebar theme switch does this).
+- `can-hover:` variant: hide controls until hover only on devices with a mouse, so touch users still see them.
+- Confirmations: `window.confirmAction({...})`, or `<form data-confirm="…" data-confirm-title="…" data-confirm-danger>`. Don't use `window.confirm()`.
+- Flash messages: redirect `->with('success'|'error'|'warning'|'info', '…')`; the layout shows them.
+- Public pages use the photographer's theme (`partials/portfolio-styles`). Wrap app-style surfaces (forms, order summaries) in `.portfolio-neutral` so theme colours don't apply to them.
+
+### Configuration worth knowing
+- `SUPPORT_EMAIL` – address shown on public and legal pages.
+- `PLATFORM_FEE_PERCENT` – share of print sales kept by the platform (default 10). Shown to photographers on Payouts and Print products.
+- Currency – set in Admin › Settings; used for all prices, Stripe checkout and payouts (`App\Support\Currency`).
+
 ### Development & Setup
 Prerequisites: Docker & Docker Compose.
 
@@ -116,17 +128,17 @@ Environment variables to confirm:
 - Filesystem (S3 keys) for photo storage
 
 ---
-### Testing Strategy (Initial Outline)
-Current tests are minimal. Recommended additions:
-- Feature tests: subscription lifecycle (subscribe, swap, cancel, resume)
-- Authorization tests: admin vs non-admin for plan CRUD & impersonation
-- Collection privacy access flow (password gate)
-- Livewire component tests (masonry grid pagination behavior)
-- Payment webhook simulation (Stripe test fixtures)
+### Testing
+- PHP: `php artisan test` (needs MySQL; see `phpunit.xml`, database `testing`).
+- Accessibility: axe-core checks on the main customer and client pages at desktop and phone sizes. Seed and run the app, then:
+  ```bash
+  php artisan migrate:fresh && php artisan db:seed --class=UxDemoSeeder
+  php artisan serve &
+  npx playwright install chromium   # first time only
+  APP_URL=http://127.0.0.1:8000 npm run test:a11y
+  ```
+- CI (`.github/workflows/ci.yml`) runs both on pushes to `develop`/`main` and on pull requests.
 
-Planned to expand with Pest or PHPUnit factories for realistic photo/collection hierarchies.
-
----
 ### Security & Compliance
 - Role separation (admin middleware)
 - Impersonation secured (cannot impersonate admins / self; clear session revert)
