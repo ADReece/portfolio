@@ -13,7 +13,7 @@
             <!-- Hero Image -->
             <img src="{{ $collection->coverPhoto->getUri() }}"
                  alt="{{ $collection->name }}"
-                 class="absolute inset-0 w-full h-full object-cover {{ $collection->coverPhotoPosition() ?? '' }}">
+                 class="absolute inset-0 w-full h-full object-cover" style="object-position: {{ $collection->coverObjectPosition() }}">
 
             <!-- Accent Overlay (dynamic) -->
             <div class="absolute inset-0" style="background: linear-gradient(to bottom, var(--portfolio-accent-overlay-start), var(--portfolio-accent-overlay-mid), var(--portfolio-accent-overlay-end));"></div>

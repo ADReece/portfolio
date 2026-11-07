@@ -36,7 +36,7 @@
                                 <img src="{{ $collection->coverPhoto->getAwsThumbnail() }}"
                                      alt="{{ $collection->name }}"
                                      class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
-                                     style="object-position: {{ $collection->cover_photo_object_position ?? 'center center' }};">
+                                     style="object-position: {{ $collection->coverObjectPosition() }};">
                             @else
                                 <!-- Placeholder if no cover photo -->
                                 <div class="w-full h-64 flex items-center justify-center bg-linear-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">

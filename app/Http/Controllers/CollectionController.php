@@ -12,10 +12,38 @@ use Illuminate\Support\Facades\Storage;
 class CollectionController extends Controller
 {
 
-    public function index() : View
+    public function index(Request $request) : View
     {
-        $collections = auth()->user()->collections;
-        return view('collections.backend.index', ['collections' => $collections]);
+        $filters = [
+            'all' => 'All',
+            'published' => 'Published',
+            'draft' => 'Drafts',
+            'private' => 'Private',
+            'archived' => 'Archived',
+        ];
+        $filter = array_key_exists($request->query('show'), $filters) ? $request->query('show') : 'all';
+
+        $base = auth()->user()->collections();
+        $counts = [
+            'all' => (clone $base)->count(),
+            'published' => (clone $base)->where('status', 'Published')->count(),
+            'draft' => (clone $base)->where('status', 'Draft')->count(),
+            'private' => (clone $base)->where('private', true)->count(),
+            'archived' => (clone $base)->where('status', 'Archived')->count(),
+        ];
+
+        $collections = $base
+            ->when($filter === 'published', fn ($q) => $q->where('status', 'Published'))
+            ->when($filter === 'draft', fn ($q) => $q->where('status', 'Draft'))
+            ->when($filter === 'private', fn ($q) => $q->where('private', true))
+            ->when($filter === 'archived', fn ($q) => $q->where('status', 'Archived'))
+            ->with('coverPhoto')
+            ->withCount(['sets', 'photos'])
+            ->orderBy('sort_order')
+            ->latest()
+            ->get();
+
+        return view('collections.backend.index', compact('collections', 'filters', 'filter', 'counts'));
     }
 
     public function sets($collection) : View

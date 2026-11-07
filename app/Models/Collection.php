@@ -47,9 +47,21 @@ class Collection extends Model
         });
     }
 
-    public function coverPhotoPosition()
+    /**
+     * CSS object-position for the cover photo, from the stored focal point
+     * (center, top, bottom, top-right, bottom-right).
+     */
+    public function coverObjectPosition(): string
     {
-        return 'object-' . $this->cover_photo_object_position ?? 'center-center';
+        return match ($this->cover_photo_object_position) {
+            'top' => 'center top',
+            'bottom' => 'center bottom',
+            'top-right' => 'right top',
+            'bottom-right' => 'right bottom',
+            'top-left' => 'left top',
+            'bottom-left' => 'left bottom',
+            default => 'center center',
+        };
     }
 
     public function user() : BelongsTo

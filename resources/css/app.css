@@ -4,8 +4,6 @@
 
 /* Templates Tailwind should scan besides the auto-detected project files. */
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-/* Cover-photo focal points are chosen from data, so keep these utilities. */
-@source inline('object-{center,top,bottom,left,right,left-top,left-bottom,right-top,right-bottom}');
 
 /*
  * Dark mode follows the visitor's system setting by default. Adding `dark`
