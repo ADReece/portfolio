@@ -7,28 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased bg-gray-50 dark:bg-gray-900">
-    <!-- Navigation -->
-    <nav class="bg-white dark:bg-gray-800 shadow-xs fixed w-full top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold text-gray-900 dark:text-gray-300">
-                        {{ config('app.name') }}
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('pricing') }}" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Pricing</a>
-                    <a href="{{ route('about') }}" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">About</a>
-                    @auth
-                        <a href="{{ route('dashboard') }}" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Dashboard</a>
-                    @else
-                        <a href="{{ route('login') }}" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Login</a>
-                        <a href="{{ route('register') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Get Started</a>
-                    @endauth
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('partials.marketing-nav')
 
     <!-- Hero Section -->
     <div class="pt-24 pb-16 bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -43,7 +22,7 @@
                 <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
                     Create stunning photography and videography portfolios. Share private galleries with clients. Sell your work. All in one beautiful platform.
                 </p>
-                <div class="flex justify-center gap-4">
+                <div class="flex flex-wrap justify-center gap-4">
                     <a href="{{ route('register') }}" class="bg-indigo-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transform transition hover:scale-105">
                         Get started free
                     </a>
@@ -185,7 +164,7 @@
     <div class="py-16 bg-linear-to-r from-indigo-600 to-purple-600 text-white">
         <div class="max-w-4xl mx-auto text-center px-4">
             <h2 class="text-4xl font-bold mb-4">Ready to Showcase Your Work?</h2>
-            <p class="text-xl mb-8 opacity-90">Join thousands of photographers and videographers who trust {{ config('app.name') }}</p>
+            <p class="text-xl mb-8 opacity-90">Join the photographers and videographers who share and sell their work with {{ config('app.name') }}</p>
             <a href="{{ route('register') }}" class="bg-white text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transform transition hover:scale-105 inline-block">
                 Get started free
             </a>
@@ -218,8 +197,7 @@
                 <div>
                     <h4 class="text-white font-semibold mb-4">Support</h4>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="mailto:{{ 'support@' . config('app.name') . '.com' }}" class="hover:text-white">{{ 'Contact Support' }}</a></li>
-                        <li><a href="#" class="hover:text-white">Help Center</a></li>
+                        <li><a href="mailto:{{ config('app.support_email') }}" class="hover:text-white">{{ 'Contact Support' }}</a></li>
                     </ul>
                 </div>
             </div>

@@ -7,22 +7,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased bg-gray-50">
-    <nav class="bg-white shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold text-gray-900">
-                        📸 {{ config('app.name') }}
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('partials.marketing-nav')
 
-    <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto pt-28 pb-12 px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-lg shadow-lg p-8">
             <h1 class="text-4xl font-bold mb-6">Service Level Agreement (SLA)</h1>
-            <p class="text-gray-600 mb-8">Last updated: {{ date('F d, Y') }}</p>
+            <p class="text-gray-600 mb-8">Last updated: 18 November 2025</p>
 
             <div class="prose max-w-none">
                 <h2 class="text-2xl font-bold mt-8 mb-4">1. Service Availability</h2>
@@ -195,8 +185,8 @@
                 <h2 class="text-2xl font-bold mt-8 mb-4">14. Contact for SLA Issues</h2>
                 <p class="mb-4">For questions about this SLA or to report service issues:</p>
                 <p class="mb-4">
-                    Email: <a href="mailto:{{ 'sla@' . config('app.name') . '.com' }}" class="text-indigo-600 hover:underline">{{ 'sla@' . config('app.name') . '.com' }}</a><br>
-                    Support: <a href="mailto:{{ 'support@' . config('app.name') . '.com' }}" class="text-indigo-600 hover:underline">{{ 'support@' . config('app.name') . '.com' }}</a>
+                    Email: <a href="mailto:{{ config('app.support_email') }}" class="text-indigo-600 hover:underline">{{ config('app.support_email') }}</a><br>
+                    Support: <a href="mailto:{{ config('app.support_email') }}" class="text-indigo-600 hover:underline">{{ config('app.support_email') }}</a>
                 </p>
             </div>
         </div>

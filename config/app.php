@@ -17,6 +17,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Where customers, clients and legal/privacy enquiries are directed.
+    'support_email' => env('SUPPORT_EMAIL', 'support@example.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

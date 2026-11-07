@@ -7,28 +7,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased bg-gray-50 dark:bg-gray-900">
-    <nav class="bg-white dark:bg-gray-800 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold text-gray-900 dark:text-white">
-                        📸 {{ config('app.name') }}
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('pricing') }}" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Pricing</a>
-                    @auth
-                        <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-gray-900">Dashboard</a>
-                    @else
-                        <a href="{{ route('login') }}" class="text-gray-700 hover:text-gray-900">Login</a>
-                        <a href="{{ route('register') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Get Started</a>
-                    @endauth
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('partials.marketing-nav')
 
-    <div class="py-16">
+    <div class="pt-32 pb-16">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-4">About {{ config('app.name') }}</h1>
@@ -109,7 +90,7 @@
                 <div>
                     <h4 class="text-white font-semibold mb-4">Support</h4>
                     <ul class="space-y-2 text-sm">
-                        <li><a href="mailto:{{ 'support@' . config('app.name') . '.com' }}" class="hover:text-white">Contact Support</a></li>
+                        <li><a href="mailto:{{ config('app.support_email') }}" class="hover:text-white">Contact Support</a></li>
                     </ul>
                 </div>
             </div>
