@@ -84,9 +84,7 @@
                                     {{ number_format($used) }} <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ $limit ? 'of '.number_format($limit) : '· no limit' }}</span>
                                 </dd>
                                 @if($limit)
-                                    <dd class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar" aria-label="{{ $label }} used" aria-valuemin="0" aria-valuemax="{{ $limit }}" aria-valuenow="{{ $used }}">
-                                        <span class="block h-full {{ $used >= $limit ? 'bg-red-500' : 'bg-brand-500' }}" style="width: {{ min(100, round($used / $limit * 100)) }}%"></span>
-                                    </dd>
+                                    <dd><div class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar" aria-label="{{ $label }} used" aria-valuemin="0" aria-valuemax="{{ $limit }}" aria-valuenow="{{ $used }}"><div class="h-full {{ $used >= $limit ? 'bg-red-500' : 'bg-brand-500' }}" style="width: {{ min(100, round($used / $limit * 100)) }}%"></div></div></dd>
                                 @endif
                             </div>
                         @endforeach
@@ -110,7 +108,7 @@
                                    'bg-white text-gray-900 shadow-xs dark:bg-gray-700 dark:text-white' => $interval === $value,
                                    'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' => $interval !== $value])>
                             {{ $label }}
-                            @if($value === 'year' && $maxSaving)<span class="ml-1 text-xs font-semibold text-green-700 dark:text-green-400">save up to {{ $maxSaving }}%</span>@endif
+                            @if($value === 'year' && $maxSaving)<span class="ml-1 text-xs font-semibold text-green-800 dark:text-green-400">save up to {{ $maxSaving }}%</span>@endif
                         </a>
                     @endforeach
                 </nav>

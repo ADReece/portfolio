@@ -6,7 +6,7 @@
     @php
         $fontKey = $user->portfolio_font ?? 'system';
         $theme   = $user->portfolio_theme ?? 'auto';
-        $accent  = $user->portfolio_accent_color ?? '#6366F1';
+        $accent  = $user->portfolio_accent_color ?? '#4F46E5';
         $bg      = $user->portfolio_background_color ?: null;
         $text    = $user->portfolio_text_color ?: null;
         $heading = $user->portfolio_heading_color ?: null;

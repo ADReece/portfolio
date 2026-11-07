@@ -2,7 +2,7 @@
     <div class="space-y-5 py-2">
         <div class="text-center space-y-1">
             @isset($user)
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $user->name ?? $user->username }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ $user->name ?? $user->username }}</p>
             @endisset
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $collection->name }}</h1>
             <p class="text-sm text-gray-600 dark:text-gray-300">

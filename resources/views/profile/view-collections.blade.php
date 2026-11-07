@@ -102,7 +102,7 @@
         }
 
         .prose a {
-            color: var(--portfolio-accent, #6366F1) !important;
+            color: var(--portfolio-accent, #4F46E5) !important;
         }
 
         /* Prevent layout shift and scrollbar on hover */

@@ -184,7 +184,7 @@
                 <div class="overflow-hidden rounded-card shadow-sm ring-1 ring-gray-200 dark:ring-gray-700" :style="`background:${bg}; color:${text}; font-family:${fontFamily}`">
                     <div class="flex items-center gap-1.5 border-b border-black/5 bg-black/5 px-3 py-2" aria-hidden="true">
                         <span class="size-2.5 rounded-full bg-red-400"></span><span class="size-2.5 rounded-full bg-amber-400"></span><span class="size-2.5 rounded-full bg-green-400"></span>
-                        <span class="ml-2 truncate text-[11px] opacity-60">{{ preg_replace('#^https?://#', '', route('profile.view', $user->username)) }}</span>
+                        <span class="ml-2 truncate text-[11px] opacity-80">{{ preg_replace('#^https?://#', '', route('profile.view', $user->username)) }}</span>
                     </div>
                     <div class="space-y-4 p-5">
                         <div class="flex items-center gap-3">
@@ -193,7 +193,7 @@
                             @endif
                             <div class="min-w-0">
                                 <p class="truncate text-xl font-bold" :style="`color:${heading}`">{{ $user->name ?: $user->username }}</p>
-                                <p class="text-xs opacity-70">{{ '@'.$user->username }}</p>
+                                <p class="text-xs opacity-80">{{ '@'.$user->username }}</p>
                             </div>
                         </div>
                         @if($user->bio)

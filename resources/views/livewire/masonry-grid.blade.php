@@ -102,14 +102,14 @@
                  x-cloak
                  style="display: none;">
                 <div class="loader small"></div>
-                <span class="ml-3 text-gray-500 dark:text-gray-400 text-sm">Loading more photos...</span>
+                <span class="ml-3 text-gray-600 dark:text-gray-400 text-sm">Loading more photos...</span>
             </div>
         @endif
 
         @if(!$hasMore && $loadedCount > 0)
             <!-- All photos loaded message -->
             <div class="w-full py-8 flex justify-center">
-                <div class="text-gray-500 dark:text-gray-400 text-sm">
+                <div class="text-gray-600 dark:text-gray-400 text-sm">
                     Showing all {{ $loadedCount }} {{ Str::plural('photo', $loadedCount) }}
                 </div>
             </div>
@@ -123,7 +123,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No photos</h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No photos found in this collection.</p>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No photos found in this collection.</p>
                 </div>
             </div>
         @endif
@@ -228,7 +228,7 @@
             border-top: 1.1em solid rgba(var(--portfolio-accent-rgb, 99, 102, 241), 0.2);
             border-right: 1.1em solid rgba(var(--portfolio-accent-rgb, 99, 102, 241), 0.2);
             border-bottom: 1.1em solid rgba(var(--portfolio-accent-rgb, 99, 102, 241), 0.2);
-            border-left: 1.1em solid var(--portfolio-accent, #6366F1);
+            border-left: 1.1em solid var(--portfolio-accent, #4F46E5);
             transform: translateZ(0);
             animation: load8 1.1s infinite linear;
         }

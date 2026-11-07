@@ -72,9 +72,7 @@
                         <dd class="mt-1 text-2xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-gray-100">{{ $value }}</dd>
                         <dd class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $hint }}</dd>
                         @if($stats['photoLimit'] && $label === 'Photos')
-                            <dd class="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar" aria-label="Photo storage used" aria-valuemin="0" aria-valuemax="{{ $stats['photoLimit'] }}" aria-valuenow="{{ $stats['photos'] }}">
-                                <span class="block h-full {{ $stats['photos'] >= $stats['photoLimit'] ? 'bg-red-500' : 'bg-brand-500' }}" style="width: {{ min(100, round($stats['photos'] / $stats['photoLimit'] * 100)) }}%"></span>
-                            </dd>
+                            <dd><div class="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar" aria-label="Photo storage used" aria-valuemin="0" aria-valuemax="{{ $stats['photoLimit'] }}" aria-valuenow="{{ $stats['photos'] }}"><div class="h-full {{ $stats['photos'] >= $stats['photoLimit'] ? 'bg-red-500' : 'bg-brand-500' }}" style="width: {{ min(100, round($stats['photos'] / $stats['photoLimit'] * 100)) }}%"></div></div></dd>
                         @endif
                     </div>
                 @endforeach

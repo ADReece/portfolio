@@ -44,7 +44,7 @@
                                 <img src="{{ $collection->coverPhoto->getAwsThumbnail() }}" alt="" loading="lazy"
                                      class="size-full object-cover" style="object-position: {{ $collection->coverObjectPosition() }}">
                             @else
-                                <div class="flex size-full flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
+                                <div class="flex size-full flex-col items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
                                     <x-ui.icon name="photo" class="size-10" />
                                     <span class="text-sm">{{ $collection->photos_count ? 'No cover photo chosen' : 'No photos yet' }}</span>
                                 </div>
