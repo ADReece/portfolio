@@ -145,7 +145,7 @@
                     @endif
                     <h3 class="text-2xl font-bold mb-2 dark:text-white">{{ $plan->name }}</h3>
                     <div class="mb-6">
-                        <span class="text-4xl font-bold dark:text-white">£{{ $plan->priceFor('month') }}</span>
+                        <span class="text-4xl font-bold dark:text-white">{{ $currencySymbol }}{{ $plan->priceFor('month') }}</span>
                         @if($plan->price > 0)
                         <span class="text-gray-600 dark:text-gray-400">/month</span>
                         @endif

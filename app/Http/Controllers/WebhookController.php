@@ -78,7 +78,7 @@ class WebhookController extends CashierController
 
                     $transfer = $stripe->transfers->create([
                         'amount' => $order->photographer_amount * 100, // Convert to cents
-                        'currency' => 'usd',
+                        'currency' => \App\Support\Currency::stripeCode(),
                         'destination' => $order->user->stripe_connect_id,
                         'transfer_group' => 'ORDER_' . $order->id,
                     ]);

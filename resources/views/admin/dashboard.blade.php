@@ -28,7 +28,7 @@
 
             <div class="mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
                 <div class="text-gray-500 dark:text-gray-400 text-sm">GMV (30 days)</div>
-                <div class="text-3xl font-bold mt-2 text-gray-900 dark:text-white">${{ number_format($gmvLast30, 2) }}</div>
+                <div class="text-3xl font-bold mt-2 text-gray-900 dark:text-white">{{ $currencySymbol }}{{ number_format($gmvLast30, 2) }}</div>
             </div>
 
             <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

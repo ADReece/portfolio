@@ -77,7 +77,7 @@
                                 <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
-                                <span class="dark:text-gray-300">5% platform fee (plus Stripe fees)</span>
+                                <span class="dark:text-gray-300">{{ rtrim(rtrim(number_format(config('services.platform_fee_percent'), 2), '0'), '.') }}% platform fee (plus Stripe fees)</span>
                             </li>
                         </ul>
                     </div>

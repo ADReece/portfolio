@@ -24,7 +24,7 @@
                 <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-lg font-semibold dark:text-white">{{ $plan->name }} Plan</span>
-                        <span class="text-2xl font-bold dark:text-white">${{ $plan->priceFor($interval ?? request('interval','month')) }}/{{ ($interval ?? request('interval','month')) === 'year' ? 'yr' : 'mo' }}</span>
+                        <span class="text-2xl font-bold dark:text-white">{{ $currencySymbol }}{{ $plan->priceFor($interval ?? request('interval','month')) }}/{{ ($interval ?? request('interval','month')) === 'year' ? 'yr' : 'mo' }}</span>
                     </div>
                     <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                         @foreach($plan->features as $feature)

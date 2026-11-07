@@ -28,31 +28,16 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Default Currency
-                                </label>
-                                <select name="settings[default_currency]" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-                                    <option value="GBP" {{ optional($settings->get('currency')->firstWhere('key', 'default_currency'))->value === 'GBP' ? 'selected' : '' }}>GBP (£)</option>
-                                    <option value="USD" {{ optional($settings->get('currency')->firstWhere('key', 'default_currency'))->value === 'USD' ? 'selected' : '' }}>USD ($)</option>
-                                    <option value="EUR" {{ optional($settings->get('currency')->firstWhere('key', 'default_currency'))->value === 'EUR' ? 'selected' : '' }}>EUR (€)</option>
-                                    <option value="AUD" {{ optional($settings->get('currency')->firstWhere('key', 'default_currency'))->value === 'AUD' ? 'selected' : '' }}>AUD ($)</option>
-                                    <option value="CAD" {{ optional($settings->get('currency')->firstWhere('key', 'default_currency'))->value === 'CAD' ? 'selected' : '' }}>CAD ($)</option>
-                                </select>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">This currency will be used for all pricing</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Currency Symbol
-                                </label>
-                                <input type="text" name="settings[currency_symbol]"
-                                       value="{{ optional($settings->get('currency')->firstWhere('key', 'currency_symbol'))->value ?? '£' }}"
-                                       class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                                       maxlength="5">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Symbol displayed before prices</p>
-                            </div>
+                        <div class="max-w-sm">
+                            <label for="default_currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Currency
+                            </label>
+                            <select id="default_currency" name="settings[default_currency]" aria-describedby="default_currency_help" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                                @foreach(\App\Support\Currency::SYMBOLS as $code => $symbol)
+                                    <option value="{{ $code }}" @selected(\App\Support\Currency::code() === $code)>{{ $code }} ({{ $symbol }})</option>
+                                @endforeach
+                            </select>
+                            <p id="default_currency_help" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Used for plan prices, print sales and payouts. The symbol is set automatically.</p>
                         </div>
 
                         <div class="mt-6">

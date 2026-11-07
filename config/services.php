@@ -35,6 +35,10 @@ return [
         'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
     ],
 
+    // Percentage the platform keeps from each client print sale. Shown to
+    // photographers on the Connect Stripe page, so copy always matches.
+    'platform_fee_percent' => (float) env('PLATFORM_FEE_PERCENT', 10),
+
     'prodigi' => [
         'api_key' => env('PRODIGI_API_KEY'),
         'merchant_id' => env('PRODIGI_MERCHANT_ID'),

@@ -18,7 +18,7 @@
                         <tr>
                             <td class="px-4 py-2 text-gray-800 dark:text-gray-200">#{{ $order->id }}</td>
                             <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ $order->user->email ?? '—' }}</td>
-                            <td class="px-4 py-2 text-gray-800 dark:text-gray-200">${{ number_format($order->total, 2) }}</td>
+                            <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</td>
                             <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ ucfirst($order->status) }}</td>
                             <td class="px-4 py-2 text-gray-800 dark:text-gray-200">{{ $order->created_at->toDayDateTimeString() }}</td>
                         </tr>
@@ -29,7 +29,7 @@
             <div class="mt-4">{{ $orders->links() }}</div>
             <div class="mt-6 bg-white dark:bg-gray-800 rounded p-4">
                 <div class="text-gray-500 dark:text-gray-400 text-sm">Total Completed GMV</div>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white">${{ number_format($totalCompleted, 2) }}</div>
+                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $currencySymbol }}{{ number_format($totalCompleted, 2) }}</div>
             </div>
         </div>
     </div>

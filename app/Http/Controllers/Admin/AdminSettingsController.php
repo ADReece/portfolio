@@ -30,6 +30,8 @@ class AdminSettingsController extends Controller
             );
         }
 
+        \App\Support\Currency::flush();
+
         return redirect()->back()->with('success', 'Settings updated successfully!');
     }
 
