@@ -154,8 +154,8 @@ Route::get('/collections/{collection}/download-archive/{filename}', [CollectionC
 Route::get('/photos/{photo}/download-options', [PhotoController::class, 'downloadOptions'])->name('photos.download-options');
 Route::post('/photos/{photo}/download-with-template/{template}', [PhotoController::class, 'downloadWithTemplate'])->name('photos.download-with-template');
 Route::get('/photos/{photo}/download-result/{generatedPrint}', [PhotoController::class, 'downloadResult'])->name('photos.download-result');
-Route::post('/photos/{photo}/request-download', [PhotoController::class, 'requestDownload'])->name('photos.request-download');
-Route::post('/photos/{photo}/request-purchase', [PhotoController::class, 'requestPurchase'])->name('photos.request-purchase');
+Route::post('/photos/{photo}/request-download', [PhotoController::class, 'requestDownload'])->middleware('throttle:5,1')->name('photos.request-download');
+Route::post('/photos/{photo}/request-purchase', [PhotoController::class, 'requestPurchase'])->middleware('throttle:5,1')->name('photos.request-purchase');
 Route::get('/photos/{photo}/buy-print', [PrintPurchaseController::class, 'show'])->name('print-purchase.show');
 Route::post('/photos/{photo}/buy-print', [PrintPurchaseController::class, 'store'])->name('print-purchase.store');
 Route::get('/orders/{order}/purchase-success', [PrintPurchaseController::class, 'success'])->name('print-purchase.success');

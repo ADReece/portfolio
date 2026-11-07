@@ -235,9 +235,9 @@ class ProfileController extends Controller
         // Handle password protection for private collections. Access is granted
         // either by a signed share link (emailed to the client) or by entering the
         // password once, after which the collection stays unlocked for the session.
-        if ($collection->private && ! self::collectionIsUnlocked($request, $collection)) {
+        if ($collection->private && ! \App\Support\GalleryAccess::collectionIsUnlocked($request, $collection)) {
             if ($request->hasValidSignature()) {
-                self::unlockCollection($request, $collection);
+                \App\Support\GalleryAccess::unlockCollection($request, $collection);
             } else {
                 return view('collections.frontend.password', ['collection' => $collection, 'user' => $user]);
             }
@@ -271,28 +271,9 @@ class ProfileController extends Controller
             return back()->withErrors(['password' => __('That password is not correct. Check the email from your photographer and try again.')]);
         }
 
-        self::unlockCollection($request, $collection);
+        \App\Support\GalleryAccess::unlockCollection($request, $collection);
 
         return redirect()->route('profile.collection', ['username' => $username, 'collection_id' => $collection->id]);
-    }
-
-    public static function collectionIsUnlocked(Request $request, $collection): bool
-    {
-        if (! $collection->private) {
-            return true;
-        }
-        if ($request->user() && $request->user()->id === $collection->user_id) {
-            return true;
-        }
-
-        return in_array((string) $collection->id, $request->session()->get('unlocked_collections', []), true);
-    }
-
-    public static function unlockCollection(Request $request, $collection): void
-    {
-        $unlocked = $request->session()->get('unlocked_collections', []);
-        $unlocked[] = (string) $collection->id;
-        $request->session()->put('unlocked_collections', array_values(array_unique($unlocked)));
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\Set;
 use App\Models\GeneratedPrint;
 use App\Models\Template;
 use App\Jobs\ApplyTemplateToPrint;
+use App\Support\GalleryAccess;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -134,13 +135,15 @@ class PhotoController extends Controller
 
     public function requestDownload(Request $request, Photo $photo): JsonResponse
     {
+        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+
         $validated = $request->validate([
             'email' => 'required|email|max:255',
         ]);
 
         // Generate a temporary download link (valid for 24 hours)
         $downloadUrl = Storage::disk('s3')->temporaryUrl(
-            $photo->url,
+            GalleryAccess::downloadKey($photo),
             now()->addHours(24)
         );
 
@@ -171,6 +174,8 @@ class PhotoController extends Controller
 
     public function requestPurchase(Request $request, Photo $photo): JsonResponse
     {
+        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+
         $validated = $request->validate([
             'email' => 'required|email|max:255',
         ]);
@@ -212,8 +217,10 @@ class PhotoController extends Controller
         }
     }
 
-    public function downloadOptions(Photo $photo)
+    public function downloadOptions(Request $request, Photo $photo)
     {
+        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+
         $set       = $photo->set?->load('templates.generatedPrints');
         $templates = $set?->templates ?? collect();
 
@@ -222,6 +229,8 @@ class PhotoController extends Controller
 
     public function downloadWithTemplate(Request $request, Photo $photo, Template $template)
     {
+        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+
         // Ensure template belongs to this photo's set
         $set = $photo->set;
         abort_unless($set && $set->templates->contains($template->id), 404);
@@ -245,8 +254,9 @@ class PhotoController extends Controller
         return redirect()->route('photos.download-result', [$photo, $generatedPrint]);
     }
 
-    public function downloadResult(Photo $photo, GeneratedPrint $generatedPrint)
+    public function downloadResult(Request $request, Photo $photo, GeneratedPrint $generatedPrint)
     {
+        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
         abort_unless($generatedPrint->photo_id === $photo->id, 404);
 
         $outputUrl = null;

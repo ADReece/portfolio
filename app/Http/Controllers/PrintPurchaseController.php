@@ -201,13 +201,6 @@ class PrintPurchaseController extends Controller
             return false;
         }
 
-        if ($collection->private) {
-            return ProfileController::collectionIsUnlocked($request, $collection);
-        }
-
-        return ! $photo->private
-            && ! $photo->hide_from_portfolio
-            && ! $photo->set->hide_from_portfolio
-            && ! $collection->hide_from_portfolio;
+        return \App\Support\GalleryAccess::canViewPhoto($request, $photo);
     }
 }

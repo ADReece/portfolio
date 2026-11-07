@@ -191,7 +191,7 @@ class CollectionController extends Controller
             ], 403);
         }
 
-        if (! \App\Http\Controllers\ProfileController::collectionIsUnlocked($request, $collection)) {
+        if (! \App\Support\GalleryAccess::collectionIsUnlocked($request, $collection)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Open the gallery with its password before requesting a download.'
