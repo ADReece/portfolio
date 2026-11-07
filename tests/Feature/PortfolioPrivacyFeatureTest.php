@@ -78,6 +78,19 @@ class PortfolioPrivacyFeatureTest extends TestCase
         $response->assertViewIs('collections.frontend.password');
     }
 
+    public function test_public_collections_page_lists_only_visible_collections(): void
+    {
+        $user = User::factory()->create(['portfolio_display_mode' => 'grid']);
+        $visible = Collection::factory()->published()->create(['user_id' => $user->id]);
+        Collection::factory()->private()->published()->create(['user_id' => $user->id]);
+        Collection::factory()->create(['user_id' => $user->id]); // draft
+
+        $this->get(route('profile.collections', ['username' => $user->username]))
+            ->assertOk()
+            ->assertViewIs('profile.view-collections')
+            ->assertViewHas('collections', fn ($c) => $c->count() === 1 && $c->first()->id === $visible->id);
+    }
+
     private function makePrivateCollection(): array
     {
         $user = User::factory()->create();

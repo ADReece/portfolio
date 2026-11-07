@@ -26,6 +26,15 @@ class PhotoUpload extends Component
 
     public function render()
     {
-        return view('livewire.photo-upload');
+        $user = auth()->user();
+        $limit = $user?->subscriptionPlan?->photo_limit;
+        $unlimited = ! $user || $user->isFeatureOverrideActive() || $user->is_admin || $limit === null;
+        $used = $unlimited ? null : $user->photos()->count();
+
+        return view('livewire.photo-upload', [
+            'photoLimit' => $unlimited ? null : (int) $limit,
+            'photosUsed' => $used,
+            'photosRemaining' => $unlimited ? null : max(0, (int) $limit - $used),
+        ]);
     }
 }

@@ -182,19 +182,7 @@ class ProfileController extends Controller
         if(!is_null($user)){
             // Determine which view to show based on user's preference
             if ($user->portfolio_display_mode === 'collections') {
-                // Load published, non-hidden, non-private collections with cover photos
-                $collections = $user->collections()
-                    ->where('status', 'Published')
-                    ->where('hide_from_portfolio', false)
-                    ->where('private', false) // Exclude private collections from public portfolio
-                    ->with('coverPhoto')
-                    ->orderBy('event_date', 'desc')
-                    ->get();
-
-                return view('profile.view-collections', [
-                    'user' => $user,
-                    'collections' => $collections
-                ]);
+                return $this->collectionsView($user);
             }
 
             // Default to grid view
@@ -205,11 +193,30 @@ class ProfileController extends Controller
 
     }
 
+    /**
+     * Public list of a photographer's collections, whatever their default
+     * portfolio display mode is.
+     */
     public function collections($username) : View
     {
-        $collections = User::where('username', $username)->firstOrFail()?->collections;
+        return $this->collectionsView(User::where('username', $username)->firstOrFail());
+    }
 
-        return view('collections.frontend.index', ['collections' => $collections]);
+    private function collectionsView(User $user): View
+    {
+        // Published, non-hidden, non-private collections with cover photos
+        $collections = $user->collections()
+            ->where('status', 'Published')
+            ->where('hide_from_portfolio', false)
+            ->where('private', false)
+            ->with('coverPhoto')
+            ->orderBy('event_date', 'desc')
+            ->get();
+
+        return view('profile.view-collections', [
+            'user' => $user,
+            'collections' => $collections,
+        ]);
     }
 
     public function collection(Request $request, $username, $collection_id) : View

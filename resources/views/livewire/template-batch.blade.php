@@ -155,9 +155,16 @@
                 </div>
 
                 <div class="flex justify-end mt-4">
-                    <button wire:click="generate"
+                    {{-- wire:confirm is Livewire 3 only; use the app's confirm dialog instead. --}}
+                    <button type="button"
+                            x-data
+                            x-on:click="window.confirmAction({
+                                title: @js('Generate '.$photos->count().' '.\Illuminate\Support\Str::plural('print', $photos->count()).'?'),
+                                message: 'Prints are created in the background. You can leave this page and come back to download them.',
+                                confirmText: 'Generate',
+                                onConfirm: () => $wire.generate(),
+                            })"
                             wire:loading.attr="disabled"
-                            wire:confirm="Generate {{ $photos->count() }} prints? This will start background jobs."
                             class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50">
                         <span wire:loading.remove>Generate {{ $photos->count() }} Print{{ $photos->count() !== 1 ? 's' : '' }}</span>
                         <span wire:loading>Queuing jobs...</span>

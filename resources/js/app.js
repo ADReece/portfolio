@@ -57,30 +57,38 @@ window.showErrorToast = (message) => window.showToast(message, 'error');
 window.showWarningToast = (message) => window.showToast(message, 'warning');
 window.showInfoToast = (message) => window.showToast(message, 'info');
 
-window.fslightbox = fslightbox;
-
 // fslightbox automatically provides refreshFsLightbox() - don't override it
 
 import Alpine from 'alpinejs';
 import intersect from '@alpinejs/intersect';
+import collapse from '@alpinejs/collapse';
 
 window.Alpine = Alpine;
 
 Alpine.plugin(intersect);
+Alpine.plugin(collapse);
 
-// Wait for Livewire to be fully loaded before starting Alpine
-// This ensures Livewire is available when Alpine components try to access it
-function startAlpineWhenLivewireReady() {
-    if (typeof window.Livewire !== 'undefined') {
-        Alpine.start();
+// Start Alpine. On pages that include Livewire, Alpine must start after
+// Livewire has loaded; pages without Livewire (marketing, guest, client
+// download pages) start Alpine straight away. Previously those pages waited
+// for Livewire forever, so none of their interactive parts worked.
+function startAlpine() {
+    if (window.__alpineStarted) return;
+    window.__alpineStarted = true;
+    Alpine.start();
+}
+
+function startAlpineWhenReady(attemptsLeft = 40) {
+    const pageUsesLivewire = !!document.querySelector('script[src*="livewire"]');
+    if (!pageUsesLivewire || typeof window.Livewire !== 'undefined' || attemptsLeft <= 0) {
+        startAlpine();
     } else {
-        setTimeout(startAlpineWhenLivewireReady, 50);
+        setTimeout(() => startAlpineWhenReady(attemptsLeft - 1), 50);
     }
 }
 
-// Start the check after DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startAlpineWhenLivewireReady);
+    document.addEventListener('DOMContentLoaded', () => startAlpineWhenReady());
 } else {
-    startAlpineWhenLivewireReady();
+    startAlpineWhenReady();
 }

@@ -1,13 +1,29 @@
 <div>
     @if($setId)
+        @if(!is_null($photoLimit))
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span class="text-gray-600 dark:text-gray-300">
+                    {{ number_format($photosUsed) }} of {{ number_format($photoLimit) }} photos used on your plan
+                </span>
+                @if($photosRemaining <= max(10, (int) ceil($photoLimit * 0.1)))
+                    <a href="{{ route('pricing') }}" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                        {{ $photosRemaining === 0 ? 'Upgrade to upload more' : 'Need more space? Upgrade' }}
+                    </a>
+                @endif
+            </div>
+            <div class="mb-4 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden" role="progressbar" aria-label="Photo storage used" aria-valuemin="0" aria-valuemax="{{ $photoLimit }}" aria-valuenow="{{ $photosUsed }}">
+                <div class="h-full {{ $photosRemaining === 0 ? 'bg-red-500' : 'bg-indigo-500' }}" style="width: {{ $photoLimit ? min(100, round($photosUsed / $photoLimit * 100)) : 0 }}%"></div>
+            </div>
+        @endif
+
         <div wire:ignore>
-            <div class="border-dashed border-2 border-gray-300 rounded-lg p-6 text-center bg-white" id="file-upload-wrapper-{{ $setId }}">
+            <div class="border-dashed border-2 border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center bg-white dark:bg-gray-800" id="file-upload-wrapper-{{ $setId }}">
                 <input type="file" id="file-upload-{{ $setId }}" name="file" multiple accept="image/*">
             </div>
         </div>
 
         @if($uploadCount > 0)
-            <div class="mt-3 text-sm text-green-600">
+            <div class="mt-3 text-sm text-green-700 dark:text-green-400" role="status">
                 {{ $uploadCount }} {{ Str::plural('file', $uploadCount) }} uploaded successfully
             </div>
         @endif
@@ -43,13 +59,14 @@
                         maxFileSize: '100MB',
                         maxParallelUploads: 1,
                         credits: false,
-                        labelIdle: 'Drag & Drop your photos or <span class="filepond--label-action">Browse</span>',
+                        labelIdle: 'Drag photos here or <span class="filepond--label-action">choose files</span>',
                         server: {
                             process: {
                                 url: '{{ route("upload-files") }}',
                                 method: 'POST',
                                 headers: {
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json',
                                 },
                                 ondata: (formData) => {
                                     formData.append('set_id', '{{ $setId }}');
@@ -67,15 +84,17 @@
                                     }
                                 },
                                 onerror: (responseText) => {
-                                    let message = 'Upload failed.';
+                                    let message = "That photo didn't upload. Check your connection and try again.";
 
                                     try {
                                         const response = JSON.parse(responseText);
                                         message = response.message || response.error || message;
-                                    } catch (error) {
-                                        if (responseText) {
-                                            message = responseText;
+                                        if (response.upgrade_url) {
+                                            // Plan limit reached: stop the rest of the queue too.
+                                            pond.removeFiles();
                                         }
+                                    } catch (error) {
+                                        // Non-JSON (e.g. an HTML error page): keep the friendly default.
                                     }
 
                                     window.showErrorToast(message);
@@ -91,11 +110,12 @@
                             return;
                         }
 
-                        console.log('File uploaded successfully:', file.filename || file.file?.name);
                     });
 
                     pond.on('processfiles', () => {
-                        console.log('All files in queue processed');
+                        if (typeof @this !== 'undefined') {
+                            @this.call('$refresh');
+                        }
                     });
                 }
 

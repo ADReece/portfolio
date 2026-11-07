@@ -16,6 +16,7 @@
         "vite": "^4.0.0"
     },
     "dependencies": {
+        "@alpinejs/collapse": "^3.13.8",
         "@alpinejs/intersect": "^3.13.8",
         "filepond": "^4.32.12",
         "filepond-plugin-file-validate-size": "^2.2.8",

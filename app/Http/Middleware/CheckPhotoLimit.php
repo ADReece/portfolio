@@ -8,27 +8,32 @@ use Illuminate\Http\Request;
 class CheckPhotoLimit
 {
     /**
-     * Handle an incoming request.
+     * Stop uploads once the user's plan limit is reached.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * Uploads arrive as background requests from the uploader, so the
+     * response is JSON with a readable message and an upgrade link rather
+     * than a redirect the uploader can't follow.
      */
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
 
-        if (!$user || !$user->subscriptionPlan) {
-            return redirect()->route('pricing')
-                ->with('error', 'Please select a subscription plan to upload photos.');
+        if ($user && $user->canUploadPhotos()) {
+            return $next($request);
         }
 
-        if (!$user->canUploadPhotos()) {
-            $limit = $user->subscriptionPlan->photo_limit;
-            return redirect()->back()
-                ->with('error', "You've reached your photo limit of {$limit} photos. Please upgrade your plan to upload more.");
+        $message = ! $user?->subscriptionPlan
+            ? 'Choose a plan to start uploading photos.'
+            : "You've used all {$user->subscriptionPlan->photo_limit} photos on your plan. Upgrade to upload more.";
+
+        if ($request->expectsJson() || $request->ajax() || $request->isMethod('post')) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'upgrade_url' => route('pricing'),
+            ], 403);
         }
 
-        return $next($request);
+        return redirect()->route('pricing')->with('error', $message);
     }
 }
