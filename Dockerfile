@@ -1,18 +1,8 @@
 # Single-container image for hydrogen (Raspberry Pi 5, arm64):
 # nginx + PHP-FPM + MariaDB + a queue worker, run by supervisord.
 
-# --- Front-end assets ---------------------------------------------------------
-FROM node:22-alpine AS assets
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
-COPY vite.config.js ./
-COPY resources ./resources
-COPY public ./public
-RUN npm run build
-
-# --- Runtime ------------------------------------------------------------------
-FROM alpine:3.21
+# --- PHP runtime and Composer packages -----------------------------------------
+FROM alpine:3.21 AS app
 
 RUN apk add --no-cache \
         nginx supervisor mariadb mariadb-client tini \
@@ -31,6 +21,23 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist \
     && rm -rf /root/.composer/cache
 
+
+# --- Front-end assets ---------------------------------------------------------
+FROM node:22-alpine AS assets
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+# app.js imports Livewire's ESM build and app.css scans Laravel's pagination views.
+COPY --from=app /var/www/html/vendor/livewire/livewire/dist ./vendor/livewire/livewire/dist
+COPY --from=app /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views ./vendor/laravel/framework/src/Illuminate/Pagination/resources/views
+COPY vite.config.js ./
+COPY resources ./resources
+COPY public ./public
+RUN npm run build
+
+# --- Final image --------------------------------------------------------------
+FROM app
+WORKDIR /var/www/html
 COPY . .
 COPY --from=assets /app/public/build ./public/build
 
