@@ -1,79 +1,85 @@
-<div>
+<div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <x-ui.page-header :title="'Make prints for '.$collection->name" :back="route('collections.edit', $collection)" :back-label="$collection->name"
+                      description="Add one of your print templates to every photo in this collection, then download the results." />
+
     {{-- Feature gate --}}
     @unless(auth()->user()->hasFeature('custom_templates'))
-        <div class="p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-center">
-            <p class="font-medium text-amber-800 dark:text-amber-200 mb-2">Template batching is a premium feature.</p>
-            <a href="{{ route('pricing') }}" class="px-4 py-2 bg-amber-600 text-white rounded-md text-sm hover:bg-amber-700">
-                Upgrade your plan
-            </a>
-        </div>
+        <x-ui.alert tone="amber" title="Print templates aren't included in your plan">
+            Upgrade to add a template to every photo in a collection at once.
+            <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+        </x-ui.alert>
     @else
 
     {{-- ══════════════════════════════════
          STEP 1 — SELECT TEMPLATE
     ══════════════════════════════════ --}}
     @if($step === 'select_template')
-        <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                Step 1 — Choose a template
-            </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Select the overlay and text field configuration you want to apply to this collection's photos.
-            </p>
+        <div class="space-y-5">
+            <div>
+                <p class="text-sm font-medium text-brand-700 dark:text-brand-300">Step 1 of 3</p>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Choose a template</h3>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Pick the overlay and text fields to add to this collection's photos.
+                </p>
+            </div>
 
             @error('selectedTemplateId')
-                <div class="mb-4 text-red-600 dark:text-red-400 text-sm">{{ $message }}</div>
+                <x-ui.alert tone="red">{{ $message }}</x-ui.alert>
             @enderror
 
             @if($templates->isEmpty())
-                <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <p class="mb-4">You haven't created any templates yet.</p>
-                    <a href="{{ route('templates.create') }}"
-                       class="px-5 py-2.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">
-                        Create a template
-                    </a>
-                </div>
+                <x-ui.empty-state icon="swatch" title="You haven't created any templates yet"
+                                  description="Create a template with an overlay and text fields, then come back here to use it.">
+                    <x-ui.button icon="plus" :href="route('templates.create')">Create a template</x-ui.button>
+                </x-ui.empty-state>
             @else
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <ul role="list" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($templates as $tmpl)
-                        <div wire:click="selectTemplate('{{ $tmpl->id }}')"
-                             class="cursor-pointer border-2 rounded-lg overflow-hidden transition-all
-                                    {{ $selectedTemplateId === $tmpl->id
-                                        ? 'border-indigo-500 ring-2 ring-indigo-300'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300' }}">
-
-                            {{-- Overlay thumbnail --}}
-                            @if($tmpl->overlay_path)
-                                <div class="h-24 bg-gray-900 flex items-center justify-center overflow-hidden">
-                                    <img src="{{ $tmpl->overlayUrl() }}" alt="{{ $tmpl->name }}"
-                                         class="h-full w-full object-contain">
-                                </div>
-                            @else
-                                <div class="h-24 bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                                    <span class="text-white text-sm font-medium opacity-60">Text Only</span>
-                                </div>
-                            @endif
-
-                            <div class="p-3">
-                                <p class="font-medium text-sm text-gray-900 dark:text-gray-100">{{ $tmpl->name }}</p>
-                                @if(!empty($tmpl->fields))
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {{ count($tmpl->fields) }} field{{ count($tmpl->fields) !== 1 ? 's' : '' }}:
-                                        {{ implode(', ', array_column($tmpl->fields, 'label')) }}
-                                    </p>
+                        @php $isSelected = $selectedTemplateId === $tmpl->id; @endphp
+                        <li>
+                            <button type="button"
+                                    wire:click="selectTemplate('{{ $tmpl->id }}')"
+                                    aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
+                                    @class([
+                                        'relative block w-full overflow-hidden rounded-card text-left transition focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+                                        'ring-2 ring-brand-600 dark:ring-brand-400' => $isSelected,
+                                        'ring-1 ring-gray-200 hover:ring-brand-300 dark:ring-gray-700 dark:hover:ring-brand-700' => ! $isSelected,
+                                    ])>
+                                @if($tmpl->overlay_path)
+                                    <span class="flex h-24 items-center justify-center overflow-hidden bg-gray-900">
+                                        <img src="{{ $tmpl->overlayUrl() }}" alt="" loading="lazy" class="h-full w-full object-contain">
+                                    </span>
+                                @else
+                                    <span class="flex h-24 flex-col items-center justify-center gap-1 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                                        <x-ui.icon name="document-text" class="size-6" />
+                                        <span class="text-xs font-medium">Text only</span>
+                                    </span>
                                 @endif
-                            </div>
-                        </div>
+
+                                @if($isSelected)
+                                    <span class="absolute right-2 top-2 rounded-full bg-brand-600 p-0.5 text-white shadow">
+                                        <x-ui.icon name="check" variant="m" class="size-4" />
+                                    </span>
+                                @endif
+
+                                <span class="block bg-white p-3 dark:bg-gray-800">
+                                    <span class="block text-sm font-medium text-gray-900 dark:text-gray-100">{{ $tmpl->name }}</span>
+                                    @if(!empty($tmpl->fields))
+                                        <span class="mt-1 block text-xs text-gray-600 dark:text-gray-400">
+                                            {{ count($tmpl->fields) }} text {{ \Illuminate\Support\Str::plural('field', count($tmpl->fields)) }}:
+                                            {{ implode(', ', array_column($tmpl->fields, 'label')) }}
+                                        </span>
+                                    @else
+                                        <span class="mt-1 block text-xs text-gray-600 dark:text-gray-400">Overlay only</span>
+                                    @endif
+                                </span>
+                            </button>
+                        </li>
                     @endforeach
-                </div>
+                </ul>
 
                 <div class="flex justify-end">
-                    <button wire:click="proceed"
-                            wire:loading.attr="disabled"
-                            class="px-5 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">
-                        <span wire:loading.remove>Continue →</span>
-                        <span wire:loading>Loading...</span>
-                    </button>
+                    <x-ui.button wire:click="proceed" wire:target="proceed" icon-trailing="arrow-right">Continue</x-ui.button>
                 </div>
             @endif
         </div>
@@ -82,69 +88,65 @@
          STEP 2 — ENTER PER-PHOTO DATA
     ══════════════════════════════════ --}}
     @elseif($step === 'enter_data')
-        <div>
-            <div class="flex items-center justify-between mb-1">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Step 2 — Enter photo data
-                </h3>
-                <button wire:click="$set('step', 'select_template')"
-                        class="text-sm text-gray-500 dark:text-gray-400 hover:underline">
-                    ← Change template
-                </button>
+        <div class="space-y-5">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-medium text-brand-700 dark:text-brand-300">Step 2 of 3</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Add the text for each photo</h3>
+                    @if($selectedTemplate)
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            Using <strong class="font-semibold text-gray-900 dark:text-gray-100">{{ $selectedTemplate->name }}</strong>. Fill in the text for each photo below.
+                        </p>
+                    @endif
+                </div>
+                <x-ui.button variant="ghost" size="sm" icon="arrow-left" wire:click="$set('step', 'select_template')">Change template</x-ui.button>
             </div>
 
-            @if($selectedTemplate)
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    Template: <strong class="text-gray-700 dark:text-gray-300">{{ $selectedTemplate->name }}</strong>
-                    — Fill in the fields for each photo below.
-                </p>
-            @endif
-
             @if($photos->isEmpty())
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    This collection has no photos yet.
-                </div>
+                <x-ui.empty-state icon="photo" title="This collection has no photos yet"
+                                  description="Upload photos to this collection, then come back to create prints." />
             @else
-                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="overflow-x-auto rounded-card ring-1 ring-gray-200 dark:ring-gray-700">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700/50">
+                        <thead class="bg-gray-50 dark:bg-gray-800/60">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                                <th scope="col" class="w-24 px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
                                     Photo
                                 </th>
                                 @if($selectedTemplate && !empty($selectedTemplate->fields))
                                     @foreach($selectedTemplate->fields as $field)
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th scope="col" class="min-w-40 px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
                                             {{ $field['label'] }}
                                         </th>
                                     @endforeach
                                 @endif
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                        <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
                             @foreach($photos as $photo)
-                                <tr>
-                                    {{-- Thumbnail --}}
+                                @php $photoNumber = $loop->iteration; @endphp
+                                <tr wire:key="batch-photo-{{ $photo->id }}">
                                     <td class="px-4 py-3">
                                         @if($photo->thumbnail_url ?? null)
                                             <img src="{{ \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($photo->thumbnail_url, now()->addMinutes(30)) }}"
-                                                 alt="Photo"
-                                                 class="w-16 h-16 object-cover rounded-sm">
+                                                 alt="Photo {{ $photoNumber }}"
+                                                 class="size-16 rounded-control object-cover">
                                         @else
-                                            <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-sm flex items-center justify-center text-xs text-gray-400">
-                                                No preview
+                                            <div class="flex size-16 items-center justify-center rounded-control bg-gray-100 text-gray-400 dark:bg-gray-700">
+                                                <x-ui.icon name="photo" class="size-6" />
+                                                <span class="sr-only">Photo {{ $photoNumber }} (no preview)</span>
                                             </div>
                                         @endif
                                     </td>
 
-                                    {{-- Field inputs --}}
                                     @if($selectedTemplate && !empty($selectedTemplate->fields))
                                         @foreach($selectedTemplate->fields as $field)
                                             <td class="px-4 py-3">
-                                                <input type="text"
+                                                <label for="batch-{{ $photo->id }}-{{ $loop->index }}" class="sr-only">{{ $field['label'] }} for photo {{ $photoNumber }}</label>
+                                                <input type="text" id="batch-{{ $photo->id }}-{{ $loop->index }}"
                                                        wire:model="photoData.{{ $photo->id }}.{{ $field['key'] }}"
                                                        placeholder="{{ $field['label'] }}"
-                                                       class="w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                                       class="block w-full rounded-control border-gray-300 text-sm shadow-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                             </td>
                                         @endforeach
                                     @endif
@@ -154,20 +156,21 @@
                     </table>
                 </div>
 
-                <div class="flex justify-end mt-4">
-                    {{-- wire:confirm is Livewire 3 only; use the app's confirm dialog instead. --}}
+                <div class="flex justify-end">
+                    {{-- Uses the app's confirm dialog. Kept on a plain <button> because @js() can't be used inside component tag attributes. --}}
                     <button type="button"
                             x-data
                             x-on:click="window.confirmAction({
-                                title: @js('Generate '.$photos->count().' '.\Illuminate\Support\Str::plural('print', $photos->count()).'?'),
+                                title: @js('Create '.$photos->count().' '.\Illuminate\Support\Str::plural('print', $photos->count()).'?'),
                                 message: 'Prints are created in the background. You can leave this page and come back to download them.',
-                                confirmText: 'Generate',
+                                confirmText: 'Create prints',
                                 onConfirm: () => $wire.generate(),
                             })"
                             wire:loading.attr="disabled"
-                            class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50">
-                        <span wire:loading.remove>Generate {{ $photos->count() }} Print{{ $photos->count() !== 1 ? 's' : '' }}</span>
-                        <span wire:loading>Queuing jobs...</span>
+                            class="inline-flex items-center justify-center gap-2 rounded-control bg-brand-600 px-4 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-xs transition-colors hover:bg-brand-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-400 dark:focus-visible:ring-offset-gray-900">
+                        <x-ui.icon name="sparkles" class="size-4" />
+                        <span wire:loading.remove>Create {{ $photos->count() }} {{ \Illuminate\Support\Str::plural('print', $photos->count()) }}</span>
+                        <span wire:loading>Starting…</span>
                     </button>
                 </div>
             @endif
@@ -177,84 +180,98 @@
          STEP 3 — PROCESSING / RESULTS
     ══════════════════════════════════ --}}
     @elseif($step === 'processing')
-        <div wire:poll.2000ms>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                Step 3 — Generating prints
-            </h3>
+        @php
+            $completed = $prints->where('status', 'completed')->count();
+            $failed    = $prints->where('status', 'failed')->count();
+            $pending   = $prints->whereIn('status', ['pending', 'processing'])->count();
+            $total     = $prints->count();
+            $finished  = $completed + $failed;
+        @endphp
 
-            @php
-                $completed = $prints->where('status', 'completed')->count();
-                $failed    = $prints->where('status', 'failed')->count();
-                $pending   = $prints->whereIn('status', ['pending', 'processing'])->count();
-                $total     = $prints->count();
-            @endphp
+        {{-- Poll for status only while prints are still being made. --}}
+        <div class="space-y-5" @unless($allDone) wire:poll.2000ms @endunless>
+            <div>
+                <p class="text-sm font-medium text-brand-700 dark:text-brand-300">Step 3 of 3</p>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {{ $allDone ? 'Your prints are ready' : 'Creating your prints' }}
+                </h3>
+            </div>
 
-            {{-- Progress bar --}}
+            <p role="status" aria-live="polite" class="sr-only">
+                @if($allDone)
+                    All prints finished: {{ $completed }} ready@if($failed > 0), {{ $failed }} failed@endif.
+                @else
+                    {{ $finished }} of {{ $total }} prints finished.
+                @endif
+            </p>
+
             @if(!$allDone)
-                <div class="mb-4">
-                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        <span>{{ $completed }} / {{ $total }} completed</span>
-                        <span>{{ $pending }} remaining</span>
+                <div>
+                    <div class="mb-1 flex justify-between text-sm text-gray-600 dark:text-gray-400" aria-hidden="true">
+                        <span class="tabular-nums">{{ $completed }} of {{ $total }} ready</span>
+                        <span class="tabular-nums">{{ $pending }} to go</span>
                     </div>
-                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div class="bg-indigo-600 h-2 rounded-full transition-all"
-                             style="width: {{ $total > 0 ? round(($completed / $total) * 100) : 0 }}%"></div>
+                    <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+                         role="progressbar" aria-label="Prints created"
+                         aria-valuemin="0" aria-valuemax="{{ $total }}" aria-valuenow="{{ $finished }}"
+                         aria-valuetext="{{ $finished }} of {{ $total }} finished">
+                        <div class="h-2 rounded-full bg-brand-600 transition-all motion-reduce:transition-none dark:bg-brand-500"
+                             style="width: {{ $total > 0 ? round(($finished / $total) * 100) : 0 }}%"></div>
                     </div>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">You can leave this page — prints keep being created in the background.</p>
                 </div>
             @else
-                <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-sm text-green-700 dark:text-green-300 text-sm">
-                    ✓ All prints processed — {{ $completed }} completed@if($failed > 0), {{ $failed }} failed@endif.
-                </div>
+                <x-ui.alert :tone="$failed > 0 ? 'amber' : 'green'" :title="$completed.' '.\Illuminate\Support\Str::plural('print', $completed).' ready'">
+                    @if($failed > 0)
+                        {{ $failed }} {{ \Illuminate\Support\Str::plural('print', $failed) }} couldn't be created.
+                    @else
+                        Every print was created. Download them below.
+                    @endif
+                </x-ui.alert>
             @endif
 
-            {{-- Print grid --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <ul role="list" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                 @foreach($prints as $print)
-                    <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                        {{-- Thumbnail or placeholder --}}
+                    <li wire:key="batch-print-{{ $print->id }}" class="overflow-hidden rounded-card bg-white ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
                         @if($print->isCompleted())
-                            <div class="relative group">
-                                <img src="{{ $print->outputUrl() }}" alt="Generated print"
-                                     class="w-full aspect-square object-cover">
-                                <div class="absolute inset-0 bg-black/40 transition-opacity flex items-center justify-center opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
+                            <div class="group relative">
+                                <img src="{{ $print->outputUrl() }}" alt="Print {{ $loop->iteration }}" class="aspect-square w-full object-cover">
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-100 transition-opacity can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                     <a href="{{ $print->outputUrl() }}" target="_blank"
-                                       class="px-3 py-1.5 bg-white text-gray-900 text-xs font-medium rounded-sm hover:bg-gray-100">
-                                        Download
+                                       class="inline-flex items-center gap-1.5 rounded-control bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500">
+                                        <x-ui.icon name="arrow-down-tray" class="size-4" />
+                                        Download<span class="sr-only"> print {{ $loop->iteration }}</span>
                                     </a>
                                 </div>
                             </div>
                         @elseif($print->isFailed())
-                            <div class="aspect-square bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                                <div class="text-center p-3">
-                                    <svg class="w-8 h-8 text-red-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                    </svg>
-                                    <p class="text-xs text-red-600 dark:text-red-400">Failed</p>
-                                </div>
+                            <div class="flex aspect-square flex-col items-center justify-center gap-1 bg-red-50 p-3 text-center dark:bg-red-950/40">
+                                <x-ui.icon name="exclamation-triangle" class="size-8 text-red-600 dark:text-red-400" />
+                                <p class="text-xs font-medium text-red-700 dark:text-red-300">Couldn't create</p>
                             </div>
                         @else
-                            <div class="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                                <svg class="w-8 h-8 text-gray-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            <div class="flex aspect-square items-center justify-center bg-gray-100 dark:bg-gray-700">
+                                <svg class="size-8 animate-spin text-gray-400 motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/>
+                                    <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
                                 </svg>
+                                <span class="sr-only">Creating…</span>
                             </div>
                         @endif
 
-                        {{-- Caption (print_data summary) --}}
                         <div class="p-2">
                             @foreach(array_slice($print->print_data ?? [], 0, 2) as $val)
                                 @if($val)
-                                    <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ $val }}</p>
+                                    <p class="truncate text-xs text-gray-700 dark:text-gray-300">{{ $val }}</p>
                                 @endif
                             @endforeach
                             @if(empty(array_filter($print->print_data ?? [])))
-                                <p class="text-xs text-gray-400 dark:text-gray-500 italic">No data</p>
+                                <p class="text-xs italic text-gray-500 dark:text-gray-400">No text</p>
                             @endif
                         </div>
-                    </div>
+                    </li>
                 @endforeach
-            </div>
+            </ul>
         </div>
     @endif
 

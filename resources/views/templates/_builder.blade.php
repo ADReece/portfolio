@@ -1,137 +1,140 @@
 {{-- Shared template builder UI (included by create.blade.php and edit.blade.php) --}}
 {{-- Expects Alpine component `templateEditor` to be on the parent form --}}
 
-<div class="flex gap-6 items-start">
+@php
+    $fieldInput = 'block w-full rounded-control border-gray-300 text-sm shadow-xs focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100';
+    $fieldLabel = 'block text-xs font-medium text-gray-700 dark:text-gray-300';
+@endphp
 
-    {{-- ══════════════ LEFT — FORM ══════════════ --}}
-    <div class="w-full lg:w-96 shrink-0 space-y-5">
+<div class="grid items-start gap-6 lg:grid-cols-[24rem_minmax(0,1fr)]">
 
-        {{-- Info --}}
-        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Template Info</h3>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span class="text-red-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name', $template->name ?? '') }}" required
-                       placeholder="e.g. Sports Portrait – Home Kit"
-                       class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+    {{-- ══════════════ FORM ══════════════ --}}
+    <div class="min-w-0 space-y-6">
+
+        <x-ui.card title="Details">
+            <div class="space-y-4">
+                <x-ui.input name="name" label="Template name" :value="old('name', $template->name ?? '')" required
+                            placeholder="e.g. Sports portrait – home kit" />
+                <x-ui.textarea name="description" label="Description" rows="2" optional
+                               placeholder="A note to help you tell templates apart">{{ old('description', $template->description ?? '') }}</x-ui.textarea>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                <textarea name="description" rows="2"
-                          class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                          placeholder="Optional notes">{{ old('description', $template->description ?? '') }}</textarea>
-            </div>
-        </div>
+        </x-ui.card>
 
-        {{-- Overlay --}}
-        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">Overlay</h3>
-
+        <x-ui.card title="Overlay" description="An image laid over the photo. Transparent areas let the photo show through.">
             @isset($template)
                 @if($template->overlay_path)
-                    <div class="mb-3 flex items-center gap-3">
+                    <div class="mb-4 flex items-center gap-3">
                         <img src="{{ $template->overlayUrl() }}" alt="Current overlay"
-                             class="h-16 w-16 object-contain bg-gray-900 rounded-sm border border-gray-700">
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                            Current overlay
+                             class="size-16 rounded-control bg-gray-900 object-contain ring-1 ring-gray-700">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <p>Current overlay</p>
                             @if($template->psd_path)
-                                <br><span class="text-indigo-400">PSD source stored</span>
+                                <p class="text-xs text-brand-700 dark:text-brand-300">Original PSD file saved</p>
                             @endif
                         </div>
                     </div>
                 @endif
             @endisset
 
-            <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                Upload a <strong>PNG</strong> (transparent areas show through) or a <strong>PSD</strong> (auto-flattened to PNG).
-            </label>
-            <input type="file" name="overlay" accept=".png,.psd"
-                   @change="handleOverlayChange"
-                   class="block w-full text-sm text-gray-500 dark:text-gray-400
-                          file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0
-                          file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
-                          hover:file:bg-indigo-100 dark:file:bg-indigo-900/50 dark:file:text-indigo-300">
-            <p class="mt-1 text-xs text-gray-400">Max 20 MB &nbsp;·&nbsp; PNG or PSD</p>
-        </div>
-
-        {{-- Text Fields --}}
-        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Text Fields</h3>
-                <button type="button" @click="addField()"
-                        class="inline-flex items-center px-2.5 py-1 text-xs bg-indigo-600 text-white rounded-sm hover:bg-indigo-700">
-                    + Add Field
-                </button>
+            <div class="space-y-1">
+                <label for="overlay" class="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                    @isset($template) @if($template->overlay_path) Replace overlay @else Overlay image @endif @else Overlay image @endisset
+                    <span class="font-normal text-gray-500 dark:text-gray-400">(optional)</span>
+                </label>
+                <input id="overlay" type="file" name="overlay" accept=".png,.psd" aria-describedby="overlay-help"
+                       @change="handleOverlayChange"
+                       class="block w-full text-sm text-gray-600 dark:text-gray-400
+                              file:mr-3 file:rounded-control file:border-0 file:bg-brand-50 file:px-3 file:py-1.5
+                              file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100
+                              dark:file:bg-brand-950 dark:file:text-brand-300">
+                <p id="overlay-help" class="text-sm text-gray-600 dark:text-gray-400">
+                    PNG or Photoshop (PSD) file, up to 20 MB. PSD files are flattened for you, but can't be previewed here.
+                </p>
             </div>
+        </x-ui.card>
+
+        <x-ui.card title="Text fields" description="Text that changes per photo, like a name or date.">
+            <x-slot:actions>
+                <x-ui.button size="sm" icon="plus" x-on:click="addField()">Add field</x-ui.button>
+            </x-slot:actions>
 
             <div class="space-y-3">
                 <template x-for="(field, index) in fields" :key="index">
-                    <div :class="activeField === index ? 'ring-2 ring-indigo-400' : ''"
-                         class="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/30 cursor-pointer"
-                         @click="activeField = index">
+                    <div :class="activeField === index ? 'ring-2 ring-brand-500' : 'ring-1 ring-gray-200 dark:ring-gray-700'"
+                         class="rounded-card bg-gray-50 p-3 dark:bg-gray-900/40"
+                         @click="activeField = index"
+                         @focusin="activeField = index">
 
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-semibold text-gray-600 dark:text-gray-300"
+                        <div class="mb-3 flex items-center justify-between gap-2">
+                            <span class="truncate text-sm font-semibold text-gray-800 dark:text-gray-200"
                                   x-text="field.label || ('Field ' + (index + 1))"></span>
                             <button type="button" @click.stop="removeField(index)"
-                                    class="text-red-400 hover:text-red-600 text-xs">Remove</button>
+                                    class="inline-flex items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-300 dark:hover:bg-red-950">
+                                <x-ui.icon name="trash" class="size-4" />
+                                Remove<span class="sr-only" x-text="' ' + (field.label || ('field ' + (index + 1)))"></span>
+                            </button>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-xs text-gray-400">Key (no spaces)</label>
-                                <input type="text" :name="'fields[' + index + '][key]'"
-                                       x-model="field.key" placeholder="player_name"
-                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="col-span-2 sm:col-span-1">
+                                <label :for="'field-' + index + '-label'" class="{{ $fieldLabel }}">Label</label>
+                                <input type="text" :id="'field-' + index + '-label'" :name="'fields[' + index + '][label]'"
+                                       x-model="field.label" placeholder="Player name"
+                                       class="mt-1 {{ $fieldInput }}">
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label :for="'field-' + index + '-key'" class="{{ $fieldLabel }}">Name in data file</label>
+                                <input type="text" :id="'field-' + index + '-key'" :name="'fields[' + index + '][key]'"
+                                       :aria-describedby="'field-' + index + '-key-help'"
+                                       x-model="field.key" placeholder="player_name" autocapitalize="off" spellcheck="false"
+                                       class="mt-1 font-mono {{ $fieldInput }}">
+                                <p :id="'field-' + index + '-key-help'" class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                    How this field is named when you fill in values. No spaces — use letters, numbers, - or _.
+                                </p>
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400">Label</label>
-                                <input type="text" :name="'fields[' + index + '][label]'"
-                                       x-model="field.label" placeholder="Player Name"
-                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                <label :for="'field-' + index + '-x'" class="{{ $fieldLabel }}">Across (%)</label>
+                                <input type="number" :id="'field-' + index + '-x'" :name="'fields[' + index + '][x]'"
+                                       x-model.number="field.x" min="0" max="100" step="0.1" inputmode="decimal"
+                                       class="mt-1 tabular-nums {{ $fieldInput }}">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400">X position %</label>
-                                <input type="number" :name="'fields[' + index + '][x]'"
-                                       x-model.number="field.x" min="0" max="100" step="0.1"
-                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                <label :for="'field-' + index + '-y'" class="{{ $fieldLabel }}">Down (%)</label>
+                                <input type="number" :id="'field-' + index + '-y'" :name="'fields[' + index + '][y]'"
+                                       x-model.number="field.y" min="0" max="100" step="0.1" inputmode="decimal"
+                                       class="mt-1 tabular-nums {{ $fieldInput }}">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400">Y position %</label>
-                                <input type="number" :name="'fields[' + index + '][y]'"
-                                       x-model.number="field.y" min="0" max="100" step="0.1"
-                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                <label :for="'field-' + index + '-size'" class="{{ $fieldLabel }}">Text size (px)</label>
+                                <input type="number" :id="'field-' + index + '-size'" :name="'fields[' + index + '][font_size]'"
+                                       x-model.number="field.font_size" min="8" max="300" inputmode="numeric"
+                                       class="mt-1 tabular-nums {{ $fieldInput }}">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400">Font size (px)</label>
-                                <input type="number" :name="'fields[' + index + '][font_size]'"
-                                       x-model.number="field.font_size" min="8" max="300"
-                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400">Text color</label>
-                                <div class="mt-0.5 flex gap-1">
-                                    <input type="color" :name="'fields[' + index + '][color]'"
+                                <label :for="'field-' + index + '-color'" class="{{ $fieldLabel }}">Text colour</label>
+                                <div class="mt-1 flex gap-1.5">
+                                    <input type="color" :id="'field-' + index + '-color'" :name="'fields[' + index + '][color]'"
                                            x-model="field.color"
-                                           class="h-7 w-8 rounded-sm border-gray-300 cursor-pointer">
-                                    <input type="text" x-model="field.color"
-                                           class="flex-1 rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
-                                           placeholder="#ffffff">
+                                           class="h-9 w-10 shrink-0 cursor-pointer rounded-control border-gray-300 dark:border-gray-600">
+                                    <label :for="'field-' + index + '-color-hex'" class="sr-only">Text colour hex code</label>
+                                    <input type="text" :id="'field-' + index + '-color-hex'" x-model="field.color"
+                                           placeholder="#ffffff" spellcheck="false"
+                                           class="min-w-0 flex-1 font-mono {{ $fieldInput }}">
                                 </div>
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400">Alignment</label>
-                                <select :name="'fields[' + index + '][align]'" x-model="field.align"
-                                        class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="center">Center</option>
+                                <label :for="'field-' + index + '-align'" class="{{ $fieldLabel }}">Alignment</label>
+                                <select :id="'field-' + index + '-align'" :name="'fields[' + index + '][align]'" x-model="field.align"
+                                        class="mt-1 {{ $fieldInput }}">
+                                    <option value="center">Centre</option>
                                     <option value="left">Left</option>
                                     <option value="right">Right</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400">Font</label>
-                                <select :name="'fields[' + index + '][font_id]'" x-model="field.font_id"
-                                        class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
+                                <label :for="'field-' + index + '-font'" class="{{ $fieldLabel }}">Font</label>
+                                <select :id="'field-' + index + '-font'" :name="'fields[' + index + '][font_id]'" x-model="field.font_id"
+                                        class="mt-1 {{ $fieldInput }}">
                                     <option value="">Default (OpenSans Bold)</option>
                                     <template x-for="font in availableFonts" :key="font.id">
                                         <option :value="font.id" x-text="font.name"></option>
@@ -142,85 +145,70 @@
                     </div>
                 </template>
 
-                <div x-show="fields.length === 0" class="text-xs text-gray-400 text-center py-3">
-                    No text fields yet. Click "+ Add Field" to add one.
-                </div>
+                <p x-show="fields.length === 0" class="py-3 text-center text-sm text-gray-600 dark:text-gray-400">
+                    No text fields yet. Choose “Add field” to add one, or leave it as an overlay only.
+                </p>
             </div>
-        </div>
+        </x-ui.card>
 
-        <div class="flex justify-end gap-3">
-            <a href="{{ $cancelRoute }}"
-               class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="px-5 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                {{ $submitLabel }}
-            </button>
+        <div class="flex flex-wrap justify-end gap-3">
+            <x-ui.button variant="secondary" :href="$cancelRoute">Cancel</x-ui.button>
+            <x-ui.button type="submit">{{ $submitLabel }}</x-ui.button>
         </div>
     </div>
 
-    {{-- ══════════════ RIGHT — LIVE PREVIEW ══════════════ --}}
-    <div class="flex-1 min-w-0">
-        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5 sticky top-6">
-
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Live Preview</h3>
-                <span class="text-xs text-gray-400">Drag labels to reposition · click to select</span>
-            </div>
-
-            {{-- Preview canvas area --}}
-            <div class="relative bg-gray-900 rounded-lg overflow-hidden select-none"
+    {{-- ══════════════ LIVE PREVIEW ══════════════ --}}
+    <div class="min-w-0 lg:sticky lg:top-6">
+        <x-ui.card title="Preview" description="Drag a label to move it, or select it and use the arrow keys.">
+            <div class="relative select-none overflow-hidden rounded-control bg-gray-900"
                  style="aspect-ratio: 3/2;"
                  x-ref="previewContainer"
-                 @mousemove="onPreviewMouseMove"
-                 @mouseup="stopDrag"
-                 @mouseleave="stopDrag">
+                 @pointermove="onPreviewMouseMove"
+                 @pointerup.window="stopDrag"
+                 @pointercancel.window="stopDrag">
 
                 {{-- Placeholder --}}
-                <div x-show="!previewUrl" class="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
-                    <svg class="w-12 h-12 mb-2 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-xs opacity-40">Upload a PNG or PSD overlay to preview it here</p>
+                <div x-show="!previewUrl" class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center text-gray-400">
+                    <x-ui.icon name="photo" class="size-10 opacity-60" />
+                    <p class="text-sm">Upload a PNG overlay to see it here</p>
                 </div>
 
                 <img x-show="previewUrl" :src="previewUrl" alt="Overlay preview"
-                     class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                     class="pointer-events-none absolute inset-0 h-full w-full object-contain">
 
                 {{-- Draggable text field handles --}}
                 <template x-for="(field, index) in fields" :key="index">
-                    <div class="absolute cursor-move px-2 py-0.5 rounded-sm border transition-colors"
-                         :class="activeField === index
-                             ? 'border-yellow-400 bg-yellow-400/25 shadow-lg'
-                             : 'border-white/50 bg-black/40 hover:border-white hover:bg-black/60'"
-                         :style="`left: ${field.x}%; top: ${field.y}%; transform: translate(-50%, -50%);`"
-                         @mousedown.prevent="startDrag($event, index)"
-                         @click.stop="activeField = index">
-                        <span class="text-white text-xs font-medium whitespace-nowrap drop-shadow-sm pointer-events-none"
+                    <button type="button"
+                            class="absolute cursor-move touch-none rounded-sm border px-2 py-0.5 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+                            :class="activeField === index
+                                ? 'border-yellow-400 bg-yellow-400/25 shadow-lg'
+                                : 'border-white/50 bg-black/40 hover:border-white hover:bg-black/60'"
+                            :style="`left: ${field.x}%; top: ${field.y}%; transform: translate(-50%, -50%);`"
+                            :aria-label="(field.label || field.key || ('Field ' + (index + 1))) + ': ' + field.x + '% across, ' + field.y + '% down. Use arrow keys to move.'"
+                            @pointerdown.prevent="startDrag($event, index)"
+                            @click.stop="activeField = index"
+                            @focus="activeField = index"
+                            @keydown.arrow-left.prevent="nudge(index, $event.shiftKey ? -5 : -0.5, 0)"
+                            @keydown.arrow-right.prevent="nudge(index, $event.shiftKey ? 5 : 0.5, 0)"
+                            @keydown.arrow-up.prevent="nudge(index, 0, $event.shiftKey ? -5 : -0.5)"
+                            @keydown.arrow-down.prevent="nudge(index, 0, $event.shiftKey ? 5 : 0.5)">
+                        <span class="pointer-events-none whitespace-nowrap text-xs font-medium text-white drop-shadow-sm"
                               x-text="field.label || field.key || ('Field ' + (index + 1))"></span>
-                    </div>
+                    </button>
                 </template>
             </div>
 
-            <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-                (0, 0) = top-left &nbsp;·&nbsp; (50, 50) = centre &nbsp;·&nbsp; (100, 100) = bottom-right
+            <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                Positions are measured from the top-left corner: 50% across and 50% down is the centre. Hold Shift with the arrow keys to move further.
             </p>
 
             @isset($template)
-                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <a href="{{ route('templates.test', $template) }}"
-                       class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Test with a photo
-                    </a>
+                <div class="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                    <x-ui.button variant="secondary" icon="beaker" :href="route('templates.test', $template)">Try on a photo</x-ui.button>
+                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Save your changes first — the test uses the saved template.</p>
                 </div>
             @endisset
-        </div>
+        </x-ui.card>
     </div>
 
 </div>
@@ -260,10 +248,15 @@ function templateEditor(existingFields, availableFonts) {
         },
 
         startDrag(event, fieldIndex) {
+            // Only the primary button / a single touch or pen contact starts a drag.
+            if (event.button !== undefined && event.button !== 0) return;
             const rect = this.$refs.previewContainer.getBoundingClientRect();
             this.activeField = fieldIndex;
+            // Keep receiving pointermove even if the finger/cursor leaves the handle or preview.
+            try { event.currentTarget && event.currentTarget.setPointerCapture(event.pointerId); } catch (e) {}
             this.dragging = {
                 fieldIndex,
+                pointerId:    event.pointerId,
                 startMouseX:  event.clientX,
                 startMouseY:  event.clientY,
                 startFieldX:  parseFloat(this.fields[fieldIndex].x) || 0,
@@ -275,6 +268,7 @@ function templateEditor(existingFields, availableFonts) {
 
         onPreviewMouseMove(event) {
             if (!this.dragging) return;
+            if (this.dragging.pointerId !== undefined && event.pointerId !== this.dragging.pointerId) return;
             const dx  = event.clientX - this.dragging.startMouseX;
             const dy  = event.clientY - this.dragging.startMouseY;
             const newX = this.dragging.startFieldX + (dx / this.dragging.containerW) * 100;
@@ -285,6 +279,14 @@ function templateEditor(existingFields, availableFonts) {
 
         stopDrag() {
             this.dragging = null;
+        },
+
+        nudge(index, dx, dy) {
+            const f = this.fields[index];
+            if (!f) return;
+            this.activeField = index;
+            f.x = Math.round(Math.min(100, Math.max(0, (parseFloat(f.x) || 0) + dx)) * 10) / 10;
+            f.y = Math.round(Math.min(100, Math.max(0, (parseFloat(f.y) || 0) + dy)) * 10) / 10;
         },
     };
 }

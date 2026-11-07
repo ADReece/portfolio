@@ -1,112 +1,79 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Font Library
-        </h2>
-    </x-slot>
+<x-app-layout title="Fonts">
+    <div class="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header title="Fonts"
+                          description="Upload your own fonts to use for text on your print templates."
+                          :back="route('templates.index')" back-label="Print templates" />
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        @if($errors->any())
+            <x-ui.alert tone="red" title="We couldn't upload that font">
+                <ul class="list-disc space-y-0.5 pl-5">
+                    @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+                </ul>
+            </x-ui.alert>
+        @endif
 
-            {{-- Feedback --}}
-            @if($errors->any())
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-sm text-sm">
-                    <ul class="list-disc list-inside">
-                        @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-                    </ul>
-                </div>
-            @endif
-
-            {{-- Upload --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">Upload a Font</h3>
-                <form method="POST" action="{{ route('fonts.store') }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="flex gap-4 items-end flex-wrap">
-                        <div class="flex-1 min-w-48">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Display name <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" name="name" value="{{ old('name') }}" required
-                                   placeholder="e.g. Roboto Bold"
-                                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        </div>
-                        <div class="flex-1 min-w-48">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Font file <span class="text-red-500">*</span>
-                            </label>
-                            <input type="file" name="font" accept=".ttf,.otf" required
-                                   class="block w-full text-sm text-gray-500 dark:text-gray-400
-                                          file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0
-                                          file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
-                                          hover:file:bg-indigo-100 dark:file:bg-indigo-900/50 dark:file:text-indigo-300">
-                            <p class="mt-1 text-xs text-gray-400">TTF or OTF &nbsp;·&nbsp; Max 5 MB</p>
-                        </div>
-                        <div>
-                            <button type="submit"
-                                    class="px-5 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                                Upload
-                            </button>
-                        </div>
+        <x-ui.card title="Upload a font">
+            <form method="POST" action="{{ route('fonts.store') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="grid items-start gap-4 sm:grid-cols-[1fr_1fr_auto]">
+                    <x-ui.input name="name" label="Font name" :value="old('name')" required
+                                placeholder="e.g. Roboto Bold" help="How it appears in the font list." />
+                    <div class="space-y-1">
+                        <label for="font" class="block text-sm font-medium text-gray-800 dark:text-gray-200">Font file</label>
+                        <input id="font" type="file" name="font" accept=".ttf,.otf" required aria-describedby="font-help"
+                               class="block w-full text-sm text-gray-600 dark:text-gray-400
+                                      file:mr-3 file:rounded-control file:border-0 file:bg-brand-50 file:px-3 file:py-1.5
+                                      file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100
+                                      dark:file:bg-brand-950 dark:file:text-brand-300">
+                        <p id="font-help" class="text-sm text-gray-600 dark:text-gray-400">TTF or OTF, up to 5 MB.</p>
                     </div>
-                </form>
-            </div>
-
-            {{-- System fonts --}}
-            @if($systemFonts->isNotEmpty())
-                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                        System Fonts
-                        <span class="text-xs font-normal text-gray-400 ml-1">(available to all users)</span>
-                    </h3>
-                    <div class="space-y-2">
-                        @foreach($systemFonts as $font)
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $font->name }}</p>
-                                    <p class="text-xs text-gray-400">{{ $font->filename }}</p>
-                                </div>
-                                <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-sm">System</span>
-                            </div>
-                        @endforeach
+                    <div class="sm:pt-6">
+                        <x-ui.button type="submit" icon="arrow-up-tray">Upload</x-ui.button>
                     </div>
                 </div>
-            @endif
+            </form>
+        </x-ui.card>
 
-            {{-- User fonts --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">Your Fonts</h3>
-
-                @if($userFonts->isEmpty())
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        No custom fonts uploaded yet. Use the form above to add your own TTF or OTF fonts.
-                    </p>
-                @else
-                    <div class="space-y-2">
-                        @foreach($userFonts as $font)
-                            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $font->name }}</p>
-                                    <p class="text-xs text-gray-400">{{ $font->filename }} &nbsp;·&nbsp; uploaded {{ $font->created_at->diffForHumans() }}</p>
-                                </div>
-                                <form method="POST" action="{{ route('fonts.destroy', $font) }}"
-                                      data-confirm="Delete this font? Templates using it will fall back to the default font." data-confirm-title="Delete this font?" data-confirm-button="Delete font" data-confirm-danger>
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-xs text-red-500 hover:text-red-700">Delete</button>
-                                </form>
+        <x-ui.card title="Your fonts" :padding="false">
+            @if($userFonts->isEmpty())
+                <x-ui.empty-state icon="language" title="No fonts uploaded yet"
+                                  description="Templates use OpenSans Bold unless you choose another font." />
+            @else
+                <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
+                    @foreach($userFonts as $font)
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-6">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{{ $font->name }}</p>
+                                <p class="truncate text-xs text-gray-600 dark:text-gray-400">{{ $font->filename }} · uploaded {{ $font->created_at->diffForHumans() }}</p>
                             </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
+                            <form method="POST" action="{{ route('fonts.destroy', $font) }}"
+                                  data-confirm="Templates using it will switch to the default font." data-confirm-title="Delete this font?" data-confirm-button="Delete font" data-confirm-danger>
+                                @csrf
+                                @method('DELETE')
+                                <x-ui.button type="submit" variant="danger-outline" size="sm" icon="trash">
+                                    Delete<span class="sr-only"> {{ $font->name }}</span>
+                                </x-ui.button>
+                            </form>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-ui.card>
 
-            <div class="text-right">
-                <a href="{{ route('templates.index') }}" class="text-sm text-gray-500 hover:underline">
-                    ← Back to Templates
-                </a>
-            </div>
-
-        </div>
+        @if($systemFonts->isNotEmpty())
+            <x-ui.card title="Built-in fonts" description="Available to everyone — you can't remove these." :padding="false">
+                <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
+                    @foreach($systemFonts as $font)
+                        <li class="flex items-center justify-between gap-3 px-5 py-3 sm:px-6">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{{ $font->name }}</p>
+                                <p class="truncate text-xs text-gray-600 dark:text-gray-400">{{ $font->filename }}</p>
+                            </div>
+                            <x-ui.badge>Built-in</x-ui.badge>
+                        </li>
+                    @endforeach
+                </ul>
+            </x-ui.card>
+        @endif
     </div>
 </x-app-layout>

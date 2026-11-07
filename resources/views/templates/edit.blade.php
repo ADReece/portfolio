@@ -1,37 +1,30 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Edit Template: {{ $template->name }}
-            </h2>
-            <div class="flex items-center gap-4">
-                <a href="{{ route('templates.test', $template) }}" class="text-sm text-green-600 dark:text-green-400 hover:underline">Test with photo</a>
-                <a href="{{ route('fonts.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Manage Fonts</a>
-                <a href="{{ route('templates.index') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">← Back to Templates</a>
-            </div>
-        </div>
-    </x-slot>
+<x-app-layout :title="'Edit '.$template->name">
+    <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header :title="'Edit “'.$template->name.'”'"
+                          description="Change the overlay or text fields, then try it on one of your photos."
+                          :back="route('templates.index')" back-label="All templates">
+            <x-slot:actions>
+                <x-ui.button variant="secondary" icon="language" :href="route('fonts.index')">Manage fonts</x-ui.button>
+                <x-ui.button variant="secondary" icon="beaker" :href="route('templates.test', $template)">Try on a photo</x-ui.button>
+            </x-slot:actions>
+        </x-ui.page-header>
 
-    <div class="py-8">
-        <div class="max-w-(--breakpoint-xl) mx-auto sm:px-6 lg:px-8">
+        @if($errors->any())
+            <x-ui.alert tone="red" title="Please fix the following">
+                <ul class="list-disc space-y-0.5 pl-5">
+                    @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                </ul>
+            </x-ui.alert>
+        @endif
 
-            @if($errors->any())
-                <div class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-sm">
-                    <ul class="list-disc list-inside text-sm">
-                        @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('templates.update', $template) }}" enctype="multipart/form-data"
-                  x-data="templateEditor({{ json_encode($template->fields) }}, {{ json_encode($fonts) }})">
-                @csrf
-                @method('PUT')
-                @include('templates._builder', [
-                    'submitLabel' => 'Save Changes',
-                    'cancelRoute' => route('templates.index'),
-                ])
-            </form>
-        </div>
+        <form method="POST" action="{{ route('templates.update', $template) }}" enctype="multipart/form-data"
+              x-data="templateEditor({{ json_encode($template->fields) }}, {{ json_encode($fonts) }})">
+            @csrf
+            @method('PUT')
+            @include('templates._builder', [
+                'submitLabel' => 'Save changes',
+                'cancelRoute' => route('templates.index'),
+            ])
+        </form>
     </div>
 </x-app-layout>

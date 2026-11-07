@@ -115,7 +115,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/font-library/{font}', [FontController::class, 'destroy'])->name('fonts.destroy');
 
     // Template batch — Livewire full-page component
-    Route::get('/collections/{collection}/batch', TemplateBatch::class)->name('collections.batch');
+    Route::get('/collections/{collectionId}/batch', TemplateBatch::class)->name('collections.batch');
 });
 
 Route::middleware(['auth','subscription:upload_logo'])->group(function(){

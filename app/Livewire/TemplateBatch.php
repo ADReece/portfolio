@@ -104,9 +104,11 @@ class TemplateBatch extends Component
         $allDone = $this->step === 'processing' && $prints->isNotEmpty()
             && $prints->every(fn ($p) => !$p->isPending());
 
+        $collection = auth()->user()->collections()->findOrFail($this->collectionId);
+
         return view('livewire.template-batch', compact(
-            'templates', 'selectedTemplate', 'photos', 'prints', 'allDone'
-        ));
+            'collection', 'templates', 'selectedTemplate', 'photos', 'prints', 'allDone'
+        ))->title('Make prints · '.$collection->name);
     }
 
     private function getPhotos()
