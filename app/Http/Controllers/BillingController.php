@@ -145,17 +145,36 @@ class BillingController extends Controller
     // Stripe Connect methods for receiving payments
     public function connectStripe(Request $request)
     {
-        return view('billing.connect-stripe');
+        // The OAuth "state" ties Stripe's redirect back to this browser session,
+        // so nobody can trick a photographer into linking someone else's account.
+        $state = \Illuminate\Support\Str::random(40);
+        $request->session()->put('stripe_connect_state', $state);
+
+        $connectUrl = 'https://connect.stripe.com/oauth/authorize?'.http_build_query([
+            'response_type' => 'code',
+            'client_id' => config('services.stripe.connect_client_id'),
+            'scope' => 'read_write',
+            'redirect_uri' => route('connect.stripe.callback'),
+            'state' => $state,
+        ]);
+
+        return view('billing.connect-stripe', ['connectUrl' => $connectUrl]);
     }
 
     public function handleConnectCallback(Request $request)
     {
         // Handle OAuth callback from Stripe Connect
         $code = $request->query('code');
+        $expectedState = $request->session()->pull('stripe_connect_state');
+
+        if (! $expectedState || ! hash_equals($expectedState, (string) $request->query('state'))) {
+            return redirect()->route('connect.stripe')
+                ->with('error', 'That Stripe connection link has expired. Please try connecting again.');
+        }
 
         if (!$code) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Failed to connect Stripe account.');
+            return redirect()->route('connect.stripe')
+                ->with('error', $request->query('error_description') ?: "Stripe wasn't connected. Please try again.");
         }
 
         try {
@@ -172,11 +191,12 @@ class BillingController extends Controller
                 'stripe_connect_enabled' => true,
             ]);
 
-            return redirect()->route('dashboard')
-                ->with('success', 'Stripe account connected successfully! You can now receive payments.');
+            return redirect()->route('connect.stripe')
+                ->with('success', 'Stripe is connected. Print earnings will be paid to your account.');
         } catch (\Exception $e) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Failed to connect Stripe account: ' . $e->getMessage());
+            \Log::warning('Stripe Connect callback failed: '.$e->getMessage());
+            return redirect()->route('connect.stripe')
+                ->with('error', "We couldn't finish connecting Stripe. Please try again.");
         }
     }
 
