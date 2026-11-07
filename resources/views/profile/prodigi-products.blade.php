@@ -1,75 +1,78 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Print Product Availability
-        </h2>
-    </x-slot>
+@php
+    $user = auth()->user();
+    $feeRate = config('services.platform_fee_percent') / 100;
+    $feeLabel = rtrim(rtrim(number_format(config('services.platform_fee_percent'), 2), '0'), '.');
+    $byCategory = $products->groupBy(fn ($p) => $p->category ?: 'Other');
+@endphp
 
-    <div class="py-8">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                    These products come directly from your synced Prodigi catalog. All products are enabled by default; uncheck any products you do not want clients to order.
-                </p>
+<x-app-layout title="Print products">
+    <div class="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header title="Print products"
+                          description="Choose which prints clients can order from your galleries, and set your prices. Orders are printed and shipped for you." />
 
-                @if (session('status') === 'prodigi-products-updated')
-                    <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-sm p-3 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
-                        Product availability updated.
-                    </div>
-                @endif
+        @unless($user->hasFeature('selling'))
+            <x-ui.alert tone="amber" title="Selling prints isn't included in your plan">
+                You can set this up now, but clients won't see “Order a print” until you upgrade.
+                <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+            </x-ui.alert>
+        @endunless
 
-                @if ($products->isEmpty())
-                    <div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-sm p-3 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
-                        No catalog products found yet. Run the sync command: php artisan prodigi:sync-catalog --seed-user-preferences
-                    </div>
-                @else
-                    <form method="POST" action="{{ route('profile.prodigi-products.update') }}">
-                        @csrf
-                        @method('PATCH')
+        @unless($user->stripe_connect_enabled)
+            <x-ui.alert title="Connect Stripe to get paid">
+                Print earnings are paid to your Stripe account. Connect it before clients start ordering.
+                <x-slot:actions><x-ui.button size="sm" variant="secondary" :href="route('connect.stripe')">Set up payouts</x-ui.button></x-slot:actions>
+            </x-ui.alert>
+        @endunless
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            @foreach($products as $product)
-                                <label class="flex items-start gap-3 rounded-sm border border-gray-200 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-900/40">
-                                    <input
-                                        type="checkbox"
-                                        name="enabled_product_ids[]"
-                                        value="{{ $product->id }}"
-                                        class="mt-1 rounded-sm border-gray-300 text-indigo-600 shadow-xs focus:ring-indigo-500"
-                                        @checked(in_array($product->id, $enabledProductIds, true))
-                                    >
+        @if($products->isEmpty())
+            <x-ui.card :padding="false">
+                <x-ui.empty-state icon="shopping-bag" title="No print products available yet"
+                                  description="We're still setting up the print catalogue. Please check back soon or contact support." />
+            </x-ui.card>
+        @else
+            <form method="POST" action="{{ route('profile.prodigi-products.update') }}" class="space-y-6">
+                @csrf
+                @method('PATCH')
 
-                                    <span>
-                                        <span class="block font-medium text-gray-900 dark:text-gray-100">{{ $product->name }}</span>
-                                        <span class="block text-xs text-gray-500 dark:text-gray-400">SKU: {{ $product->sku }}</span>
-                                        <span class="block mt-2 text-xs text-gray-500 dark:text-gray-400">Client price (USD)</span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0.50"
-                                            name="retail_prices[{{ $product->id }}]"
-                                            value="{{ old('retail_prices.' . $product->id, $pricesByProductId[$product->id] ?? '29.99') }}"
-                                            class="mt-1 w-28 rounded-sm border-gray-300 text-sm shadow-xs focus:ring-indigo-500 focus:border-indigo-500"
-                                        >
-                                        @if($product->category)
-                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-sm text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                                                {{ $product->category }}
-                                            </span>
-                                        @endif
-                                        @if($product->description)
-                                            <span class="block text-xs text-gray-600 dark:text-gray-300 mt-1">{{ \Illuminate\Support\Str::limit($product->description, 120) }}</span>
-                                        @endif
-                                    </span>
-                                </label>
+                @foreach($byCategory as $category => $items)
+                    <x-ui.card :title="$category" :padding="false">
+                        <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @foreach($items as $product)
+                                @php($price = old('retail_prices.'.$product->id, $pricesByProductId[$product->id] ?? '29.99'))
+                                <li class="flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6"
+                                    x-data="{ on: @js(in_array($product->id, $enabledProductIds, true)), price: @js((float) $price) }">
+                                    <div class="min-w-0 flex-1">
+                                        <x-ui.checkbox :id="'product-'.$product->id" name="enabled_product_ids[]" :value="$product->id" :unchecked-value="null"
+                                                       :checked="in_array($product->id, $enabledProductIds, true)" x-model="on"
+                                                       :label="$product->name" :description="$product->description ? \Illuminate\Support\Str::limit($product->description, 110) : null" />
+                                    </div>
+                                    <div class="flex items-center gap-4" :class="on ? '' : 'opacity-50'">
+                                        <div>
+                                            <label for="price-{{ $product->id }}" class="sr-only">Price for {{ $product->name }}</label>
+                                            <div class="flex rounded-control shadow-xs">
+                                                <span class="inline-flex items-center rounded-l-control border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">{{ $currencySymbol }}</span>
+                                                <input id="price-{{ $product->id }}" type="number" step="0.01" min="0.50" max="9999.99" inputmode="decimal"
+                                                       name="retail_prices[{{ $product->id }}]" value="{{ $price }}" x-model.number="price"
+                                                       class="w-24 rounded-r-control border-gray-300 text-sm tabular-nums focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                            </div>
+                                            @error('retail_prices.'.$product->id)<p class="mt-1 text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
+                                        </div>
+                                        <p class="w-32 text-sm text-gray-600 dark:text-gray-400">
+                                            You receive<br>
+                                            <span class="font-semibold text-gray-900 tabular-nums dark:text-gray-100" x-text="@js($currencySymbol) + Math.max(0, (price || 0) * {{ 1 - $feeRate }}).toFixed(2)"></span>
+                                        </p>
+                                    </div>
+                                </li>
                             @endforeach
-                        </div>
+                        </ul>
+                    </x-ui.card>
+                @endforeach
 
-                        <div class="mt-6 flex items-center gap-3">
-                            <x-primary-button>Save Product Availability</x-primary-button>
-                            <a href="{{ route('profile.customize') }}" class="text-sm text-gray-600 dark:text-gray-300 underline">Back to customization</a>
-                        </div>
-                    </form>
-                @endif
-            </div>
-        </div>
+                <div class="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-card sm:border sm:px-5 dark:border-gray-800 dark:bg-gray-950/95">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Clients pay the price shown, with no delivery charge added. You receive the price minus our {{ $feeLabel }}% fee.</p>
+                    <x-ui.button type="submit">Save print products</x-ui.button>
+                </div>
+            </form>
+        @endif
     </div>
 </x-app-layout>
