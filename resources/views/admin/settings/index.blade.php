@@ -1,53 +1,27 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('System Settings') }}
-        </h2>
-    </x-slot>
+@php
+    $currencyOptions = collect(\App\Support\Currency::SYMBOLS)->mapWithKeys(fn ($symbol, $code) => [$code => "$code ($symbol)"])->all();
+@endphp
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+<x-app-layout title="Settings">
+    <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header title="Settings" description="Platform-wide configuration." />
 
-            <!-- Currency Settings -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Currency Settings</h3>
-                    <form action="{{ route('admin.settings.update') }}" method="POST">
-                        @csrf
-                        @method('PUT')
+        <x-ui.card title="Currency" description="Used for plan prices, print sales and payouts. The symbol is set automatically.">
+            <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-5">
+                @csrf
+                @method('PUT')
 
-                        <div class="max-w-sm">
-                            <label for="default_currency" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Currency
-                            </label>
-                            <select id="default_currency" name="settings[default_currency]" aria-describedby="default_currency_help" class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
-                                @foreach(\App\Support\Currency::SYMBOLS as $code => $symbol)
-                                    <option value="{{ $code }}" @selected(\App\Support\Currency::code() === $code)>{{ $code }} ({{ $symbol }})</option>
-                                @endforeach
-                            </select>
-                            <p id="default_currency_help" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Used for plan prices, print sales and payouts. The symbol is set automatically.</p>
-                        </div>
-
-                        <div class="mt-6">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                                Save Currency Settings
-                            </button>
-                        </div>
-                    </form>
+                <div class="max-w-sm">
+                    <x-ui.select id="default_currency" name="settings[default_currency]" label="Currency"
+                                 :options="$currencyOptions" :selected="\App\Support\Currency::code()" />
                 </div>
-            </div>
 
-            <!-- Subscription Plans Management -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription Plans Management</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Stripe Product & Price IDs are now managed directly within each plan. Use the button below to manage all subscription plans and their Stripe integration details.</p>
-                    <a href="{{ route('admin.plans.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                        Manage Subscription Plans
-                    </a>
-                </div>
-            </div>
+                <x-ui.button type="submit">Save currency</x-ui.button>
+            </form>
+        </x-ui.card>
 
-        </div>
+        <x-ui.card title="Subscription plans" description="Stripe product and price IDs are set on each plan.">
+            <x-ui.button variant="secondary" icon-trailing="arrow-right" :href="route('admin.plans.index')">Manage plans</x-ui.button>
+        </x-ui.card>
     </div>
 </x-app-layout>

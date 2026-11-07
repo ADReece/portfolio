@@ -6,7 +6,7 @@
 
 @php
     $id ??= $name ?? 'select-'.\Illuminate\Support\Str::random(6);
-    $error = $name ? $errors->first($name) : null;
+    $error = $name ? $errors->first(str_replace(['[', ']'], ['.', ''], $name)) : null;
     $describedBy = trim(($help ? "$id-help " : '').($error ? "$id-error" : ''));
 @endphp
 
