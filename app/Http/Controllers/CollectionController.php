@@ -145,14 +145,12 @@ class CollectionController extends Controller
         ]);
 
         try {
-            // Get the plain text password from session or generate a shareable token
-            // Note: We cannot retrieve the hashed password, so we'll need to handle this differently
-            // For now, we'll send the link and ask them to contact you for the password
-            // In production, you might want to generate a temporary access token instead
-
-            $collectionUrl = route('profile.collection', [
+            // Passwords are stored hashed, so instead of the password we send a
+            // signed link that unlocks the gallery for the client.
+            $linkExpiresAt = now()->addDays(30);
+            $collectionUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('profile.collection', $linkExpiresAt, [
                 'username' => auth()->user()->username,
-                'collection_id' => $collection->id
+                'collection_id' => $collection->id,
             ]);
 
             \Mail::send('emails.collection-share', [
@@ -161,6 +159,7 @@ class CollectionController extends Controller
                 'clientName' => $validated['name'] ?? 'there',
                 'customMessage' => $validated['message'] ?? null,
                 'photographerName' => auth()->user()->name ?? auth()->user()->username,
+                'linkExpiresAt' => $linkExpiresAt,
             ], function ($message) use ($validated, $collection) {
                 $message->to($validated['email'])
                     ->subject('Your Private Gallery: ' . $collection->name);

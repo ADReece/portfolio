@@ -135,6 +135,9 @@ Route::prefix('/@{username}')->group(function(){
 
     Route::get('/collections', [ProfileController::class, 'collections'])->name('profile.collections');
     Route::get('/collections/{collection_id}', [ProfileController::class, 'collection'])->name('profile.collection');
+    Route::post('/collections/{collection_id}/unlock', [ProfileController::class, 'unlockCollectionWithPassword'])
+        ->middleware('throttle:10,1')
+        ->name('profile.collection.unlock');
     Route::get('/print-products', [ProdigiProductSettingsController::class, 'listForPortfolio'])->name('profile.print-products');
 });
 

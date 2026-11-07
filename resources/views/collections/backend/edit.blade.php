@@ -96,13 +96,13 @@
                                 <div class="flex items-center gap-4">
                                     <label class="inline-flex items-center">
                                         <input type="hidden" name="private" value="0">
-                                        <input type="checkbox" name="private" value="1" {{ old('private', $collection->private) ? 'checked' : '' }}
+                                        <input type="checkbox" name="private" id="private" value="1" {{ old('private', $collection->private) ? 'checked' : '' }}
                                                class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500">
                                         <span class="ml-2 text-gray-700 dark:text-gray-300">Private Collection</span>
                                     </label>
                                     <label class="inline-flex items-center">
                                         <input type="hidden" name="hide_from_portfolio" value="0">
-                                        <input type="checkbox" name="hide_from_portfolio" value="1" {{ old('hide_from_portfolio', $collection->hide_from_portfolio) ? 'checked' : '' }}
+                                        <input type="checkbox" name="hide_from_portfolio" id="hide_from_portfolio" value="1" {{ old('hide_from_portfolio', $collection->hide_from_portfolio) ? 'checked' : '' }}
                                                class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500">
                                         <span class="ml-2 text-gray-700 dark:text-gray-300">Hide from Portfolio</span>
                                     </label>
@@ -116,12 +116,12 @@
                             </div>
 
                             <!-- Password (only if private) -->
-                            <div>
-                                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password (for private collections)</label>
+                            <div id="password-field" @if(!old('private', $collection->private)) style="display: none" @endif>
+                                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gallery password</label>
                                 <input type="text" name="password" id="password"
                                        placeholder="{{ $collection->private ? 'Change password (optional)' : 'Set a password for private collections' }}"
                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Leave blank to keep existing password.</p>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $collection->password ? 'Leave blank to keep the current password.' : 'Clients enter this to open the gallery. Clients you email get a link that opens it without the password.' }}</p>
                             </div>
                         </div>
 
@@ -134,6 +134,19 @@
                     </form>
                 </div>
             </div>
+
+            @if($collection->status !== 'Published')
+            <div class="mt-8 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div>
+                    <h3 class="font-semibold text-indigo-900 dark:text-indigo-100">Clients can't see this collection yet</h3>
+                    <p class="text-sm text-indigo-800 dark:text-indigo-200">Set the status to <strong>Published</strong> and save to get a link you can share with clients.</p>
+                </div>
+                <button type="button" onclick="document.getElementById('status').value='Published'; document.getElementById('status').focus();"
+                        class="shrink-0 inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
+                    Set to Published
+                </button>
+            </div>
+            @endif
 
             <!-- Shareable Link Section -->
             @if($collection->status === 'Published')
@@ -171,7 +184,7 @@
                                 <div class="flex-1">
                                     <h4 class="text-sm font-medium text-yellow-800">Private Collection</h4>
                                     <p class="mt-1 text-sm text-yellow-700">
-                                        This collection requires a password. Share the password separately with your client, or use the email button below to send both automatically.
+                                        Visitors need the gallery password to open this link. Use the email button below to send your client a personal link that opens the gallery without a password for 30 days.
                                     </p>
                                 </div>
                             </div>
@@ -185,7 +198,7 @@
                                 <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
-                                Email Link & Password to Client
+                                Email gallery link to client
                             </button>
                         </div>
                         @endif
@@ -200,6 +213,18 @@
                     <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Manage Sets</h3>
                     @livewire('manage-sets', ['collectionId' => $collection->id])
                 </div>
+            </div>
+
+            <!-- Danger zone -->
+            <div class="mt-8 rounded-lg border border-red-200 dark:border-red-900 bg-white dark:bg-gray-800 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-gray-100">Delete collection</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Permanently deletes this collection with all of its sets and photos. This can't be undone.</p>
+                </div>
+                <button type="button" onclick="deleteCollection()"
+                        class="shrink-0 inline-flex items-center justify-center px-4 py-2 rounded-md border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">
+                    Delete collection
+                </button>
             </div>
         </div>
     </div>
@@ -236,7 +261,7 @@
                         </div>
                         <div class="bg-gray-50 p-3 rounded">
                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                <strong>Preview:</strong> An email will be sent with the collection link and password, plus your custom message if provided.
+                                <strong>Preview:</strong> Your client gets a personal link that opens the gallery without a password for 30 days, plus your message if you add one.
                             </p>
                         </div>
                     </div>
