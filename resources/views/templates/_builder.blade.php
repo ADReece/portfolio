@@ -4,34 +4,34 @@
 <div class="flex gap-6 items-start">
 
     {{-- ══════════════ LEFT — FORM ══════════════ --}}
-    <div class="w-full lg:w-96 flex-shrink-0 space-y-5">
+    <div class="w-full lg:w-96 shrink-0 space-y-5">
 
         {{-- Info --}}
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-5">
+        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wide">Template Info</h3>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name <span class="text-red-500">*</span></label>
                 <input type="text" name="name" value="{{ old('name', $template->name ?? '') }}" required
                        placeholder="e.g. Sports Portrait – Home Kit"
-                       class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                       class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
                 <textarea name="description" rows="2"
-                          class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                          class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                           placeholder="Optional notes">{{ old('description', $template->description ?? '') }}</textarea>
             </div>
         </div>
 
         {{-- Overlay --}}
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-5">
+        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">Overlay</h3>
 
             @isset($template)
                 @if($template->overlay_path)
                     <div class="mb-3 flex items-center gap-3">
                         <img src="{{ $template->overlayUrl() }}" alt="Current overlay"
-                             class="h-16 w-16 object-contain bg-gray-900 rounded border border-gray-700">
+                             class="h-16 w-16 object-contain bg-gray-900 rounded-sm border border-gray-700">
                         <div class="text-xs text-gray-500 dark:text-gray-400">
                             Current overlay
                             @if($template->psd_path)
@@ -48,18 +48,18 @@
             <input type="file" name="overlay" accept=".png,.psd"
                    @change="handleOverlayChange"
                    class="block w-full text-sm text-gray-500 dark:text-gray-400
-                          file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0
+                          file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0
                           file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
                           hover:file:bg-indigo-100 dark:file:bg-indigo-900/50 dark:file:text-indigo-300">
             <p class="mt-1 text-xs text-gray-400">Max 20 MB &nbsp;·&nbsp; PNG or PSD</p>
         </div>
 
         {{-- Text Fields --}}
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-5">
+        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Text Fields</h3>
                 <button type="button" @click="addField()"
-                        class="inline-flex items-center px-2.5 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                        class="inline-flex items-center px-2.5 py-1 text-xs bg-indigo-600 text-white rounded-sm hover:bg-indigo-700">
                     + Add Field
                 </button>
             </div>
@@ -82,47 +82,47 @@
                                 <label class="text-xs text-gray-400">Key (no spaces)</label>
                                 <input type="text" :name="'fields[' + index + '][key]'"
                                        x-model="field.key" placeholder="player_name"
-                                       class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-400">Label</label>
                                 <input type="text" :name="'fields[' + index + '][label]'"
                                        x-model="field.label" placeholder="Player Name"
-                                       class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-400">X position %</label>
                                 <input type="number" :name="'fields[' + index + '][x]'"
                                        x-model.number="field.x" min="0" max="100" step="0.1"
-                                       class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-400">Y position %</label>
                                 <input type="number" :name="'fields[' + index + '][y]'"
                                        x-model.number="field.y" min="0" max="100" step="0.1"
-                                       class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-400">Font size (px)</label>
                                 <input type="number" :name="'fields[' + index + '][font_size]'"
                                        x-model.number="field.font_size" min="8" max="300"
-                                       class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                       class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-400">Text color</label>
                                 <div class="mt-0.5 flex gap-1">
                                     <input type="color" :name="'fields[' + index + '][color]'"
                                            x-model="field.color"
-                                           class="h-7 w-8 rounded border-gray-300 cursor-pointer">
+                                           class="h-7 w-8 rounded-sm border-gray-300 cursor-pointer">
                                     <input type="text" x-model="field.color"
-                                           class="flex-1 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                           class="flex-1 rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                            placeholder="#ffffff">
                                 </div>
                             </div>
                             <div>
                                 <label class="text-xs text-gray-400">Alignment</label>
                                 <select :name="'fields[' + index + '][align]'" x-model="field.align"
-                                        class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="center">Center</option>
                                     <option value="left">Left</option>
                                     <option value="right">Right</option>
@@ -131,7 +131,7 @@
                             <div>
                                 <label class="text-xs text-gray-400">Font</label>
                                 <select :name="'fields[' + index + '][font_id]'" x-model="field.font_id"
-                                        class="mt-0.5 w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        class="mt-0.5 w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xs shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">Default (OpenSans Bold)</option>
                                     <template x-for="font in availableFonts" :key="font.id">
                                         <option :value="font.id" x-text="font.name"></option>
@@ -162,7 +162,7 @@
 
     {{-- ══════════════ RIGHT — LIVE PREVIEW ══════════════ --}}
     <div class="flex-1 min-w-0">
-        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-5 sticky top-6">
+        <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-5 sticky top-6">
 
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Live Preview</h3>
@@ -191,14 +191,14 @@
 
                 {{-- Draggable text field handles --}}
                 <template x-for="(field, index) in fields" :key="index">
-                    <div class="absolute cursor-move px-2 py-0.5 rounded border transition-colors"
+                    <div class="absolute cursor-move px-2 py-0.5 rounded-sm border transition-colors"
                          :class="activeField === index
                              ? 'border-yellow-400 bg-yellow-400/25 shadow-lg'
                              : 'border-white/50 bg-black/40 hover:border-white hover:bg-black/60'"
                          :style="`left: ${field.x}%; top: ${field.y}%; transform: translate(-50%, -50%);`"
                          @mousedown.prevent="startDrag($event, index)"
                          @click.stop="activeField = index">
-                        <span class="text-white text-xs font-medium whitespace-nowrap drop-shadow pointer-events-none"
+                        <span class="text-white text-xs font-medium whitespace-nowrap drop-shadow-sm pointer-events-none"
                               x-text="field.label || field.key || ('Field ' + (index + 1))"></span>
                     </div>
                 </template>

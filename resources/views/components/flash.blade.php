@@ -22,7 +22,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $styles[$type][2] }}"/>
                 </svg>
                 <p class="flex-1">{{ $message }}</p>
-                <button type="button" x-on:click="open = false" class="shrink-0 rounded opacity-70 hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-current" aria-label="Dismiss message">
+                <button type="button" x-on:click="open = false" class="shrink-0 rounded-sm opacity-70 hover:opacity-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-current" aria-label="Dismiss message">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>

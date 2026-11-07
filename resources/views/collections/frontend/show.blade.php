@@ -19,7 +19,7 @@
             <div class="absolute inset-0" style="background: linear-gradient(to bottom, var(--portfolio-accent-overlay-start), var(--portfolio-accent-overlay-mid), var(--portfolio-accent-overlay-end));"></div>
         @else
             <!-- Fallback gradient if no cover photo -->
-            <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900"></div>
+            <div class="absolute inset-0 bg-linear-to-br from-indigo-900 via-purple-900 to-pink-900"></div>
         @endif
 
         <!-- Hero Content -->

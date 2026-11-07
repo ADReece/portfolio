@@ -170,12 +170,12 @@
                             Display all your public photos in a beautiful masonry grid layout. Great for showcasing your full portfolio at a glance.
                         </span>
                         <div class="mt-2 flex items-center gap-2">
-                            <div class="grid grid-cols-3 gap-1 w-24 h-16 bg-gray-200 dark:bg-gray-600 rounded p-1">
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded row-span-2"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
+                            <div class="grid grid-cols-3 gap-1 w-24 h-16 bg-gray-200 dark:bg-gray-600 rounded-sm p-1">
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm row-span-2"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
                             </div>
                         </div>
                     </div>
@@ -194,11 +194,11 @@
                             Display your collections as individual galleries with cover photos. Perfect for organizing work by project or event.
                         </span>
                         <div class="mt-2 flex items-center gap-2">
-                            <div class="grid grid-cols-2 gap-1 w-24 h-16 bg-gray-200 dark:bg-gray-600 rounded p-1">
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
-                                <div class="bg-gray-400 dark:bg-gray-400 rounded"></div>
+                            <div class="grid grid-cols-2 gap-1 w-24 h-16 bg-gray-200 dark:bg-gray-600 rounded-sm p-1">
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
+                                <div class="bg-gray-400 dark:bg-gray-400 rounded-sm"></div>
                             </div>
                         </div>
                     </div>
@@ -215,7 +215,7 @@
                     {{ __('Masonry Grid Columns') }}
                 </label>
                 <select name="masonry_columns" id="masonry_columns"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                        class="w-full rounded-md border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                     <option value="2" {{ (old('masonry_columns', auth()->user()->masonry_columns ?? 4)) == 2 ? 'selected' : '' }}>2 Columns (Mobile-like)</option>
                     <option value="3" {{ (old('masonry_columns', auth()->user()->masonry_columns ?? 4)) == 3 ? 'selected' : '' }}>3 Columns</option>
                     <option value="4" {{ (old('masonry_columns', auth()->user()->masonry_columns ?? 4)) == 4 ? 'selected' : '' }}>4 Columns (Default)</option>
@@ -234,7 +234,7 @@
                     {{ __('Photos Per Load') }}
                 </label>
                 <select name="photos_per_page" id="photos_per_page"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                        class="w-full rounded-md border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                     <option value="10" {{ (old('photos_per_page', auth()->user()->photos_per_page ?? 20)) == 10 ? 'selected' : '' }}>10 Photos (Fast)</option>
                     <option value="20" {{ (old('photos_per_page', auth()->user()->photos_per_page ?? 20)) == 20 ? 'selected' : '' }}>20 Photos (Default)</option>
                     <option value="30" {{ (old('photos_per_page', auth()->user()->photos_per_page ?? 20)) == 30 ? 'selected' : '' }}>30 Photos</option>

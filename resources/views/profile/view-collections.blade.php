@@ -4,7 +4,7 @@
         <div class="flex flex-col items-center lg:mt-32">
             @if($user->logo_path)
                 <div class="flex justify-center mb-6">
-                    <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-20 object-contain drop-shadow" />
+                    <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-20 object-contain drop-shadow-sm" />
                 </div>
             @endif
             <h2 class="font-bold text-3xl text-gray-900 dark:text-gray-100">
@@ -39,7 +39,7 @@
                                      style="object-position: {{ $collection->cover_photo_object_position ?? 'center center' }};">
                             @else
                                 <!-- Placeholder if no cover photo -->
-                                <div class="w-full h-64 flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
+                                <div class="w-full h-64 flex items-center justify-center bg-linear-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
                                     <svg class="w-20 h-20 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
@@ -47,7 +47,7 @@
                             @endif
 
                             <!-- Always-visible dark overlay for text readability -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent group-hover:from-black/90 group-hover:via-black/50 transition-all duration-300 pointer-events-none"></div>
+                            <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent group-hover:from-black/90 group-hover:via-black/50 transition-all duration-300 pointer-events-none"></div>
 
                             <!-- Title bar with enhanced hover state -->
                             <div class="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">

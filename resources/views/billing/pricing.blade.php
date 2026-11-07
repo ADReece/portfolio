@@ -100,7 +100,7 @@
                     <ul class="space-y-3 mb-8 min-h-[300px]">
                         @foreach($plan->features as $feature)
                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                             <span class="text-sm dark:text-gray-300">{{ $feature }}</span>
@@ -130,7 +130,7 @@
 
             @auth
                 @if(optional(auth()->user())->subscriptionPlan)
-                <div class="mt-12 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <div class="mt-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h3 class="text-xl font-bold mb-4 dark:text-white">
                         Current Plan: {{ auth()->user()->subscriptionPlan->name }}
                         @if(auth()->user()->isFeatureOverrideActive())
@@ -165,7 +165,7 @@
                     @endif
 
                     <div class="mt-6 grid grid-cols-2 gap-4">
-                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-sm">
                             <p class="text-sm text-gray-600 dark:text-gray-400">Photos Used</p>
                             <p class="text-2xl font-bold dark:text-white">
                                 {{ auth()->user()->photos()->count() }}
@@ -178,7 +178,7 @@
                                 @endif
                             </p>
                         </div>
-                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-sm">
                             <p class="text-sm text-gray-600 dark:text-gray-400">Collections Used</p>
                             <p class="text-2xl font-bold dark:text-white">
                                 {{ auth()->user()->collections()->count() }}

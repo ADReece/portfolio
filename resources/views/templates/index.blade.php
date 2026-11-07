@@ -29,7 +29,7 @@
                 </div>
             @else
                 @if($templates->isEmpty())
-                    <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-12 text-center">
+                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-12 text-center">
                         <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
                         </svg>
@@ -45,7 +45,7 @@
                 @else
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @foreach($templates as $template)
-                            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                                 {{-- Overlay preview --}}
                                 @if($template->overlay_path)
                                     <div class="h-36 bg-gray-900 flex items-center justify-center overflow-hidden">
@@ -54,7 +54,7 @@
                                              class="h-full w-full object-contain">
                                     </div>
                                 @else
-                                    <div class="h-36 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <div class="h-36 bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                         <span class="text-white text-2xl font-bold opacity-50">Text Only</span>
                                     </div>
                                 @endif
@@ -77,7 +77,7 @@
 
                                     <div class="flex gap-2">
                                         <a href="{{ route('templates.edit', $template) }}"
-                                           class="flex-1 text-center px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                                           class="flex-1 text-center px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-sm hover:bg-gray-200 dark:hover:bg-gray-600">
                                             Edit
                                         </a>
                                         <form method="POST" action="{{ route('templates.destroy', $template) }}"
@@ -85,7 +85,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/70">
+                                                    class="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-sm hover:bg-red-200 dark:hover:bg-red-900/70">
                                                 Delete
                                             </button>
                                         </form>

@@ -6,10 +6,10 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <form class="mb-4" method="GET">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name/email/username" class="w-full md:w-1/2 border border-gray-300 dark:border-gray-700 rounded px-3 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100" />
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name/email/username" class="w-full md:w-1/2 border border-gray-300 dark:border-gray-700 rounded-sm px-3 py-2 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100" />
             </form>
 
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
@@ -39,22 +39,22 @@
                             <td class="px-4 py-2 space-x-2">
                                 <form action="{{ route('admin.users.toggle-override', $user) }}" method="POST" class="inline">
                                     @csrf
-                                    <button class="px-3 py-1 rounded bg-indigo-600 text-white text-sm">{{ $user->feature_override ? 'Disable Override' : 'Enable Override' }}</button>
+                                    <button class="px-3 py-1 rounded-sm bg-indigo-600 text-white text-sm">{{ $user->feature_override ? 'Disable Override' : 'Enable Override' }}</button>
                                 </form>
                                 <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST" class="inline">
                                     @csrf
-                                    <button class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm">{{ $user->is_admin ? 'Revoke Admin' : 'Make Admin' }}</button>
+                                    <button class="px-3 py-1 rounded-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm">{{ $user->is_admin ? 'Revoke Admin' : 'Make Admin' }}</button>
                                 </form>
                                 @if(!$user->is_admin && $user->id !== auth()->id())
                                     <form action="{{ route('admin.users.impersonate', $user) }}" method="POST" class="inline">
                                         @csrf
-                                        <button class="px-3 py-1 rounded bg-purple-600 text-white text-sm hover:bg-purple-700">Impersonate</button>
+                                        <button class="px-3 py-1 rounded-sm bg-purple-600 text-white text-sm hover:bg-purple-700">Impersonate</button>
                                     </form>
                                 @endif
                                 <form action="{{ route('admin.users.override-expiry', $user) }}" method="POST" class="inline">
                                     @csrf
-                                    <input type="date" name="expires_at" class="border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
-                                    <button class="px-3 py-1 rounded bg-green-600 text-white text-sm">Set Expiry</button>
+                                    <input type="date" name="expires_at" class="border border-gray-300 dark:border-gray-700 rounded-sm px-2 py-1 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100" />
+                                    <button class="px-3 py-1 rounded-sm bg-green-600 text-white text-sm">Set Expiry</button>
                                 </form>
                             </td>
                         </tr>

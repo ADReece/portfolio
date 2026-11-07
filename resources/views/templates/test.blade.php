@@ -12,7 +12,7 @@
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
                     Pick one of your photos, fill in the text field values, and see exactly how the finished image will look.
@@ -20,7 +20,7 @@
                 </p>
 
                 @if($errors->any())
-                    <div class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded text-sm">
+                    <div class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-sm text-sm">
                         <ul class="list-disc list-inside">
                             @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
                         </ul>
@@ -49,7 +49,7 @@
                                         <img src="{{ $photo->getAwsThumbnail() }}" alt="photo"
                                              class="w-full aspect-square object-cover rounded border-2 border-transparent
                                                     peer-checked:border-indigo-500 group-hover:border-indigo-300 transition-all">
-                                        <div class="absolute inset-0 bg-indigo-600/20 opacity-0 peer-checked:opacity-100 rounded transition-opacity"></div>
+                                        <div class="absolute inset-0 bg-indigo-600/20 opacity-0 peer-checked:opacity-100 rounded-sm transition-opacity"></div>
                                     </label>
                                 @endforeach
                             </div>
@@ -72,13 +72,13 @@
                                                    name="field_values[{{ $field['key'] }}]"
                                                    value="{{ old('field_values.' . $field['key'], '') }}"
                                                    placeholder="Enter value for {{ $field['label'] ?? $field['key'] }}"
-                                                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                                   class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                                         </div>
                                     @endforeach
                                 </div>
                             </div>
                         @else
-                            <div class="mb-6 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded text-sm text-amber-700 dark:text-amber-300">
+                            <div class="mb-6 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-sm text-sm text-amber-700 dark:text-amber-300">
                                 This template has no text fields — only the overlay will be applied.
                             </div>
                         @endif

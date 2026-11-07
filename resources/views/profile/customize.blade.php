@@ -13,9 +13,9 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Info Banner -->
-            <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded">
+            <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-sm">
                 <div class="flex items-start">
-                    <div class="flex-shrink-0">
+                    <div class="shrink-0">
                         <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                         </svg>
@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
                 <div class="p-6 space-y-10">
                     <!-- Branding / Logo Uploader -->
                     <div class="mb-8">
@@ -44,7 +44,7 @@
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2 mb-4">
                             <span>Image Watermarking</span>
                             @if(!($user->hasFeature('watermarking') || $user->isFeatureOverrideActive()))
-                                <span class="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Locked</span>
+                                <span class="px-2 py-0.5 text-xs rounded-sm bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Locked</span>
                             @endif
                         </h3>
 
@@ -66,7 +66,7 @@
 
                                 <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                                     <div class="flex items-start gap-2">
-                                        <svg class="h-4 w-4 text-blue-400 dark:text-blue-300 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="h-4 w-4 text-blue-400 dark:text-blue-300 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                                         </svg>
                                         <div class="flex-1 text-xs text-blue-700 dark:text-blue-300">
@@ -110,7 +110,7 @@
                     <!-- Quick Presets (Collapsible) -->
                     <div class="mb-8" x-data="{ presetsOpen: false }">
                         <button type="button" @click="presetsOpen = !presetsOpen"
-                                class="w-full flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all">
+                                class="w-full flex items-center justify-between p-4 bg-linear-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all">
                             <div class="flex items-center gap-3">
                                 <span class="text-2xl">🎯</span>
                                 <div class="text-left">
@@ -135,49 +135,49 @@
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition-all"
                                         data-preset='{"theme":"light","accent":"#6366F1","bg":"#FFFFFF","text":"#1F2937","heading":"#111827"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-white border"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-white border"></div>
                                     <div class="text-xs font-medium">Classic Light</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition-all"
                                         data-preset='{"theme":"dark","accent":"#818CF8","bg":"#111827","text":"#F3F4F6","heading":"#F9FAFB"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-gray-900 border border-gray-700"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-gray-900 border border-gray-700"></div>
                                     <div class="text-xs font-medium">Classic Dark</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-rose-500 transition-all"
                                         data-preset='{"theme":"light","accent":"#E11D48","bg":"#FFF1F2","text":"#881337","heading":"#4C0519"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-rose-50 border border-rose-200"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-rose-50 border border-rose-200"></div>
                                     <div class="text-xs font-medium">Rose Garden</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-emerald-500 transition-all"
                                         data-preset='{"theme":"dark","accent":"#10B981","bg":"#064E3B","text":"#D1FAE5","heading":"#ECFDF5"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-emerald-900 border border-emerald-700"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-emerald-900 border border-emerald-700"></div>
                                     <div class="text-xs font-medium">Forest Night</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-amber-500 transition-all"
                                         data-preset='{"theme":"light","accent":"#F59E0B","bg":"#FFFBEB","text":"#78350F","heading":"#451A03"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-amber-50 border border-amber-200"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-amber-50 border border-amber-200"></div>
                                     <div class="text-xs font-medium">Golden Hour</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-purple-500 transition-all"
                                         data-preset='{"theme":"dark","accent":"#A855F7","bg":"#1E1B4B","text":"#E9D5FF","heading":"#F3E8FF"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-purple-950 border border-purple-800"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-purple-950 border border-purple-800"></div>
                                     <div class="text-xs font-medium">Purple Dream</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-slate-500 transition-all"
                                         data-preset='{"theme":"light","accent":"#0F172A","bg":"#F8FAFC","text":"#475569","heading":"#0F172A"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-slate-50 border border-slate-200"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-slate-50 border border-slate-200"></div>
                                     <div class="text-xs font-medium">Minimal Gray</div>
                                 </button>
 
                                 <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-cyan-500 transition-all"
                                         data-preset='{"theme":"dark","accent":"#06B6D4","bg":"#083344","text":"#CFFAFE","heading":"#ECFEFF"}'>
-                                    <div class="w-full h-8 rounded mb-2 bg-cyan-950 border border-cyan-800"></div>
+                                    <div class="w-full h-8 rounded-sm mb-2 bg-cyan-950 border border-cyan-800"></div>
                                     <div class="text-xs font-medium">Ocean Deep</div>
                                 </button>
                             </div>
@@ -194,7 +194,7 @@
 
                     <div class="text-sm text-gray-600 dark:text-gray-400">
                         <span class="mr-1">{{ __('Your public URL:') }}</span>
-                        <code class="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                        <code class="px-2 py-1 rounded-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                             {{ _('/@' . $user->username) }}
                         </code>
                     </div>

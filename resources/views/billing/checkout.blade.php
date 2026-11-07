@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg p-8">
                 <h3 class="text-2xl font-bold mb-6 dark:text-white">Subscribe to {{ $plan->name }}</h3>
 
                 <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
@@ -29,7 +29,7 @@
 
                 @php($stripePk = config('cashier.key'))
                 @if(empty($stripePk))
-                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4">
+                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-sm mb-4">
                         Stripe publishable key is not configured. Please set STRIPE_KEY=pk_test_xxx in your .env and reload this page.
                     </div>
                 @endif

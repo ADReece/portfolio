@@ -12,10 +12,10 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-screen-xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-(--breakpoint-xl) mx-auto sm:px-6 lg:px-8">
 
             @if($errors->any())
-                <div class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
+                <div class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-sm">
                     <ul class="list-disc list-inside text-sm">
                         @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
                     </ul>

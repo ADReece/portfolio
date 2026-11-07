@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg p-8">
                 @if(auth()->user()->stripe_connect_enabled)
                     <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-6 mb-6">
                         <div class="flex items-center">

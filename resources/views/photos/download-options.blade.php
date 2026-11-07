@@ -25,12 +25,12 @@
         </div>
 
         <!-- Plain download -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
             <h2 class="text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">Original photo</h2>
             <div x-data="{ email: '', sending: false, sent: false, err: '' }">
                 <div class="flex gap-3">
                     <input type="email" x-model="email" placeholder="your@email.com"
-                           class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                           class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                     <button @click="
                         if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { err = 'Enter a valid email.'; return; }
                         err = ''; sending = true;
@@ -58,7 +58,7 @@
                 </h2>
 
                 @foreach($templates as $template)
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5">
                         <div class="flex items-start justify-between mb-4">
                             <div>
                                 <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ $template->name }}</h3>
@@ -68,7 +68,7 @@
                             </div>
                             @if($template->overlayUrl())
                                 <img src="{{ $template->overlayUrl() }}" alt="Preview"
-                                     class="w-16 h-16 object-cover rounded border border-gray-200 dark:border-gray-700 ml-4 flex-shrink-0">
+                                     class="w-16 h-16 object-cover rounded-sm border border-gray-200 dark:border-gray-700 ml-4 shrink-0">
                             @endif
                         </div>
 
@@ -86,7 +86,7 @@
                                                    name="fields[{{ $field['key'] }}]"
                                                    value="{{ old('fields.' . $field['key'], $photo->caption ?? '') }}"
                                                    placeholder="{{ $field['label'] ?? $field['key'] }}"
-                                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                   class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                                         </div>
                                     @endforeach
                                 </div>

@@ -6,7 +6,7 @@
         <div class="lg:mt-32 font-semibold mx-auto text-center text-gray-800 dark:text-gray-200 leading-tight">
             @if($user->logo_path)
                 <div class="flex justify-center mb-6">
-                    <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-20 object-contain drop-shadow" />
+                    <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-20 object-contain drop-shadow-sm" />
                 </div>
             @endif
             <h1 class="text-3xl font-bold mb-2">

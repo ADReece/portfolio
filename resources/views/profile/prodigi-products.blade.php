@@ -7,19 +7,19 @@
 
     <div class="py-8">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                 <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
                     These products come directly from your synced Prodigi catalog. All products are enabled by default; uncheck any products you do not want clients to order.
                 </p>
 
                 @if (session('status') === 'prodigi-products-updated')
-                    <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded p-3 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
+                    <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-sm p-3 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
                         Product availability updated.
                     </div>
                 @endif
 
                 @if ($products->isEmpty())
-                    <div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-3 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
+                    <div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-sm p-3 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
                         No catalog products found yet. Run the sync command: php artisan prodigi:sync-catalog --seed-user-preferences
                     </div>
                 @else
@@ -29,12 +29,12 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             @foreach($products as $product)
-                                <label class="flex items-start gap-3 rounded border border-gray-200 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                                <label class="flex items-start gap-3 rounded-sm border border-gray-200 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-900/40">
                                     <input
                                         type="checkbox"
                                         name="enabled_product_ids[]"
                                         value="{{ $product->id }}"
-                                        class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                        class="mt-1 rounded-sm border-gray-300 text-indigo-600 shadow-xs focus:ring-indigo-500"
                                         @checked(in_array($product->id, $enabledProductIds, true))
                                     >
 
@@ -48,10 +48,10 @@
                                             min="0.50"
                                             name="retail_prices[{{ $product->id }}]"
                                             value="{{ old('retail_prices.' . $product->id, $pricesByProductId[$product->id] ?? '29.99') }}"
-                                            class="mt-1 w-28 rounded border-gray-300 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                            class="mt-1 w-28 rounded-sm border-gray-300 text-sm shadow-xs focus:ring-indigo-500 focus:border-indigo-500"
                                         >
                                         @if($product->category)
-                                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-sm text-xs bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                                                 {{ $product->category }}
                                             </span>
                                         @endif

@@ -12,7 +12,7 @@
         <!-- Username -->
         <div class="mt-4" x-data="{ username: @js(old('username', '')) }">
             <x-input-label for="username" :value="__('Portfolio address')" />
-            <div class="mt-1 flex rounded-md shadow-sm">
+            <div class="mt-1 flex rounded-md shadow-xs">
                 <span class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 text-sm text-gray-500 dark:text-gray-400 select-none">{{ preg_replace('#^https?://#', '', url('/')) }}/@</span>
                 <x-text-input id="username" class="block w-full rounded-l-none" type="text" name="username" x-model="username"
                               :value="old('username')" required autocomplete="username" maxlength="30"
@@ -55,7 +55,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
+            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 

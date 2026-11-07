@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
 </head>
 <body class="antialiased bg-gray-50 dark:bg-gray-900">
     <!-- Navigation -->
-    <nav class="bg-white dark:bg-gray-800 shadow-sm fixed w-full top-0 z-50">
+    <nav class="bg-white dark:bg-gray-800 shadow-xs fixed w-full top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -31,12 +31,12 @@
     </nav>
 
     <!-- Hero Section -->
-    <div class="pt-24 pb-16 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div class="pt-24 pb-16 bg-linear-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
                 <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6">
                     Showcase Your Art.<br/>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                    <span class="text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600">
                         Build Your Brand.
                     </span>
                 </h1>
@@ -153,7 +153,7 @@
                     <ul class="space-y-3 mb-8 min-h-[250px]">
                         @foreach($plan->features as $feature)
                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                             <span class="text-sm dark:text-gray-300">{{ $feature }}</span>
@@ -182,7 +182,7 @@
     </div>
 
     <!-- CTA Section -->
-    <div class="py-16 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+    <div class="py-16 bg-linear-to-r from-indigo-600 to-purple-600 text-white">
         <div class="max-w-4xl mx-auto text-center px-4">
             <h2 class="text-4xl font-bold mb-4">Ready to Showcase Your Work?</h2>
             <p class="text-xl mb-8 opacity-90">Join thousands of photographers and videographers who trust {{ config('app.name') }}</p>

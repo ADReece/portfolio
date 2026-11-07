@@ -6,7 +6,7 @@
     </x-slot>
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <form action="{{ route('upload.create') }}" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -46,7 +46,7 @@
 {{--                    <!-- Album Selection Dropdown -->--}}
 {{--                    <div class="mb-4">--}}
 {{--                        <label for="album" class="block text-sm font-medium text-gray-700">Choose Album (optional)</label>--}}
-{{--                        <select name="album_id" id="album" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">--}}
+{{--                        <select name="album_id" id="album" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">--}}
 {{--                            <option value="">No Album</option>--}}
 {{--                            @foreach($collections as $album)--}}
 {{--                                <option value="{{ $album->id }}">{{ $album->name }}</option>--}}
@@ -65,7 +65,7 @@
 
 {{--                    <!-- Upload Button -->--}}
 {{--                    <div class="mt-6 text-right">--}}
-{{--                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">--}}
+{{--                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">--}}
 {{--                            Upload--}}
 {{--                        </button>--}}
 {{--                    </div>--}}

@@ -1,12 +1,12 @@
 <div>
     @if (session()->has('message'))
-        <div class="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded">
+        <div class="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-sm">
             {{ session('message') }}
         </div>
     @endif
 
     <!-- Photos Grid -->
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg"
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg"
          x-data="{
             selected: [],
             all: @js($set->photos->pluck('id')->map(fn ($id) => (string) $id)->values()),
@@ -31,11 +31,11 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                             <input type="checkbox" x-on:change="toggleAll()" x-bind:checked="allSelected"
-                                   class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                   class="rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
                             Select all
                         </label>
                         <button type="button" x-show="selected.length" x-cloak x-on:click="deleteSelected()"
-                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                             x-text="`Delete ${selected.length} selected`">
                         </button>
                     </div>
@@ -50,7 +50,7 @@
                         <div class="relative group photo-item" data-photo-id="{{ $photo->id }}" wire:key="photo-{{ $photo->id }}">
                             <input type="checkbox" x-model="selected" value="{{ $photo->id }}"
                                 aria-label="Select {{ $photo->caption ?: 'photo' }}"
-                                class="absolute top-2 left-2 z-10 w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                class="absolute top-2 left-2 z-10 w-5 h-5 rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
 
                             @if($set->collection->cover_photo_id === $photo->id)
                                 <div class="absolute top-2 right-2 z-10 px-2 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-lg flex items-center gap-1">
@@ -65,11 +65,11 @@
                                 alt="{{ $photo->caption ?? 'Photo' }}"
                                 class="w-full h-48 object-cover rounded-lg">
 
-                            <div class="absolute inset-0 bg-black bg-opacity-30 can-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
+                            <div class="absolute inset-0 bg-black/30 can-hover:bg-black/50 transition-opacity rounded-lg flex items-center justify-center opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                 <div class="flex flex-col gap-2">
                                     <div class="flex gap-2">
                                         <button wire:click="editPhoto('{{ $photo->id }}')"
-                                            class="px-3 py-1 bg-white text-gray-800 rounded text-sm hover:bg-gray-100">
+                                            class="px-3 py-1 bg-white text-gray-800 rounded-sm text-sm hover:bg-gray-100">
                                             Edit
                                         </button>
                                         <button @click="window.confirmAction({
@@ -79,17 +79,17 @@
                                                     isDanger: true,
                                                     onConfirm: () => $wire.call('deletePhoto', '{{ $photo->id }}')
                                                 })"
-                                            class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                                            class="px-3 py-1 bg-red-600 text-white rounded-sm text-sm hover:bg-red-700">
                                             Delete
                                         </button>
                                     </div>
                                     @if($set->collection->cover_photo_id === $photo->id)
-                                        <span class="px-3 py-1 bg-green-500 text-white rounded text-xs text-center">
+                                        <span class="px-3 py-1 bg-green-500 text-white rounded-sm text-xs text-center">
                                             ★ Cover Photo
                                         </span>
                                     @else
                                         <button wire:click="setAsCover('{{ $photo->id }}')"
-                                            class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                                            class="px-3 py-1 bg-indigo-600 text-white rounded-sm text-sm hover:bg-indigo-700">
                                             Set as Cover
                                         </button>
                                     @endif
@@ -108,7 +108,7 @@
 
     <!-- Edit Photo Modal -->
     @if($editingPhotoId)
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+    <div class="fixed inset-0 bg-gray-600/50 overflow-y-auto h-full w-full z-50"
          wire:click.self="$set('editingPhotoId', null)">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800 dark:border-gray-700">
             <div class="mt-3">
@@ -117,7 +117,7 @@
                     <div class="mb-4">
                         <label for="caption" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Caption</label>
                         <input type="text" id="caption" wire:model="editingCaption"
-                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                         @error('editingCaption')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -126,7 +126,7 @@
                     <div class="mb-4">
                         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
                         <textarea id="description" wire:model="editingDescription" rows="3"
-                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                         @error('editingDescription')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -135,7 +135,7 @@
                     <div class="mb-4">
                         <label class="flex items-center">
                             <input type="checkbox" wire:model="editingHideFromPortfolio"
-                                class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">Hide from portfolio</span>
                         </label>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">When enabled, this photo won't appear on your main portfolio page.</p>

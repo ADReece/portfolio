@@ -1,5 +1,5 @@
 <div class="max-w-xl mx-auto px-4 py-14">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 sm:p-8 space-y-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sm:p-8 space-y-6">
         <div class="flex items-start gap-4">
             @if($tone === 'success')
                 <span class="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">
@@ -26,12 +26,12 @@
 
         <div class="flex flex-wrap gap-3">
             @if($tone !== 'success' && $photo)
-                <a href="{{ route('print-purchase.show', $photo) }}" class="portfolio-button inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">Try again</a>
+                <a href="{{ route('print-purchase.show', $photo) }}" class="portfolio-button inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">Try again</a>
             @endif
             @if($returnUrl)
-                <a href="{{ $returnUrl }}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Back to gallery</a>
+                <a href="{{ $returnUrl }}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500">Back to gallery</a>
             @elseif($photographer?->username)
-                <a href="{{ route('profile.view', $photographer->username) }}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Visit {{ $photographer->name ?? $photographer->username }}'s portfolio</a>
+                <a href="{{ route('profile.view', $photographer->username) }}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500">Visit {{ $photographer->name ?? $photographer->username }}'s portfolio</a>
             @endif
         </div>
     </div>

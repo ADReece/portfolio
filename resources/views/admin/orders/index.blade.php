@@ -2,7 +2,7 @@
     <x-slot name="header"><h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Orders</h2></x-slot>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
@@ -27,7 +27,7 @@
                 </table>
             </div>
             <div class="mt-4">{{ $orders->links() }}</div>
-            <div class="mt-6 bg-white dark:bg-gray-800 rounded p-4">
+            <div class="mt-6 bg-white dark:bg-gray-800 rounded-sm p-4">
                 <div class="text-gray-500 dark:text-gray-400 text-sm">Total Completed GMV</div>
                 <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $currencySymbol }}{{ number_format($totalCompleted, 2) }}</div>
             </div>

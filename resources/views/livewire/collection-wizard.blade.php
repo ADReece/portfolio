@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-900 py-10">
+<div class="min-h-screen bg-linear-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-900 py-10">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <!-- Progress Steps -->
@@ -45,7 +45,7 @@
 
         <!-- Step 1: Collection Details -->
         @if($currentStep === 1)
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-200 dark:border-gray-700">
+            <div class="bg-white dark:bg-gray-800 shadow-xs rounded-2xl border border-gray-200 dark:border-gray-700">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Create Collection in 30 Seconds</h2>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Type a name, hit continue, done. You can tweak advanced settings later.</p>
@@ -60,7 +60,7 @@
                         <input type="text"
                                id="name"
                                wire:model="name"
-                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                placeholder="e.g., Sam & Maya Wedding"
                                autofocus>
                         @error('name')
@@ -75,7 +75,7 @@
                         <input type="date"
                                id="event_date"
                                wire:model="event_date"
-                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                               class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                         @error('event_date')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
@@ -90,7 +90,7 @@
                                     <input type="checkbox"
                                            id="private"
                                            wire:model="private"
-                                           class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
+                                           class="rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
                                 </div>
                                 <div class="ml-3">
                                     <label for="private" class="text-sm font-medium text-gray-700 dark:text-gray-300">Private Collection</label>
@@ -105,7 +105,7 @@
                                 <input type="password"
                                        id="password"
                                        wire:model="password"
-                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                        placeholder="Enter a secure password">
                                 @error('password')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -117,7 +117,7 @@
                                     <input type="checkbox"
                                            id="watermarked"
                                            wire:model="watermarked"
-                                           class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
+                                           class="rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
                                 </div>
                                 <div class="ml-3">
                                     <label for="watermarked" class="text-sm font-medium text-gray-700 dark:text-gray-300">Watermarked</label>
@@ -130,7 +130,7 @@
                                     <input type="checkbox"
                                            id="hide_from_portfolio"
                                            wire:model="hide_from_portfolio"
-                                           class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
+                                           class="rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
                                 </div>
                                 <div class="ml-3">
                                     <label for="hide_from_portfolio" class="text-sm font-medium text-gray-700 dark:text-gray-300">Hide from Public Portfolio</label>
@@ -143,11 +143,11 @@
                     <!-- Actions -->
                     <div class="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                         <a href="{{ route('collections.index') }}"
-                           class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                           class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Cancel
                         </a>
                         <button type="submit"
-                                class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Continue
                         </button>
                     </div>
@@ -159,7 +159,7 @@
         @if($currentStep === 2)
             <div class="space-y-6">
                 <!-- Collection Info Card -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                <div class="bg-white dark:bg-gray-800 shadow-xs rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $collection->name }}</h2>
@@ -168,7 +168,7 @@
                             @endif
                         </div>
                         <a href="{{ route('collections.edit', $collectionId) }}"
-                           class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm">
+                           class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-hidden focus:ring-2 focus:ring-gray-500 text-sm">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -179,7 +179,7 @@
                 </div>
 
                 <!-- Create New Set Card -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-200 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 shadow-xs rounded-2xl border border-gray-200 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Create Sets Fast</h3>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Tap a template or type your own.</p>
@@ -200,9 +200,9 @@
                             <input type="text"
                                    wire:model="setName"
                                    placeholder="Type custom set name and press Enter"
-                                   class="flex-1 rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                   class="flex-1 rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                             <button type="submit"
-                                    class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">
+                                    class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap">
                                 Add
                             </button>
                         </div>
@@ -213,7 +213,7 @@
                 </div>
 
                 <!-- Existing Sets -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-2xl border border-gray-200 dark:border-gray-700">
+                <div class="bg-white dark:bg-gray-800 shadow-xs rounded-2xl border border-gray-200 dark:border-gray-700">
                     <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Your Sets ({{ $sets->count() }})</h3>
                     </div>
@@ -236,7 +236,7 @@
                                             <form wire:submit.prevent="updateSet" class="space-y-3">
                                                 <input type="text"
                                                        wire:model="editingSetName"
-                                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                                                 <div class="flex gap-2">
                                                     <button type="submit"
                                                             class="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
@@ -310,7 +310,7 @@
 
                     @if($sets->isNotEmpty())
                         <button wire:click="finishAndRedirect"
-                                class="px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                class="px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             <svg class="inline-block w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>

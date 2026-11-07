@@ -34,7 +34,7 @@
             @csrf
 
             <div class="space-y-6 min-w-0">
-                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-5">
+                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-5">
                     <legend class="sr-only">Print options</legend>
                     <div>
                         <label for="prodigi_product_id" class="{{ $labelClass }}">Print size and type</label>
@@ -51,12 +51,12 @@
 
                     <div>
                         <label for="quantity" class="{{ $labelClass }}">Quantity</label>
-                        <input id="quantity" type="number" min="1" max="10" name="quantity" x-model.number="quantity" class="{{ $inputClass }} !w-32" required />
+                        <input id="quantity" type="number" min="1" max="10" name="quantity" x-model.number="quantity" class="{{ $inputClass }} w-32!" required />
                         @error('quantity')<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
                     </div>
                 </fieldset>
 
-                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <legend class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 float-left w-full">Your details</legend>
                     <div>
                         <label for="customer_name" class="{{ $labelClass }}">Full name</label>
@@ -76,7 +76,7 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <legend class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 float-left w-full">Delivery address</legend>
                     <div class="md:col-span-2">
                         <label for="shipping_country_code" class="{{ $labelClass }}">Country</label>
@@ -115,7 +115,7 @@
                 </fieldset>
             </div>
 
-            <aside class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4 lg:sticky lg:top-6" aria-labelledby="summary-heading">
+            <aside class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4 lg:sticky lg:top-6" aria-labelledby="summary-heading">
                 <h2 id="summary-heading" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Order summary</h2>
                 <img src="{{ $photo->getAwsThumbnail() }}" alt="{{ $photo->caption ? 'Photo: '.$photo->caption : 'The photo you are ordering' }}" class="rounded-md w-full max-h-64 object-contain bg-gray-100 dark:bg-gray-900" />
                 <dl class="text-sm space-y-2" aria-live="polite">
@@ -124,7 +124,7 @@
                     <div class="flex justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-2 font-semibold"><dt class="text-gray-900 dark:text-gray-100">Total</dt><dd class="tabular-nums text-gray-900 dark:text-gray-100" x-text="unit ? money(total) : '–'">–</dd></div>
                 </dl>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Stripe shows the final amount, including any taxes, before you pay.</p>
-                <button type="submit" class="w-full inline-flex justify-center items-center px-5 py-3 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
+                <button type="submit" class="w-full inline-flex justify-center items-center px-5 py-3 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                     Continue to payment
                 </button>
             </aside>

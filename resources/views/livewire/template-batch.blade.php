@@ -49,7 +49,7 @@
                                          class="h-full w-full object-contain">
                                 </div>
                             @else
-                                <div class="h-24 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                <div class="h-24 bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                                     <span class="text-white text-sm font-medium opacity-60">Text Only</span>
                                 </div>
                             @endif
@@ -129,9 +129,9 @@
                                         @if($photo->thumbnail_url ?? null)
                                             <img src="{{ \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($photo->thumbnail_url, now()->addMinutes(30)) }}"
                                                  alt="Photo"
-                                                 class="w-16 h-16 object-cover rounded">
+                                                 class="w-16 h-16 object-cover rounded-sm">
                                         @else
-                                            <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-xs text-gray-400">
+                                            <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-sm flex items-center justify-center text-xs text-gray-400">
                                                 No preview
                                             </div>
                                         @endif
@@ -144,7 +144,7 @@
                                                 <input type="text"
                                                        wire:model="photoData.{{ $photo->id }}.{{ $field['key'] }}"
                                                        placeholder="{{ $field['label'] }}"
-                                                       class="w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                       class="w-full rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                                             </td>
                                         @endforeach
                                     @endif
@@ -202,7 +202,7 @@
                     </div>
                 </div>
             @else
-                <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-green-700 dark:text-green-300 text-sm">
+                <div class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-sm text-green-700 dark:text-green-300 text-sm">
                     ✓ All prints processed — {{ $completed }} completed@if($failed > 0), {{ $failed }} failed@endif.
                 </div>
             @endif
@@ -218,7 +218,7 @@
                                      class="w-full aspect-square object-cover">
                                 <div class="absolute inset-0 bg-black/40 transition-opacity flex items-center justify-center opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                     <a href="{{ $print->outputUrl() }}" target="_blank"
-                                       class="px-3 py-1.5 bg-white text-gray-900 text-xs font-medium rounded hover:bg-gray-100">
+                                       class="px-3 py-1.5 bg-white text-gray-900 text-xs font-medium rounded-sm hover:bg-gray-100">
                                         Download
                                     </a>
                                 </div>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased bg-gray-50 dark:bg-gray-900">
-    <nav class="bg-white dark:bg-gray-800 shadow-sm">
+    <nav class="bg-white dark:bg-gray-800 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -74,7 +74,7 @@
                 </div>
             </div>
 
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-lg p-8 text-white text-center">
+            <div class="bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg shadow-lg p-8 text-white text-center">
                 <h2 class="text-3xl font-bold mb-4">Join Thousands of Creative Professionals</h2>
                 <p class="text-lg mb-6">Start showcasing your work today with {{ config('app.name') }}</p>
                 <a href="{{ route('register') }}" class="bg-white text-indigo-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 inline-block">

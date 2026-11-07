@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             <!-- Currency Settings -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
                 <div class="p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Currency Settings</h3>
                     <form action="{{ route('admin.settings.update') }}" method="POST">
@@ -38,7 +38,7 @@
             </div>
 
             <!-- Subscription Plans Management -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xs sm:rounded-lg">
                 <div class="p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subscription Plans Management</h3>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Stripe Product & Price IDs are now managed directly within each plan. Use the button below to manage all subscription plans and their Stripe integration details.</p>
