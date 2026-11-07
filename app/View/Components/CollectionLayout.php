@@ -10,13 +10,19 @@ class CollectionLayout extends Component
     public $user;
 
     /**
-     * Create a new component instance.
-     *
-     * @param User|null $user
-     * @return void
+     * @param  User|null  $user  The photographer whose page this is (branding).
+     * @param  string|null  $title  Browser tab / link preview title.
+     * @param  string|null  $description  Link preview description.
+     * @param  string|null  $image  Link preview image URL.
+     * @param  bool  $noindex  Keep search engines out (private galleries).
      */
-    public function __construct($user = null)
-    {
+    public function __construct(
+        $user = null,
+        public ?string $title = null,
+        public ?string $description = null,
+        public ?string $image = null,
+        public bool $noindex = false,
+    ) {
         $this->user = $user;
     }
 

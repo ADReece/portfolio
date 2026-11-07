@@ -1,84 +1,55 @@
-<x-collection-layout :user="$user">
-    <!-- Full-Page Loading Spinner -->
-    <div id="collection-loader" class="fixed inset-0 bg-gray-900 dark:bg-black z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="loader-large"></div>
-            <p class="mt-4 text-white text-lg">Loading collection...</p>
-        </div>
-    </div>
-
-    <!-- Full-screen Hero Section -->
-    <div class="relative w-full h-screen -mt-8">
+@php
+    $photographerName = $user->name ?: $user->username;
+    $photoCount = $collection->sets->sum(fn ($set) => $set->photos->count());
+@endphp
+<x-collection-layout :user="$user"
+                     :title="$collection->name.' · '.$photographerName"
+                     :description="'Photos by '.$photographerName.($collection->event_date ? ', '.$collection->event_date->format('j F Y') : '')"
+                     :image="$collection->private ? null : $collection->coverPhoto?->getAwsThumbnail()"
+                     :noindex="(bool) $collection->private">
+    <header class="relative isolate flex min-h-[70svh] w-full items-end overflow-hidden">
         @if($collection->coverPhoto)
-            <!-- Hero Image -->
-            <img src="{{ $collection->coverPhoto->getUri() }}"
-                 alt="{{ $collection->name }}"
-                 class="absolute inset-0 w-full h-full object-cover" style="object-position: {{ $collection->coverObjectPosition() }}">
-
-            <!-- Accent Overlay (dynamic) -->
-            <div class="absolute inset-0" style="background: linear-gradient(to bottom, var(--portfolio-accent-overlay-start), var(--portfolio-accent-overlay-mid), var(--portfolio-accent-overlay-end));"></div>
+            <img src="{{ $collection->coverPhoto->getUri() }}" alt="" fetchpriority="high"
+                 class="absolute inset-0 -z-10 size-full object-cover" style="object-position: {{ $collection->coverObjectPosition() }}">
+            <div class="absolute inset-0 -z-10 bg-linear-to-t from-black/75 via-black/25 to-black/10"></div>
         @else
-            <!-- Fallback gradient if no cover photo -->
-            <div class="absolute inset-0 bg-linear-to-br from-indigo-900 via-purple-900 to-pink-900"></div>
+            <div class="absolute inset-0 -z-10" style="background: linear-gradient(135deg, var(--portfolio-accent, #4f46e5), #111827);"></div>
         @endif
 
-        <!-- Hero Content -->
-        <div class="relative h-full flex flex-col items-center justify-center text-white px-4">
-            <h1 class="text-5xl md:text-7xl font-bold text-center mb-4 drop-shadow-2xl">
-                {{ $collection->name }}
-            </h1>
-
-            @if($collection->event_date)
-                <p class="text-xl md:text-2xl text-gray-200 mb-6 drop-shadow-lg">
-                    {{ $collection->event_date->format('F j, Y') }}
-                </p>
-            @endif
-
-            @if($collection->description)
-                <p class="text-lg text-gray-200 max-w-2xl text-center mb-8 drop-shadow-lg">
-                    {{ $collection->description }}
-                </p>
-            @endif
-
-            <!-- Badges -->
-            <div class="flex gap-3 mb-8">
+        <div class="mx-auto w-full max-w-7xl px-6 pt-24 pb-12 text-white sm:px-8">
+            <p class="text-sm font-medium tracking-wide text-white/80 uppercase">
+                Photos by <a href="{{ route('profile.view', $user->username) }}" class="underline-offset-4 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white">{{ $photographerName }}</a>
+            </p>
+            <h1 class="mt-2 max-w-4xl text-4xl font-bold text-balance drop-shadow-lg sm:text-6xl">{{ $collection->name }}</h1>
+            <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-white/85 sm:text-lg">
+                @if($collection->event_date)<span>{{ $collection->event_date->format('j F Y') }}</span><span aria-hidden="true">·</span>@endif
+                <span>{{ $photoCount }} {{ \Illuminate\Support\Str::plural('photo', $photoCount) }}</span>
                 @if($collection->private)
-                    <span class="px-4 py-2 bg-yellow-500 text-yellow-900 text-sm font-semibold rounded-full">
-                        🔒 Private Collection
-                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span class="inline-flex items-center gap-1"><x-ui.icon name="lock-closed" class="size-4" /> Private gallery</span>
                 @endif
-                @if($collection->watermarked)
-                    <span class="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-full">
-                        💎 Premium Content
-                    </span>
-                @endif
-            </div>
-
-            <!-- Download Archive Button (Private Collections Only) -->
-            @if($collection->private)
-                <div class="mb-8">
-                    <button onclick="requestArchive()"
-                            class="px-6 py-3 text-white text-lg font-semibold rounded-lg shadow-lg transition-all transform hover:scale-105 flex items-center gap-2"
-                            style="background-color: var(--portfolio-accent, #6366F1);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download All Photos
-                    </button>
-                </div>
+            </p>
+            @if($collection->description)
+                <p class="mt-4 max-w-2xl text-white/85">{{ $collection->description }}</p>
             @endif
 
-            <!-- Scroll Indicator -->
-            <div class="absolute bottom-8 animate-bounce">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                </svg>
+            <div class="mt-8 flex flex-wrap items-center gap-3">
+                <a href="#gallery" class="portfolio-button inline-flex items-center gap-2 rounded-control px-5 py-3 font-semibold text-white shadow-lg focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                   style="background-color: var(--portfolio-accent, #4f46e5);">
+                    <x-ui.icon name="photo" class="size-5" /> View photos
+                </a>
+                @if($collection->private)
+                    <button type="button" onclick="requestArchive()"
+                            class="inline-flex items-center gap-2 rounded-control bg-white/15 px-5 py-3 font-semibold text-white ring-1 ring-white/40 backdrop-blur hover:bg-white/25 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white">
+                        <x-ui.icon name="arrow-down-tray" class="size-5" /> Download all
+                    </button>
+                @endif
             </div>
         </div>
-    </div>
+    </header>
 
     <!-- Photo Gallery Section -->
-    <div class="py-12 px-8" style="background-color: var(--portfolio-bg-light, #F9FAFB); color: var(--portfolio-text-light, #1F2937);">
+    <div id="gallery" class="gallery-section scroll-mt-4 py-12 px-4 sm:px-8" style="background-color: var(--portfolio-bg-light, #F9FAFB); color: var(--portfolio-text-light, #1F2937);">
         <div class="max-w-7xl mx-auto">
             <livewire:masonry-grid :collectionId="$collection->id" />
         </div>
@@ -87,14 +58,10 @@
     @if(isset($user))
     <style>
         /* Custom accent color for buttons */
-        button[onclick="requestArchive()"]:hover {
-            opacity: 0.9;
-            filter: brightness(0.95);
-        }
 
         /* Gallery background respects theme */
         @media (prefers-color-scheme: dark) {
-            .py-12.px-8 {
+            .gallery-section {
                 background-color: var(--portfolio-bg-dark, #111827) !important;
                 color: var(--portfolio-text-dark, #F3F4F6) !important;
             }
@@ -102,12 +69,12 @@
 
         @if(isset($user->portfolio_theme))
             @if($user->portfolio_theme === 'dark')
-                .py-12.px-8 {
+                .gallery-section {
                     background-color: var(--portfolio-bg-dark, #111827) !important;
                     color: var(--portfolio-text-dark, #F3F4F6) !important;
                 }
             @elseif($user->portfolio_theme === 'light')
-                .py-12.px-8 {
+                .gallery-section {
                     background-color: var(--portfolio-bg-light, #F9FAFB) !important;
                     color: var(--portfolio-text-light, #1F2937) !important;
                 }
@@ -116,48 +83,8 @@
     </style>
     @endif
 
-    <style>
-        .loader-large {
-            border: 8px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top: 8px solid white;
-            width: 80px;
-            height: 80px;
-            animation: spin-large 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin-large {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 
     <script>
-        // Hide loader when page is fully loaded
-        window.addEventListener('load', function() {
-            const loader = document.getElementById('collection-loader');
-            if (loader) {
-                loader.style.opacity = '0';
-                loader.style.transition = 'opacity 0.3s ease-out';
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                }, 300);
-            }
-        });
-
-        // Fallback: Hide after 5 seconds even if load event doesn't fire
-        setTimeout(function() {
-            const loader = document.getElementById('collection-loader');
-            if (loader && loader.style.display !== 'none') {
-                loader.style.opacity = '0';
-                loader.style.transition = 'opacity 0.3s ease-out';
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                }, 300);
-            }
-        }, 5000);
-
         // Request archive download
         function requestArchive() {
             window.promptUser({

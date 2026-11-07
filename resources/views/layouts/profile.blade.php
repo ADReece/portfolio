@@ -5,11 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ isset($user) ? ($user->name ?? $user->username) : config('app.name') }} | {{ config('app.name') }} </title>
+        @include('partials.share-meta', [
+            'title' => isset($user) ? ($user->name ?: $user->username).' · Photography' : config('app.name'),
+            'description' => isset($user) ? ($user->bio ?: 'Photography portfolio of '.($user->name ?: $user->username)) : null,
+            'image' => isset($user) ? $user->logoUrl() : null,
+        ])
 
         <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=nunito:400,600,700|inter:400,500,600,700|roboto:400,500,700|open-sans:400,600,700|lato:400,700|montserrat:400,500,600,700|playfair-display:400,700|merriweather:400,700" rel="stylesheet">
+        @include('partials.portfolio-fonts', ['user' => $user ?? null])
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])

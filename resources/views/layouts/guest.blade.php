@@ -7,8 +7,7 @@
     <title>{{ isset($user) ? ($user->name ?? $user->username).' | '.config('app.name') : config('app.name') }}</title>
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=nunito:400,600,700|inter:400,500,600,700|roboto:400,500,700|open-sans:400,600,700|lato:400,700|montserrat:400,500,600,700|playfair-display:400,700|merriweather:400,700" rel="stylesheet">
+    @include('partials.portfolio-fonts', ['user' => $user ?? null])
 
     <!-- App Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
