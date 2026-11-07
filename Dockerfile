@@ -13,7 +13,7 @@ RUN apk add --no-cache \
         php83-phar php83-sodium php83-pcntl php83-posix php83-pecl-imagick \
     && ln -sf /usr/bin/php83 /usr/bin/php
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN apk add --no-cache composer
 
 WORKDIR /var/www/html
 

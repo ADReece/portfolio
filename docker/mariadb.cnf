@@ -1,4 +1,6 @@
 [mysqld]
+# Alpine's mariadb-server.cnf turns networking off; the app connects over TCP.
+skip-networking = 0
 bind-address = 127.0.0.1
 skip-name-resolve
 innodb_buffer_pool_size = 96M

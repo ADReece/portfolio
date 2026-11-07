@@ -23,7 +23,7 @@ if [ ! -d /var/lib/mysql/mysql ]; then
 fi
 
 echo "[entrypoint] Starting MariaDB for setup"
-mariadbd --user=mysql --datadir=/var/lib/mysql --skip-networking=0 &
+mariadbd --user=mysql --datadir=/var/lib/mysql &
 DB_PID=$!
 i=0
 until mariadb-admin --protocol=socket ping >/dev/null 2>&1; do
