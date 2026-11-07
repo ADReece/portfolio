@@ -39,7 +39,8 @@ class HtmlSanitizer
             $out .= $doc->saveHTML($child);
         }
 
-        return trim($out);
+        // Non-breaking spaces stop text wrapping (some editors insert them for every space).
+        return trim(str_replace(['&nbsp;', "\u{00A0}"], ' ', $out));
     }
 
     private static function cleanChildren(DOMNode $node): void

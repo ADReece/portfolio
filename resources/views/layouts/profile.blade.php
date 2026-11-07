@@ -31,16 +31,16 @@
         @include('layouts.partials.owner-bar')
         <div class="bg-gray-100 dark:bg-gray-900">
             <!-- Page Heading -->
-            <header class="portfolio-header md:fixed md:top-0 md:left-0 md:w-80 md:min-h-screen bg-white dark:bg-gray-800 shadow-lg z-10">
-                @if (isset($header))
-                <div class="max-w-7xl md:mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
-                </div>
-                @endif
-            </header>
+            @isset($header)
+                <header class="portfolio-header md:fixed md:top-0 md:left-0 md:w-80 md:min-h-screen bg-white dark:bg-gray-800 shadow-lg z-10">
+                    <div class="max-w-7xl md:mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
 
             <!-- Page Content -->
-            <main class="portfolio-content md:ml-80 bg-gray-100 dark:bg-gray-900 overflow-x-hidden" >
+            <main class="portfolio-content {{ isset($header) ? 'md:ml-80' : '' }} bg-gray-100 dark:bg-gray-900 overflow-x-hidden" >
                 <x-flash />
                 {{ $slot }}
             </main>

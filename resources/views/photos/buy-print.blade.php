@@ -15,17 +15,17 @@
             money(v) { return this.symbol + v.toFixed(2) },
          }">
         @if($returnUrl)
-            <a href="{{ $returnUrl }}" class="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300 hover:underline mb-4">
+            <a href="{{ $returnUrl }}" class="mb-4 inline-flex items-center gap-1 text-sm opacity-80 hover:underline hover:opacity-100">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 Back to gallery
             </a>
         @endif
 
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Order a print</h1>
-        <p class="text-gray-600 dark:text-gray-300 mt-1 mb-8">Printed and shipped for {{ $photographer->name ?? $photographer->username }}. You'll pay securely with Stripe on the next step.</p>
+        <h1 class="text-3xl font-bold">Order a print</h1>
+        <p class="mt-1 mb-8 opacity-80">Printed and shipped for {{ $photographer->name ?? $photographer->username }}. You'll pay securely with Stripe on the next step.</p>
 
         @if($errors->any())
-            <div class="mb-6 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-800 dark:text-red-200" role="alert">
+            <div class="portfolio-neutral mb-6 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-800 dark:text-red-200" role="alert">
                 Please check the highlighted fields below.
             </div>
         @endif
@@ -34,7 +34,7 @@
             @csrf
 
             <div class="space-y-6 min-w-0">
-                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-5">
+                <fieldset class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-5">
                     <legend class="sr-only">Print options</legend>
                     <div>
                         <label for="prodigi_product_id" class="{{ $labelClass }}">Print size and type</label>
@@ -56,8 +56,10 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <legend class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 float-left w-full">Your details</legend>
+                <fieldset class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <legend class="sr-only">Your details</legend>
+                    <h2 class="mb-4 text-lg font-semibold" aria-hidden="true">Your details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="customer_name" class="{{ $labelClass }}">Full name</label>
                         <input id="customer_name" type="text" name="customer_name" value="{{ old('customer_name') }}" autocomplete="name" class="{{ $inputClass }}" />
@@ -74,10 +76,13 @@
                         <p id="customer_phone_help" class="text-xs text-gray-500 dark:text-gray-400 mt-1">The courier uses this if there's a problem with delivery.</p>
                         @error('customer_phone')<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
                     </div>
+                    </div>
                 </fieldset>
 
-                <fieldset class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <legend class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 float-left w-full">Delivery address</legend>
+                <fieldset class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <legend class="sr-only">Delivery address</legend>
+                    <h2 class="mb-4 text-lg font-semibold" aria-hidden="true">Delivery address</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
                         <label for="shipping_country_code" class="{{ $labelClass }}">Country</label>
                         <select id="shipping_country_code" name="shipping_country_code" autocomplete="country" class="{{ $inputClass }}" required>
@@ -112,10 +117,11 @@
                         <input id="shipping_postcode" type="text" name="shipping_postcode" value="{{ old('shipping_postcode') }}" autocomplete="postal-code" class="{{ $inputClass }}" required />
                         @error('shipping_postcode')<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
                     </div>
+                    </div>
                 </fieldset>
             </div>
 
-            <aside class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4 lg:sticky lg:top-6" aria-labelledby="summary-heading">
+            <aside class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4 lg:sticky lg:top-6" aria-labelledby="summary-heading">
                 <h2 id="summary-heading" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Order summary</h2>
                 <img src="{{ $photo->getAwsThumbnail() }}" alt="{{ $photo->caption ? 'Photo: '.$photo->caption : 'The photo you are ordering' }}" class="rounded-md w-full max-h-64 object-contain bg-gray-100 dark:bg-gray-900" />
                 <dl class="text-sm space-y-2" aria-live="polite">

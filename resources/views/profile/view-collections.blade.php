@@ -4,14 +4,14 @@
         <div class="flex flex-col items-center lg:mt-32">
             @if($user->logo_path)
                 <div class="flex justify-center mb-6">
-                    <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-20 object-contain drop-shadow-sm" />
+                    <img src="{{ $user->logoUrl() }}" alt="{{ ($user->name ?: $user->username) }} logo" class="h-20 object-contain drop-shadow-sm" />
                 </div>
             @endif
-            <h2 class="font-bold text-3xl text-gray-900 dark:text-gray-100">
+            <h1 class="font-bold text-3xl">
                 {{ $user->name ?? $user->username }}
-            </h2>
+            </h1>
             @if($user->bio)
-            <div class="mt-2 text-gray-600 dark:text-gray-400 text-center max-w-2xl prose prose-sm dark:prose-invert mx-auto">
+            <div class="mt-2 text-sm leading-relaxed text-center break-words opacity-90 mx-auto [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_p+p]:mt-2">
                 {!! $user->bioHtml() !!}
             </div>
             @endif
@@ -21,7 +21,7 @@
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 overflow-x-hidden">
         @if($collections->isEmpty())
             <div class="text-center py-16">
-                <p class="text-gray-500 dark:text-gray-400">No collections available yet.</p>
+                <p class="opacity-70">No collections to show yet.</p>
             </div>
         @else
             <!-- Collections Grid -->

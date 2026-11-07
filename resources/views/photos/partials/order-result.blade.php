@@ -1,5 +1,5 @@
 <div class="max-w-xl mx-auto px-4 py-14">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sm:p-8 space-y-6">
+    <div class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sm:p-8 space-y-6">
         <div class="flex items-start gap-4">
             @if($tone === 'success')
                 <span class="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">

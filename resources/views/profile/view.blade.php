@@ -3,20 +3,20 @@
         {{ $user->name }}
     </x-slot>
     <x-slot name="header">
-        <div class="lg:mt-32 font-semibold mx-auto text-center text-gray-800 dark:text-gray-200 leading-tight">
+        <div class="lg:mt-32 mx-auto text-center leading-tight">
             @if($user->logo_path)
                 <div class="flex justify-center mb-6">
-                    <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-20 object-contain drop-shadow-sm" />
+                    <img src="{{ $user->logoUrl() }}" alt="{{ ($user->name ?: $user->username) }} logo" class="h-20 object-contain drop-shadow-sm" />
                 </div>
             @endif
             <h1 class="text-3xl font-bold mb-2">
                 {{ $user->name ?? $user->username }}
             </h1>
-            <h2 class="text-lg text-gray-600 dark:text-gray-400 mb-4">
+            <h2 class="text-lg font-semibold mb-4 opacity-80">
                  {{ _('@'.$user->username) }}
             </h2>
             @if($user->bio)
-            <div class="mt-2 text-gray-600 dark:text-gray-400 text-center max-w-2xl prose prose-sm dark:prose-invert mx-auto">
+            <div class="mt-2 text-sm leading-relaxed text-center break-words opacity-90 mx-auto [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_p+p]:mt-2">
                 {!! $user->bioHtml() !!}
             </div>
             @endif

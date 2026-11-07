@@ -31,7 +31,9 @@ document.querySelectorAll('[data-rich-text]').forEach((el) => {
     }
 
     const sync = () => {
-        input.value = quill.getText().trim() === '' ? '' : quill.getSemanticHTML();
+        // root.innerHTML keeps normal spaces (getSemanticHTML turns them into &nbsp;,
+        // which stops text wrapping). The server sanitises it either way.
+        input.value = quill.getText().trim() === '' ? '' : quill.root.innerHTML;
     };
     quill.on('text-change', sync);
     input.form?.addEventListener('submit', sync);
