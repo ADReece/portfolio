@@ -66,4 +66,21 @@ import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.e
 
 window.Alpine = Alpine;
 
+// Light / dark / system theme switch (see layouts/partials/user-menu.blade.php).
+// The choice is saved in this browser and applied before paint by theme-script.
+document.addEventListener('alpine:init', () => {
+    Alpine.data('themeSwitch', () => ({
+        theme: (() => { try { return localStorage.getItem('theme') || 'system'; } catch (e) { return 'system'; } })(),
+        set(value) {
+            this.theme = value;
+            const root = document.documentElement;
+            root.classList.remove('dark', 'light');
+            if (value !== 'system') root.classList.add(value);
+            try {
+                value === 'system' ? localStorage.removeItem('theme') : localStorage.setItem('theme', value);
+            } catch (e) {}
+        },
+    }));
+});
+
 Livewire.start();

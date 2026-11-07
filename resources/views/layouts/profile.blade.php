@@ -25,9 +25,7 @@
         @include('partials.portfolio-styles', ['user' => $user ?? null])
     </head>
     <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 overflow-x-hidden">
-        @if(Auth::check())
-            @include('layouts.navigation')
-        @endif
+        @include('layouts.partials.owner-bar')
         <div class="bg-gray-100 dark:bg-gray-900">
             <!-- Page Heading -->
             <header class="portfolio-header md:fixed md:top-0 md:left-0 md:w-80 md:min-h-screen bg-white dark:bg-gray-800 shadow-lg z-10">
@@ -39,7 +37,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="portfolio-content md:ml-80 bg-gray-100 dark:bg-gray-900 overflow-x-hidden" @if(Auth::check()) style="min-height: calc(100vh - 4rem);" @endif>
+            <main class="portfolio-content md:ml-80 bg-gray-100 dark:bg-gray-900 overflow-x-hidden" >
                 <x-flash />
                 {{ $slot }}
             </main>

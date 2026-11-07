@@ -30,7 +30,7 @@
                 @if(isset($user) && ($user->logo_path || $user->logo_thumb_path) && isset($logoUrl))
                     <img src="{{ $logoUrl }}" alt="Logo" class="w-20 h-20 object-contain" />
                 @else
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
+                    <x-application-logo class="w-16 h-16 text-brand-600 dark:text-brand-400" />
                 @endif
             </a>
         </div>
