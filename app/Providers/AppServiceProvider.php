@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Observers\UserObserver;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
-use App\Http\Livewire\LogoUploader;
+use App\Livewire\LogoUploader;
 
 class AppServiceProvider extends ServiceProvider
 {

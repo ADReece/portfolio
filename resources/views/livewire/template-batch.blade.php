@@ -142,7 +142,7 @@
                                         @foreach($selectedTemplate->fields as $field)
                                             <td class="px-4 py-3">
                                                 <input type="text"
-                                                       wire:model.defer="photoData.{{ $photo->id }}.{{ $field['key'] }}"
+                                                       wire:model="photoData.{{ $photo->id }}.{{ $field['key'] }}"
                                                        placeholder="{{ $field['label'] }}"
                                                        class="w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                             </td>

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire;
+namespace App\Livewire;
 
 use Livewire\Component;
 
@@ -21,7 +21,7 @@ class PhotoUpload extends Component
         $this->uploadCount++;
 
         // Emit event to refresh the photos grid
-        $this->emit('photoUploaded');
+        $this->dispatch('photoUploaded');
     }
 
     public function render()

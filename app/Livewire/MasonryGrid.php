@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire;
+namespace App\Livewire;
 
 use App\Models\Photo;
 use App\Models\Collection;
@@ -100,7 +100,7 @@ class MasonryGrid extends Component
             'has_more' => $this->hasMore
         ]);
 
-        $this->dispatchBrowserEvent('masonry-items-loaded');
+        $this->dispatch('masonry-items-loaded');
     }
 
     public function render()

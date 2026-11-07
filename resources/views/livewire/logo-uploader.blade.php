@@ -38,7 +38,6 @@
         </div>
         <p class="text-[11px] text-gray-400 dark:text-gray-500">PNG, JPG, WebP, SVG. Max 2MB. Thumbnail auto-generated (160px wide for raster images).</p>
     @endif
-</div>
 
 <script>
     (function(){
@@ -58,3 +57,4 @@
         }
     });
 </script>
+</div>

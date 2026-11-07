@@ -41,7 +41,7 @@
                 saveOrder(){
                     if(!this.sortable) return;
                     const ids = Array.from(document.querySelectorAll('#collection-sortable li')).map(li=>li.dataset.id);
-                    Livewire.emit('reorderCollections', ids);
+                    this.$wire.saveOrder(ids);
                 }
             }))
         });

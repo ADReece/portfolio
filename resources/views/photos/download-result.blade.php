@@ -55,5 +55,6 @@
         @endif
 
     </div>
+    @livewireScriptConfig
 </body>
 </html>

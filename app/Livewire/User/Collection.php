@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\User;
+namespace App\Livewire\User;
 
 use Carbon\Carbon;
 use Livewire\Component;

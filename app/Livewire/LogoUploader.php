@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Livewire;
+namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -91,8 +91,8 @@ class LogoUploader extends Component
         Cache::forget('user_logo_url_'.$this->user->id);
         $this->logo = null;
         $this->loadLogo();
-        $this->dispatchBrowserEvent('logo-updated', ['url' => $this->currentLogoUrl ?? asset('favicon.ico')]);
-        $this->emit('refreshLogo');
+        $this->dispatch('logo-updated', url: $this->currentLogoUrl ?? asset('favicon.ico'));
+        $this->dispatch('refreshLogo');
         session()->flash('logo-status', 'Logo updated successfully');
     }
 
@@ -109,7 +109,7 @@ class LogoUploader extends Component
         $this->user->save();
         Cache::forget('user_logo_url_'.$this->user->id);
         $this->currentLogoUrl = null;
-        $this->dispatchBrowserEvent('logo-updated', ['url' => asset('favicon.ico')]);
+        $this->dispatch('logo-updated', url: asset('favicon.ico'));
         session()->flash('logo-status', 'Logo removed');
     }
 

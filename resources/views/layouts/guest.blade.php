@@ -40,5 +40,6 @@
     </div>
 
     @include('partials.portfolio-debug', ['user' => $user ?? null])
+    @livewireScriptConfig
 </body>
 </html>

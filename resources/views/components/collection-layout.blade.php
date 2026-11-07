@@ -38,7 +38,7 @@
     </main>
 </div>
 <x-modals />
-@livewireScripts
+@livewireScriptConfig
 @include('partials.portfolio-debug', ['user' => $user ?? null])
 </body>
 </html>

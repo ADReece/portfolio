@@ -36,6 +36,6 @@
 <!-- Global Modals -->
 <x-modals />
 
-@livewireScripts
+@livewireScriptConfig
 </body>
 </html>

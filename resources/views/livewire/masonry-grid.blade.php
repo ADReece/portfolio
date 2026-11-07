@@ -579,8 +579,8 @@
 
                     // Small delay before actually calling Livewire
                     setTimeout(() => {
-                        if (window.Livewire && window.Livewire.emit) {
-                            window.Livewire.emit('load-more-photos');
+                        if (window.Livewire && window.Livewire.dispatch) {
+                            window.Livewire.dispatch('load-more-photos');
                         } else {
                             this.isLoadingMore = false;
                         }
@@ -594,14 +594,14 @@
             }));
         });
 
-        // Livewire v2 hook for message processing
-        document.addEventListener('livewire:load', () => {
-            Livewire.hook('message.processed', (message, component) => {
-                const alpineComponent = Alpine.$data(document.querySelector('[x-data="masonryData"]'));
-                if (alpineComponent) {
-                    setTimeout(() => alpineComponent.appendNewItems(), 150);
-                }
-            });
+        // After "load more" renders new items (MasonryGrid::loadMore dispatches
+        // this once the DOM has been updated), move them into the columns.
+        window.addEventListener('masonry-items-loaded', () => {
+            const el = document.querySelector('[x-data="masonryData"]');
+            const alpineComponent = el && Alpine.$data(el);
+            if (alpineComponent) {
+                setTimeout(() => alpineComponent.appendNewItems(), 50);
+            }
         });
 
         // Download request function

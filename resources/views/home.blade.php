@@ -228,6 +228,7 @@
             </div>
         </div>
     </footer>
+    @livewireScriptConfig
 </body>
 </html>
 

@@ -6,15 +6,40 @@
     @endif
 
     <!-- Photos Grid -->
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg"
+         x-data="{
+            selected: [],
+            all: @js($set->photos->pluck('id')->map(fn ($id) => (string) $id)->values()),
+            get allSelected() { return this.all.length > 0 && this.selected.length === this.all.length },
+            toggleAll() { this.selected = this.allSelected ? [] : [...this.all] },
+            deleteSelected() {
+                const ids = [...this.selected];
+                window.confirmAction({
+                    title: `Delete ${ids.length} ${ids.length === 1 ? 'photo' : 'photos'}?`,
+                    message: 'They are removed from this set and from your portfolio. This can\'t be undone.',
+                    confirmText: 'Delete',
+                    isDanger: true,
+                    onConfirm: () => { this.$wire.bulkDelete(ids); this.selected = []; },
+                });
+            },
+         }"
+         x-effect="all = @js($set->photos->pluck('id')->map(fn ($id) => (string) $id)->values()); selected = selected.filter(id => all.includes(id))">
         <div class="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Photos ({{ $set->photos->count() }})</h3>
-                <button onclick="deleteSelected()"
-                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm hidden"
-                    id="delete-selected-btn">
-                    Delete Selected
-                </button>
+                @if($set->photos->isNotEmpty())
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" x-on:change="toggleAll()" x-bind:checked="allSelected"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                            Select all
+                        </label>
+                        <button type="button" x-show="selected.length" x-cloak x-on:click="deleteSelected()"
+                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                            x-text="`Delete ${selected.length} selected`">
+                        </button>
+                    </div>
+                @endif
             </div>
 
             @if($set->photos->isEmpty())
@@ -23,8 +48,9 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     @foreach($set->photos as $photo)
                         <div class="relative group photo-item" data-photo-id="{{ $photo->id }}" wire:key="photo-{{ $photo->id }}">
-                            <input type="checkbox" class="photo-checkbox absolute top-2 left-2 z-10 w-5 h-5 rounded border-gray-300 dark:border-gray-600"
-                                value="{{ $photo->id }}">
+                            <input type="checkbox" x-model="selected" value="{{ $photo->id }}"
+                                aria-label="Select {{ $photo->caption ?: 'photo' }}"
+                                class="absolute top-2 left-2 z-10 w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
 
                             @if($set->collection->cover_photo_id === $photo->id)
                                 <div class="absolute top-2 right-2 z-10 px-2 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-lg flex items-center gap-1">
@@ -131,41 +157,5 @@
     </div>
     @endif
 
-    <script>
-        // Handle photo selection
-        document.addEventListener('livewire:load', function () {
-            setupPhotoSelection();
-        });
-
-        // Re-setup after Livewire updates
-        document.addEventListener('livewire:update', function () {
-            setupPhotoSelection();
-        });
-
-        function setupPhotoSelection() {
-            const checkboxes = document.querySelectorAll('.photo-checkbox');
-            const deleteBtn = document.getElementById('delete-selected-btn');
-
-            if (!deleteBtn) return;
-
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-                    deleteBtn.classList.toggle('hidden', !anyChecked);
-                });
-            });
-        }
-
-        function deleteSelected() {
-            const checkboxes = document.querySelectorAll('.photo-checkbox:checked');
-            const photoIds = Array.from(checkboxes).map(cb => cb.value);
-
-            if (photoIds.length === 0) return;
-
-            if (confirm(`Delete ${photoIds.length} selected photo(s)?`)) {
-                @this.call('bulkDelete', photoIds);
-            }
-        }
-    </script>
 </div>
 

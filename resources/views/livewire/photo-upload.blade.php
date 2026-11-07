@@ -114,7 +114,7 @@
 
                     pond.on('processfiles', () => {
                         if (typeof @this !== 'undefined') {
-                            @this.call('$refresh');
+                            @this.$refresh();
                         }
                     });
                 }
@@ -128,8 +128,6 @@
                     window.addEventListener('filepond:ready', initializeUploader, { once: true });
                 }
 
-                // Re-init after Livewire re-renders the component.
-                document.addEventListener('livewire:update', initializeUploader);
             })();
         </script>
     @else

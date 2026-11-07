@@ -98,7 +98,7 @@
                                 </div>
                             </div>
 
-                            <div x-data="{ isPrivate: @entangle('private') }" x-show="isPrivate" x-transition>
+                            <div x-show="$wire.private" x-transition>
                                 <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Password <span class="text-red-500">*</span>
                                 </label>

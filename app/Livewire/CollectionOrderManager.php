@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire;
+namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Collection;
@@ -22,14 +22,14 @@ class CollectionOrderManager extends Component
         })->toArray();
     }
 
-    public function saveOrder($orderedIds)
+    public function saveOrder($orderedIds = [])
     {
         // $orderedIds is an array of collection IDs in new order
         foreach ($orderedIds as $index => $id) {
             Collection::where('id',$id)->where('user_id',auth()->id())->update(['sort_order' => $index + 1]);
         }
         $this->mount(); // refresh
-        $this->dispatchBrowserEvent('order-saved');
+        $this->dispatch('order-saved');
     }
 
     public function render()

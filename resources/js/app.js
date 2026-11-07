@@ -59,36 +59,15 @@ window.showInfoToast = (message) => window.showToast(message, 'info');
 
 // fslightbox automatically provides refreshFsLightbox() - don't override it
 
-import Alpine from 'alpinejs';
+// Livewire 3 bundles Alpine. Import both from Livewire's ESM build so there's
+// exactly one Alpine, register plugins, then start. Pages without Livewire
+// components work the same way, so every page gets Alpine.
+import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import intersect from '@alpinejs/intersect';
 import collapse from '@alpinejs/collapse';
 
-window.Alpine = Alpine;
-
 Alpine.plugin(intersect);
 Alpine.plugin(collapse);
+window.Alpine = Alpine;
 
-// Start Alpine. On pages that include Livewire, Alpine must start after
-// Livewire has loaded; pages without Livewire (marketing, guest, client
-// download pages) start Alpine straight away. Previously those pages waited
-// for Livewire forever, so none of their interactive parts worked.
-function startAlpine() {
-    if (window.__alpineStarted) return;
-    window.__alpineStarted = true;
-    Alpine.start();
-}
-
-function startAlpineWhenReady(attemptsLeft = 40) {
-    const pageUsesLivewire = !!document.querySelector('script[src*="livewire"]');
-    if (!pageUsesLivewire || typeof window.Livewire !== 'undefined' || attemptsLeft <= 0) {
-        startAlpine();
-    } else {
-        setTimeout(() => startAlpineWhenReady(attemptsLeft - 1), 50);
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => startAlpineWhenReady());
-} else {
-    startAlpineWhenReady();
-}
+Livewire.start();

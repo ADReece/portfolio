@@ -41,7 +41,7 @@
         <!-- Global Modals -->
         <x-modals />
 
-        @livewireScripts
+        @livewireScriptConfig
         @stack('scripts')
     </body>
 </html>

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire;
+namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Collection;
@@ -133,7 +133,7 @@ class CollectionWizard extends Component
         ]);
 
         $this->setName = '';
-        $this->emit('set-created');
+        $this->dispatch('set-created');
         session()->flash('message', 'Set created.');
     }
 
