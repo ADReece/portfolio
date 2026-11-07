@@ -30,7 +30,7 @@ class ProdigiIntegrationTest extends TestCase
         // Create test photo
         $this->photo = Photo::factory()->create([
             'user_id' => $this->user->id,
-            'path' => 'photos/test.jpg',
+            'url' => 'photos/test.jpg',
         ]);
 
         // Create print product
