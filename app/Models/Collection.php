@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Collection extends Model
 {
@@ -59,6 +60,12 @@ class Collection extends Model
     public function sets() : HasMany
     {
         return $this->hasMany(Set::class);
+    }
+
+    /** All photos in the collection, across its sets. */
+    public function photos(): HasManyThrough
+    {
+        return $this->hasManyThrough(Photo::class, Set::class);
     }
 
     public function coverPhoto() : BelongsTo

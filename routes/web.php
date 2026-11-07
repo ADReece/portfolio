@@ -42,9 +42,7 @@ Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->nam
 // Pricing
 Route::get('/pricing', [App\Http\Controllers\BillingController::class, 'pricing'])->name('pricing');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', App\Http\Controllers\DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
 
 //Backend Routes
