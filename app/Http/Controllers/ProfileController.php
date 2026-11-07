@@ -40,7 +40,7 @@ class ProfileController extends Controller
                 return Redirect::route('profile.edit')->withErrors(['logo' => 'Logo uploads are available to subscribers only.']);
             }
             $request->validate([
-                'logo' => 'image|mimes:png,jpg,jpeg,webp,svg|max:2048'
+                'logo' => 'image:allow_svg|mimes:png,jpg,jpeg,webp,svg|max:2048'
             ]);
             // Delete old logo if present
             if ($user->logo_path) {
