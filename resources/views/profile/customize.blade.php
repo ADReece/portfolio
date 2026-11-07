@@ -1,300 +1,269 @@
-<x-app-layout>
+@php
+    $fonts = [
+        'system' => ['System default', 'system-ui, -apple-system, "Segoe UI", sans-serif'],
+        'inter' => ['Inter', '"Inter", sans-serif'],
+        'nunito' => ['Nunito', '"Nunito", sans-serif'],
+        'roboto' => ['Roboto', '"Roboto", sans-serif'],
+        'open-sans' => ['Open Sans', '"Open Sans", sans-serif'],
+        'lato' => ['Lato', '"Lato", sans-serif'],
+        'montserrat' => ['Montserrat', '"Montserrat", sans-serif'],
+        'playfair' => ['Playfair Display', '"Playfair Display", serif'],
+        'merriweather' => ['Merriweather', '"Merriweather", serif'],
+    ];
+    $presets = [
+        ['Classic light', ['theme' => 'light', 'accent' => '#4F46E5', 'bg' => '#FFFFFF', 'text' => '#374151', 'heading' => '#111827']],
+        ['Classic dark', ['theme' => 'dark', 'accent' => '#818CF8', 'bg' => '#111827', 'text' => '#E5E7EB', 'heading' => '#F9FAFB']],
+        ['Rose', ['theme' => 'light', 'accent' => '#E11D48', 'bg' => '#FFF1F2', 'text' => '#881337', 'heading' => '#4C0519']],
+        ['Forest', ['theme' => 'dark', 'accent' => '#10B981', 'bg' => '#064E3B', 'text' => '#D1FAE5', 'heading' => '#ECFDF5']],
+        ['Golden hour', ['theme' => 'light', 'accent' => '#D97706', 'bg' => '#FFFBEB', 'text' => '#78350F', 'heading' => '#451A03']],
+        ['Midnight', ['theme' => 'dark', 'accent' => '#A855F7', 'bg' => '#1E1B4B', 'text' => '#E9D5FF', 'heading' => '#F3E8FF']],
+        ['Minimal', ['theme' => 'light', 'accent' => '#0F172A', 'bg' => '#F8FAFC', 'text' => '#475569', 'heading' => '#0F172A']],
+        ['Ocean', ['theme' => 'dark', 'accent' => '#06B6D4', 'bg' => '#083344', 'text' => '#CFFAFE', 'heading' => '#ECFEFF']],
+    ];
+    $initial = [
+        'theme' => old('portfolio_theme', $user->portfolio_theme ?: 'auto'),
+        'font' => old('portfolio_font', $user->portfolio_font ?: 'system'),
+        'accent' => old('portfolio_accent_color', $user->portfolio_accent_color ?: '#4F46E5'),
+        'bg' => old('portfolio_background_color', $user->portfolio_background_color ?: ''),
+        'text' => old('portfolio_text_color', $user->portfolio_text_color ?: ''),
+        'heading' => old('portfolio_heading_color', $user->portfolio_heading_color ?: ''),
+        'mode' => old('portfolio_display_mode', $user->portfolio_display_mode ?: 'grid'),
+        'columns' => (int) old('masonry_columns', $user->masonry_columns ?: 4),
+        'perPage' => (int) old('photos_per_page', $user->photos_per_page ?: 20),
+    ];
+    $canWatermark = $user->hasFeature('watermarking') || $user->isFeatureOverrideActive();
+@endphp
+
+<x-app-layout title="Customize portfolio">
     @push('styles')
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=nunito:400,600,700|inter:400,500,600,700|roboto:400,500,700|open-sans:400,600,700|lato:400,700|montserrat:400,500,600,700|playfair-display:400,700|merriweather:400,700" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=inter:400,600,700|roboto:400,700|open-sans:400,700|lato:400,700|montserrat:400,600,700|playfair-display:400,700|merriweather:400,700&display=swap" rel="stylesheet">
     @endpush
 
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Customize Portfolio') }}
-        </h2>
-    </x-slot>
+    <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8"
+         x-data="portfolioDesigner(@js($initial), @js(collect($fonts)->map(fn ($f) => $f[1])))"
+         x-on:beforeunload.window="if (dirty) { $event.preventDefault(); $event.returnValue = ''; }">
+        <x-ui.page-header title="Customize portfolio" description="Choose how your public portfolio looks. The preview updates as you go; save to publish the changes.">
+            <x-slot:actions>
+                <x-ui.button variant="secondary" icon="arrow-top-right-on-square" :href="route('profile.view', $user->username)" target="_blank" rel="noopener">Open portfolio</x-ui.button>
+            </x-slot:actions>
+        </x-ui.page-header>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Info Banner -->
-            <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-sm">
-                <div class="flex items-start">
-                    <div class="shrink-0">
-                        <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-blue-800 dark:text-blue-200">
-                            <strong>Preview your changes:</strong> After saving, visit your public portfolio at
-                            <a href="{{ route('profile.view', ['username' => $user->username]) }}" target="_blank" class="font-semibold underline hover:text-blue-600">
-                                {{ _('/@' . $user->username) }}
-                            </a>
-                            to see your customizations applied.
+        <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+            {{-- Settings --}}
+            <div class="space-y-6">
+                <form method="POST" action="{{ route('profile.customize.update') }}" id="design-form" class="space-y-6" x-on:submit="dirty = false">
+                    @csrf
+                    @method('PATCH')
+
+                    <x-ui.card title="Start from a style" description="Fills in the colours below. You can adjust them afterwards.">
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            @foreach($presets as [$label, $p])
+                                <button type="button" x-on:click="applyPreset(@js($p))"
+                                        class="group rounded-control p-2 text-left ring-1 ring-gray-200 transition hover:ring-brand-400 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:ring-gray-700">
+                                    <span class="flex h-12 items-end gap-1 rounded-md p-2" style="background: {{ $p['bg'] }}">
+                                        <span class="h-2 w-8 rounded-full" style="background: {{ $p['heading'] }}"></span>
+                                        <span class="ml-auto size-4 rounded-full" style="background: {{ $p['accent'] }}"></span>
+                                    </span>
+                                    <span class="mt-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">{{ $label }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </x-ui.card>
+
+                    <x-ui.card title="Colours and type">
+                        <div class="grid gap-5 sm:grid-cols-2">
+                            <x-ui.select name="portfolio_theme" label="Light or dark" x-model="s.theme"
+                                         :options="['auto' => 'Match the visitor’s device', 'light' => 'Always light', 'dark' => 'Always dark']" :selected="$initial['theme']" />
+                            <x-ui.select name="portfolio_font" label="Font" x-model="s.font"
+                                         :options="collect($fonts)->map(fn ($f) => $f[0])->all()" :selected="$initial['font']" />
+
+                            @foreach([
+                                'accent' => ['portfolio_accent_color', 'Accent colour', 'Buttons and links.', false],
+                                'bg' => ['portfolio_background_color', 'Background', 'Leave unset to use the light/dark default.', true],
+                                'text' => ['portfolio_text_color', 'Text', 'Leave unset to use the default.', true],
+                                'heading' => ['portfolio_heading_color', 'Headings', 'Leave unset to use the default.', true],
+                            ] as $key => [$field, $label, $help, $optional])
+                                <div class="space-y-1">
+                                    <span id="{{ $field }}-label" class="block text-sm font-medium text-gray-800 dark:text-gray-200">{{ $label }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" aria-labelledby="{{ $field }}-label"
+                                               x-bind:value="s.{{ $key }} || defaults.{{ $key }}" x-on:input="s.{{ $key }} = $event.target.value.toUpperCase()"
+                                               class="h-10 w-14 cursor-pointer rounded-control border border-gray-300 bg-white p-1 dark:border-gray-600 dark:bg-gray-900">
+                                        <input type="hidden" name="{{ $field }}" x-bind:value="s.{{ $key }}">
+                                        <code class="text-sm text-gray-700 dark:text-gray-300" x-text="s.{{ $key }} || 'Default'"></code>
+                                        @if($optional)
+                                            <button type="button" x-show="s.{{ $key }}" x-on:click="s.{{ $key }} = ''"
+                                                    class="ml-auto rounded-sm text-sm font-medium text-gray-600 hover:text-gray-900 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-gray-400 dark:hover:text-white">Use default</button>
+                                        @endif
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $help }}</p>
+                                    @error($field)<p class="text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
+                                </div>
+                            @endforeach
+                        </div>
+                        <p x-show="contrastWarning" x-cloak class="mt-4 flex items-start gap-2 text-sm text-amber-800 dark:text-amber-300" role="status">
+                            <x-ui.icon name="exclamation-triangle" class="mt-0.5 size-4 shrink-0" />
+                            <span>Your text colour is hard to read on this background. Visitors may struggle to read your bio and captions.</span>
                         </p>
+                    </x-ui.card>
+
+                    <x-ui.card title="Layout">
+                        <fieldset class="space-y-3">
+                            <legend class="text-sm font-medium text-gray-800 dark:text-gray-200">Your portfolio's home page shows</legend>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                @foreach(['grid' => ['All photos', 'A gallery of photos from your public collections.', 'squares-2x2'], 'collections' => ['Collections', 'Cover cards for each public collection.', 'rectangle-stack']] as $value => [$title, $desc, $icon])
+                                    <label class="flex cursor-pointer gap-3 rounded-control p-3 ring-1 transition"
+                                           :class="s.mode === @js($value) ? 'bg-brand-50 ring-2 ring-brand-500 dark:bg-brand-950' : 'ring-gray-200 hover:ring-gray-300 dark:ring-gray-700'">
+                                        <input type="radio" name="portfolio_display_mode" value="{{ $value }}" x-model="s.mode" class="sr-only">
+                                        <x-ui.icon :name="$icon" class="size-6 text-brand-600 dark:text-brand-300" />
+                                        <span>
+                                            <span class="block text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $title }}</span>
+                                            <span class="block text-sm text-gray-600 dark:text-gray-400">{{ $desc }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </fieldset>
+                        <div class="mt-5 grid gap-5 sm:grid-cols-2" x-show="s.mode === 'grid'">
+                            <x-ui.select name="masonry_columns" label="Columns on large screens" x-model.number="s.columns" help="Phones always show fewer columns."
+                                         :options="[2 => '2', 3 => '3', 4 => '4', 5 => '5', 6 => '6']" :selected="$initial['columns']" />
+                            <x-ui.select name="photos_per_page" label="Photos loaded at a time" x-model.number="s.perPage" help="Fewer loads faster on slow connections."
+                                         :options="[10 => '10', 20 => '20', 30 => '30', 40 => '40', 50 => '50']" :selected="$initial['perPage']" />
+                        </div>
+                    </x-ui.card>
+
+                    <div class="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-card sm:border sm:px-5 dark:border-gray-800 dark:bg-gray-950/95">
+                        <p class="text-sm" role="status" aria-live="polite">
+                            <span x-show="dirty" x-cloak class="font-medium text-amber-700 dark:text-amber-400">You have unsaved changes</span>
+                            <span x-show="!dirty" class="text-gray-600 dark:text-gray-400">All changes saved</span>
+                        </p>
+                        <div class="flex gap-2">
+                            <x-ui.button variant="ghost" x-on:click="resetToDefaults()">Reset to defaults</x-ui.button>
+                            <x-ui.button type="submit">Save design</x-ui.button>
+                        </div>
                     </div>
-                </div>
+                </form>
+
+                <x-ui.card title="Logo" description="Shown at the top of your portfolio and galleries, and as the browser tab icon.">
+                    @livewire('logo-uploader', ['user' => $user])
+                </x-ui.card>
+
+                <x-ui.card title="Watermark" description="Text added to watermarked collections and photos.">
+                    @if($canWatermark)
+                        <form method="POST" action="{{ route('profile.watermark.update') }}" class="flex flex-wrap items-end gap-3">
+                            @csrf
+                            @method('PATCH')
+                            <x-ui.input name="watermark_text" label="Watermark text" :value="old('watermark_text', $user->watermark_text)" maxlength="50"
+                                        :placeholder="'© '.($user->name ?: $user->username)" help="Up to 50 characters. Leave blank to use your name." wrapper-class="min-w-64 flex-1" />
+                            <x-ui.button type="submit" variant="secondary">Save watermark</x-ui.button>
+                        </form>
+                    @else
+                        <x-ui.alert title="Watermarking isn't included in your plan">
+                            Upgrade to protect your photos with your own watermark.
+                            <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+                        </x-ui.alert>
+                    @endif
+                </x-ui.card>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-                <div class="p-6 space-y-10">
-                    <!-- Branding / Logo Uploader -->
-                    <div class="mb-8">
-                        @livewire('logo-uploader', ['user' => $user])
+            {{-- Live preview --}}
+            <aside class="lg:sticky lg:top-6" aria-label="Preview">
+                <div class="mb-2 flex items-center justify-between">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Preview</h2>
+                    <div class="flex rounded-control bg-gray-100 p-0.5 text-xs font-medium dark:bg-gray-800" role="radiogroup" aria-label="Preview as" x-show="s.theme === 'auto'">
+                        <button type="button" role="radio" :aria-checked="!previewDark" x-on:click="previewDark = false" :class="!previewDark ? 'bg-white shadow-xs dark:bg-gray-700' : ''" class="rounded-[calc(var(--radius-control)-2px)] px-2 py-1">Light</button>
+                        <button type="button" role="radio" :aria-checked="previewDark" x-on:click="previewDark = true" :class="previewDark ? 'bg-white shadow-xs dark:bg-gray-700' : ''" class="rounded-[calc(var(--radius-control)-2px)] px-2 py-1">Dark</button>
                     </div>
-
-                    <!-- Watermark Settings -->
-                    <div class="mb-8 border-t border-gray-200 dark:border-gray-700 pt-8">
-                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2 mb-4">
-                            <span>Image Watermarking</span>
-                            @if(!($user->hasFeature('watermarking') || $user->isFeatureOverrideActive()))
-                                <span class="px-2 py-0.5 text-xs rounded-sm bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Locked</span>
+                </div>
+                <div class="overflow-hidden rounded-card shadow-sm ring-1 ring-gray-200 dark:ring-gray-700" :style="`background:${bg}; color:${text}; font-family:${fontFamily}`">
+                    <div class="flex items-center gap-1.5 border-b border-black/5 bg-black/5 px-3 py-2" aria-hidden="true">
+                        <span class="size-2.5 rounded-full bg-red-400"></span><span class="size-2.5 rounded-full bg-amber-400"></span><span class="size-2.5 rounded-full bg-green-400"></span>
+                        <span class="ml-2 truncate text-[11px] opacity-60">{{ preg_replace('#^https?://#', '', route('profile.view', $user->username)) }}</span>
+                    </div>
+                    <div class="space-y-4 p-5">
+                        <div class="flex items-center gap-3">
+                            @if($user->logoUrl())
+                                <img src="{{ $user->logoUrl() }}" alt="" class="size-12 rounded-md object-contain">
                             @endif
-                        </h3>
-
-                        @if(!($user->hasFeature('watermarking') || $user->isFeatureOverrideActive()))
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Watermark your photos to protect your work. <a href="{{ route('pricing') }}" class="text-indigo-600 dark:text-indigo-400 underline">Upgrade to unlock</a></p>
-                        @else
-                            <form method="post" action="{{ route('profile.watermark.update') }}" class="space-y-4">
-                                @csrf
-                                @method('patch')
-
-                                <div>
-                                    <x-input-label for="watermark_text" value="Watermark Text" />
-                                    <x-text-input id="watermark_text" name="watermark_text" type="text" class="mt-1 block w-full" :value="old('watermark_text', $user->watermark_text)" autocomplete="off" />
-                                    <x-input-error :messages="$errors->get('watermark_text')" class="mt-2" />
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        Leave blank to use <strong>{{ _('@' . $user->username) }}</strong> as your watermark.
-                                    </p>
-                                </div>
-
-                                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                    <div class="flex items-start gap-2">
-                                        <svg class="h-4 w-4 text-blue-400 dark:text-blue-300 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <div class="flex-1 text-xs text-blue-700 dark:text-blue-300">
-                                            Watermarks appear on photos/collections marked as "watermarked" and are repeated diagonally across images.
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-4">
-                                    <x-primary-button>Save Watermark</x-primary-button>
-                                    @if (session('status') === 'watermark-updated')
-                                        <p class="text-xs text-green-600 dark:text-green-400">Saved!</p>
-                                    @endif
-                                </div>
-                            </form>
+                            <div class="min-w-0">
+                                <p class="truncate text-xl font-bold" :style="`color:${heading}`">{{ $user->name ?: $user->username }}</p>
+                                <p class="text-xs opacity-70">{{ '@'.$user->username }}</p>
+                            </div>
+                        </div>
+                        @if($user->bio)
+                            <div class="line-clamp-3 text-sm [&_p]:m-0">{!! $user->bioHtml() !!}</div>
                         @endif
-                    </div>
+                        <span class="inline-block rounded-control px-3 py-1.5 text-sm font-semibold text-white" :style="`background:${accentColour}`">View collections</span>
 
-                    <!-- Preview Section -->
-                    <div class="mb-8 p-6 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600" id="preview-area">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                            🎨 Live Preview
-                        </h3>
-                        <div id="portfolio-preview" class="rounded-lg overflow-hidden" style="min-height: 300px;">
-                            <div class="p-8 text-center">
-                                <h1 class="text-4xl font-bold mb-2">{{ $user->name ?? $user->username }}</h1>
-                                <p class="text-lg mb-4">{{ _('@' . $user->username) }}</p>
-                                @if($user->bio)
-                                    <div class="text-base mb-6 prose prose-sm dark:prose-invert mx-auto">
-                                        {!! $user->bioHtml() !!}
+                        <template x-if="s.mode === 'grid'">
+                            <div class="grid gap-1.5" :style="`grid-template-columns: repeat(${Math.min(s.columns, 4)}, minmax(0, 1fr))`">
+                                @forelse($previewPhotos as $photo)
+                                    <img src="{{ $photo->getAwsThumbnail() }}" alt="" class="aspect-square w-full rounded-sm object-cover">
+                                @empty
+                                    @for($i = 0; $i < 8; $i++)<span class="aspect-square rounded-sm bg-current opacity-10"></span>@endfor
+                                @endforelse
+                            </div>
+                        </template>
+                        <template x-if="s.mode === 'collections'">
+                            <div class="grid gap-3">
+                                @forelse($previewCollections as $c)
+                                    <div class="overflow-hidden rounded-md ring-1 ring-black/10">
+                                        @if($c->coverPhoto)<img src="{{ $c->coverPhoto->getAwsThumbnail() }}" alt="" class="h-20 w-full object-cover">@else<span class="block h-20 bg-current opacity-10"></span>@endif
+                                        <p class="px-2 py-1.5 text-sm font-semibold" :style="`color:${heading}`">{{ $c->name }}</p>
                                     </div>
-                                @endif
-                                <button class="px-6 py-3 rounded-lg font-semibold">Sample Button</button>
-                                <div class="mt-6">
-                                    <a href="#" class="underline">Sample Link</a>
-                                </div>
+                                @empty
+                                    @for($i = 0; $i < 2; $i++)<span class="block h-24 rounded-md bg-current opacity-10"></span>@endfor
+                                @endforelse
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Presets (Collapsible) -->
-                    <div class="mb-8" x-data="{ presetsOpen: false }">
-                        <button type="button" @click="presetsOpen = !presetsOpen"
-                                class="w-full flex items-center justify-between p-4 bg-linear-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">🎯</span>
-                                <div class="text-left">
-                                    <h3 class="text-md font-semibold text-gray-900 dark:text-gray-100">
-                                        Quick Style Presets
-                                    </h3>
-                                    <p class="text-xs text-gray-600 dark:text-gray-400">
-                                        Apply professionally designed color schemes instantly
-                                    </p>
-                                </div>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform"
-                                 :class="{ 'rotate-180': presetsOpen }"
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-
-                        <div x-show="presetsOpen"
-                             x-collapse
-                             class="mt-4 p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition-all"
-                                        data-preset='{"theme":"light","accent":"#6366F1","bg":"#FFFFFF","text":"#1F2937","heading":"#111827"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-white border"></div>
-                                    <div class="text-xs font-medium">Classic Light</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-indigo-500 transition-all"
-                                        data-preset='{"theme":"dark","accent":"#818CF8","bg":"#111827","text":"#F3F4F6","heading":"#F9FAFB"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-gray-900 border border-gray-700"></div>
-                                    <div class="text-xs font-medium">Classic Dark</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-rose-500 transition-all"
-                                        data-preset='{"theme":"light","accent":"#E11D48","bg":"#FFF1F2","text":"#881337","heading":"#4C0519"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-rose-50 border border-rose-200"></div>
-                                    <div class="text-xs font-medium">Rose Garden</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-emerald-500 transition-all"
-                                        data-preset='{"theme":"dark","accent":"#10B981","bg":"#064E3B","text":"#D1FAE5","heading":"#ECFDF5"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-emerald-900 border border-emerald-700"></div>
-                                    <div class="text-xs font-medium">Forest Night</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-amber-500 transition-all"
-                                        data-preset='{"theme":"light","accent":"#F59E0B","bg":"#FFFBEB","text":"#78350F","heading":"#451A03"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-amber-50 border border-amber-200"></div>
-                                    <div class="text-xs font-medium">Golden Hour</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-purple-500 transition-all"
-                                        data-preset='{"theme":"dark","accent":"#A855F7","bg":"#1E1B4B","text":"#E9D5FF","heading":"#F3E8FF"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-purple-950 border border-purple-800"></div>
-                                    <div class="text-xs font-medium">Purple Dream</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-slate-500 transition-all"
-                                        data-preset='{"theme":"light","accent":"#0F172A","bg":"#F8FAFC","text":"#475569","heading":"#0F172A"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-slate-50 border border-slate-200"></div>
-                                    <div class="text-xs font-medium">Minimal Gray</div>
-                                </button>
-
-                                <button type="button" class="preset-btn p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-cyan-500 transition-all"
-                                        data-preset='{"theme":"dark","accent":"#06B6D4","bg":"#083344","text":"#CFFAFE","heading":"#ECFEFF"}'>
-                                    <div class="w-full h-8 rounded-sm mb-2 bg-cyan-950 border border-cyan-800"></div>
-                                    <div class="text-xs font-medium">Ocean Deep</div>
-                                </button>
-                            </div>
-                            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <p class="text-xs text-blue-800 dark:text-blue-200">
-                                    <strong>💡 Tip:</strong> Click a preset to apply it instantly to your portfolio. You can fine-tune the settings below after applying.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Customization Form -->
-                    @include('profile.partials.customize-portfolio-form')
-
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
-                        <span class="mr-1">{{ __('Your public URL:') }}</span>
-                        <code class="px-2 py-1 rounded-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
-                            {{ _('/@' . $user->username) }}
-                        </code>
-                    </div>
-
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
-                        <span class="mr-1">{{ __('Print product controls:') }}</span>
-                        <a href="{{ route('profile.prodigi-products.edit') }}" class="underline text-indigo-600 dark:text-indigo-400">
-                            Manage client product availability
-                        </a>
+                        </template>
                     </div>
                 </div>
-            </div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">A simplified preview. Open your portfolio to see the full page after saving.</p>
+            </aside>
         </div>
     </div>
 
     @push('scripts')
     <script>
-        // Live preview updates
-        document.addEventListener('DOMContentLoaded', function() {
-            const preview = document.getElementById('portfolio-preview');
-            const form = document.getElementById('customize-form');
-
-            function updatePreview() {
-                if (!form) return;
-
-                const formData = new FormData(form);
-                const font = formData.get('portfolio_font') || 'system';
-                const theme = formData.get('portfolio_theme') || 'auto';
-                const accentColor = formData.get('portfolio_accent_color') || '#6366F1';
-                const backgroundColor = formData.get('portfolio_background_color') || '';
-                const textColor = formData.get('portfolio_text_color') || '';
-                const headingColor = formData.get('portfolio_heading_color') || '';
-
-                console.log('Updating preview with:', { font, theme, accentColor, backgroundColor, textColor, headingColor });
-
-                // Apply font
-                const fontMap = {
-                    'system': 'system-ui, -apple-system, sans-serif',
-                    'nunito': "'Nunito', sans-serif",
-                    'inter': "'Inter', sans-serif",
-                    'playfair': "'Playfair Display', serif",
-                    'roboto': "'Roboto', sans-serif",
-                    'open-sans': "'Open Sans', sans-serif",
-                    'merriweather': "'Merriweather', serif",
-                    'lato': "'Lato', sans-serif",
-                    'montserrat': "'Montserrat', sans-serif",
-                };
-                preview.style.fontFamily = fontMap[font] || fontMap['system'];
-
-                // Apply theme colors
-                if (theme === 'dark') {
-                    preview.style.backgroundColor = backgroundColor || '#111827';
-                    preview.style.color = textColor || '#F3F4F6';
-                } else if (theme === 'light') {
-                    preview.style.backgroundColor = backgroundColor || '#FFFFFF';
-                    preview.style.color = textColor || '#1F2937';
-                } else {
-                    // Auto theme - use system preference
-                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                        preview.style.backgroundColor = backgroundColor || '#111827';
-                        preview.style.color = textColor || '#F3F4F6';
-                    } else {
-                        preview.style.backgroundColor = backgroundColor || '#FFFFFF';
-                        preview.style.color = textColor || '#1F2937';
-                    }
-                }
-
-                // Apply accent color to button
-                const button = preview.querySelector('button');
-                if (button) {
-                    button.style.backgroundColor = accentColor;
-                    button.style.color = '#FFFFFF';
-                }
-
-                // Apply accent color to links
-                const links = preview.querySelectorAll('a');
-                links.forEach(link => {
-                    link.style.color = accentColor;
+        function portfolioDesigner(initial, fontFamilies) {
+            const defaults = { accent: '#4F46E5', bg: '', text: '', heading: '' };
+            const themeDefaults = {
+                light: { bg: '#FFFFFF', text: '#374151', heading: '#111827' },
+                dark: { bg: '#111827', text: '#E5E7EB', heading: '#F9FAFB' },
+            };
+            const luminance = (hex) => {
+                const c = hex.replace('#', '').match(/.{2}/g).map(v => {
+                    const x = parseInt(v, 16) / 255;
+                    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
                 });
-
-                // Apply heading color
-                const headings = preview.querySelectorAll('h1, h2, h3');
-                headings.forEach(heading => {
-                    if (headingColor) {
-                        heading.style.color = headingColor;
-                    } else {
-                        heading.style.color = (theme === 'dark' ? '#F9FAFB' : '#111827');
-                    }
-                });
-            }
-
-            // Listen for form changes
-            if (form) {
-                form.addEventListener('input', updatePreview);
-                form.addEventListener('change', updatePreview);
-
-                // Initial preview with delay to ensure form is fully loaded
-                setTimeout(updatePreview, 100);
-            }
-        });
+                return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+            };
+            return {
+                s: { ...initial },
+                saved: JSON.stringify(initial),
+                previewDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
+                defaults: { accent: '#4F46E5', bg: '#FFFFFF', text: '#374151', heading: '#111827' },
+                get dirty() { return JSON.stringify(this.s) !== this.saved; },
+                set dirty(v) { if (!v) this.saved = JSON.stringify(this.s); },
+                get mode() { return this.s.theme === 'auto' ? (this.previewDark ? 'dark' : 'light') : this.s.theme; },
+                get bg() { return this.s.bg || themeDefaults[this.mode].bg; },
+                get text() { return this.s.text || themeDefaults[this.mode].text; },
+                get heading() { return this.s.heading || themeDefaults[this.mode].heading; },
+                get accentColour() { return this.s.accent || defaults.accent; },
+                get fontFamily() { return fontFamilies[this.s.font] || fontFamilies.system; },
+                get contrastWarning() {
+                    const [a, b] = [luminance(this.bg), luminance(this.text)];
+                    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) < 4.5;
+                },
+                applyPreset(p) {
+                    Object.assign(this.s, { theme: p.theme, accent: p.accent, bg: p.bg, text: p.text, heading: p.heading });
+                },
+                resetToDefaults() {
+                    Object.assign(this.s, { theme: 'auto', font: 'system', accent: defaults.accent, bg: '', text: '', heading: '', mode: 'grid', columns: 4, perPage: 20 });
+                },
+            };
+        }
     </script>
     @endpush
 </x-app-layout>

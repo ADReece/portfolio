@@ -1,42 +1,41 @@
 <div class="space-y-4">
-    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-        <span>Brand Logo</span>
-        @if(!$canUpload)
-            <span class="px-2 py-0.5 text-xs rounded-sm bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300">Locked</span>
-        @endif
-    </h3>
-
     @if(session('logo-status'))
-        <div id="logo-flash" class="text-xs px-3 py-2 rounded-sm bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-            {{ session('logo-status') }}
-        </div>
+        <x-ui.alert tone="green" id="logo-flash" role="status">{{ session('logo-status') }}</x-ui.alert>
     @endif
 
     @if(!$canUpload)
-        <p class="text-xs text-gray-500 dark:text-gray-400">Upgrade your plan to upload a custom logo. <a href="{{ route('pricing') }}" class="text-indigo-600 dark:text-indigo-400 underline">View pricing</a></p>
+        <x-ui.alert title="Custom logos aren't included in your plan">
+            Upgrade to show your own logo on your portfolio and galleries.
+            <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+        </x-ui.alert>
     @else
-        <div class="flex items-center gap-4">
-            @if($currentLogoUrl)
-                <img src="{{ $user->logoUrl() }}" alt="Logo" class="h-16 max-w-40 object-contain rounded-sm shadow-sm" />
-            @elseif($logo)
-                <img src="{{ $logo->temporaryUrl() }}" alt="Preview" class="h-16 max-w-40 object-contain rounded-sm shadow-sm" />
-            @else
-                <div class="h-16 w-16 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 text-[10px] text-gray-400 dark:text-gray-500">No Logo</div>
-            @endif
-
-            <div class="flex flex-col gap-2">
-                <input type="file" wire:model="logo" accept="image/*" class="text-xs" />
-                @error('logo') <span class="text-xs text-red-600 dark:text-red-400">{{ $message }}</span> @enderror
-                <div class="flex gap-2">
-                    <button type="button" wire:click="save" wire:loading.attr="disabled" {{ $logo ? '' : 'disabled' }} class="px-3 py-1 text-xs rounded-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">Save Logo</button>
-                    @if($currentLogoUrl)
-                        <button type="button" wire:click="remove" wire:loading.attr="disabled" class="px-3 py-1 text-xs rounded-sm bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">Remove</button>
+        <div class="flex flex-wrap items-center gap-5">
+            <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-control bg-gray-100 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-700">
+                @if($logo)
+                    <img src="{{ $logo->temporaryUrl() }}" alt="New logo preview" class="max-h-full max-w-full object-contain" />
+                @elseif($currentLogoUrl)
+                    <img src="{{ $user->logoUrl() }}" alt="Your current logo" class="max-h-full max-w-full object-contain" />
+                @else
+                    <x-ui.icon name="photo" class="size-8 text-gray-400" />
+                @endif
+            </div>
+            <div class="space-y-2">
+                <label for="logo-file" class="block text-sm font-medium text-gray-800 dark:text-gray-200">{{ $currentLogoUrl ? 'Replace logo' : 'Upload a logo' }}</label>
+                <input id="logo-file" type="file" wire:model="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" aria-describedby="logo-help"
+                       class="block text-sm text-gray-700 file:mr-3 file:rounded-control file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:text-gray-300 dark:file:bg-brand-950 dark:file:text-brand-200" />
+                <p id="logo-help" class="text-sm text-gray-600 dark:text-gray-400">PNG, JPG, WebP or SVG, up to 2MB. A square or wide logo works best.</p>
+                <p wire:loading wire:target="logo" class="text-sm text-gray-600 dark:text-gray-400" role="status">Uploading…</p>
+                @error('logo')<p class="text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
+                <div class="flex flex-wrap gap-2 pt-1">
+                    @if($logo)
+                        <x-ui.button size="sm" wire:click="save" wire:target="save">Save logo</x-ui.button>
+                    @endif
+                    @if($currentLogoUrl && ! $logo)
+                        <x-ui.button size="sm" variant="danger-outline" wire:click="remove" wire:target="remove">Remove logo</x-ui.button>
                     @endif
                 </div>
-                <div wire:loading wire:target="logo" class="text-xs text-gray-500 dark:text-gray-400">Uploading...</div>
             </div>
         </div>
-        <p class="text-[11px] text-gray-400 dark:text-gray-500">PNG, JPG, WebP, SVG. Max 2MB. Thumbnail auto-generated (160px wide for raster images).</p>
     @endif
 
 <script>

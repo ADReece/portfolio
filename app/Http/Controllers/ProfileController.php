@@ -72,8 +72,13 @@ class ProfileController extends Controller
      */
     public function customize(Request $request): View
     {
+        $user = $request->user();
+
         return view('profile.customize', [
-            'user' => $request->user(),
+            'user' => $user,
+            // A few real photos and collections, so the preview looks like their portfolio.
+            'previewPhotos' => $user->photos()->latest()->take(8)->get(),
+            'previewCollections' => $user->collections()->where('status', 'Published')->with('coverPhoto')->take(3)->get(),
         ]);
     }
 
@@ -106,7 +111,7 @@ class ProfileController extends Controller
             'photos_per_page' => $validated['photos_per_page'] ?? $request->user()->photos_per_page,
         ]);
 
-        return Redirect::route('profile.customize')->with('status', 'portfolio-customized');
+        return Redirect::route('profile.customize')->with('success', 'Your portfolio design is saved.');
     }
 
     /**
@@ -148,7 +153,7 @@ class ProfileController extends Controller
             'watermark_text' => $validated['watermark_text']
         ]);
 
-        return Redirect::route('profile.edit')->with('status', 'watermark-updated');
+        return Redirect::route('profile.customize')->with('success', 'Watermark saved.');
     }
 
     /**
