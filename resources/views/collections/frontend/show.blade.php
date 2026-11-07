@@ -179,6 +179,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
                         body: JSON.stringify({ email: email })
@@ -186,14 +187,14 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            window.showSuccessToast('Archive is being prepared! You will receive an email with the download link shortly.');
+                            window.showSuccessToast("We're preparing your photos. We'll email " + email + ' a download link when they are ready.');
                         } else {
                             window.showErrorToast(data.message || 'Failed to request archive');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        window.showErrorToast('An error occurred. Please try again.');
+                        window.showErrorToast("We couldn't start your download. Check your connection and try again.");
                     });
                 }
             });

@@ -74,7 +74,7 @@
                     <div x-data="{ expired: false }"
                          x-init="setTimeout(() => { if (new Date() > new Date('{{ $expiresAt }}')) { expired = true; } }, 1000)">
                         <template x-if="!expired">
-                            <a href="{{ route('collections.download-archive', ['collection' => $collection->id, 'filename' => $filename]) }}"
+                            <a href="{{ $downloadUrl }}"
                                class="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-center py-4 px-6 rounded-lg font-semibold text-lg shadow-lg transform transition hover:scale-105">
                                 <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

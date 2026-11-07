@@ -191,6 +191,13 @@ class CollectionController extends Controller
             ], 403);
         }
 
+        if (! \App\Http\Controllers\ProfileController::collectionIsUnlocked($request, $collection)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Open the gallery with its password before requesting a download.'
+            ], 403);
+        }
+
         $validated = $request->validate([
             'email' => 'required|email',
         ]);
@@ -255,6 +262,11 @@ class CollectionController extends Controller
 
         return view('collections.archive-download', [
             'collection' => $collection,
+            'user' => $collection->user,
+            'downloadUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute('collections.download-archive', $expiresAt, [
+                'collection' => $collection->id,
+                'filename' => $filename,
+            ]),
             'filename' => $filename,
             'expiresAt' => $expiresAt->toIso8601String(),
             'photoCount' => $photoCount,

@@ -99,7 +99,7 @@ class GenerateCollectionArchive implements ShouldQueue
             unlink($tempPath);
 
             // Generate download page URL (valid for 48 hours)
-            $downloadPageUrl = route('collections.archive-download-page', [
+            $downloadPageUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('collections.archive-download-page', now()->addHours(48), [
                 'collection' => $collection->id,
                 'filename' => $filename
             ]);

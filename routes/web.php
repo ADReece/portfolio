@@ -89,9 +89,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/sets/{set}/templates', [SetController::class, 'syncTemplates'])->name('sets.templates.sync');
 
     Route::post('/collections/{collection}/email-client', [CollectionController::class, 'emailClient'])->name('collections.email-client');
-    Route::post('/collections/{collection}/request-archive', [CollectionController::class, 'requestArchive'])->name('collections.request-archive');
-    Route::get('/collections/{collection}/archive/{filename}', [CollectionController::class, 'archiveDownloadPage'])->name('collections.archive-download-page');
-    Route::get('/collections/{collection}/download-archive/{filename}', [CollectionController::class, 'downloadArchive'])->name('collections.download-archive');
 
 
     // Photo management
@@ -140,6 +137,18 @@ Route::prefix('/@{username}')->group(function(){
         ->name('profile.collection.unlock');
     Route::get('/print-products', [ProdigiProductSettingsController::class, 'listForPortfolio'])->name('profile.print-products');
 });
+
+// Client "download all" archives. Clients don't have accounts: requesting an
+// archive needs an unlocked gallery, and the emailed links are signed.
+Route::post('/collections/{collection}/request-archive', [CollectionController::class, 'requestArchive'])
+    ->middleware('throttle:5,1')
+    ->name('collections.request-archive');
+Route::get('/collections/{collection}/archive/{filename}', [CollectionController::class, 'archiveDownloadPage'])
+    ->middleware('signed')
+    ->name('collections.archive-download-page');
+Route::get('/collections/{collection}/download-archive/{filename}', [CollectionController::class, 'downloadArchive'])
+    ->middleware('signed')
+    ->name('collections.download-archive');
 
 // Public photo download and purchase requests
 Route::get('/photos/{photo}/download-options', [PhotoController::class, 'downloadOptions'])->name('photos.download-options');
