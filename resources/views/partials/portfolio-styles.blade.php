@@ -58,13 +58,15 @@
         .portfolio-accent, a.portfolio-link, a[href^="/@"]:not(.no-accent) { color: var(--portfolio-accent) !important; }
         .portfolio-button, button.portfolio-button, .portfolio-bg-accent { background: var(--portfolio-accent) !important; border-color: var(--portfolio-accent) !important; color:#fff !important; }
         .portfolio-button:hover, button.portfolio-button:hover { filter: brightness(.92); }
-        /* Form element styling */
-        main.portfolio-content button, main.portfolio-content .inline-flex.items-center {
+        /* Primary actions take the accent colour. Opt-in (submit buttons and
+           .portfolio-button) so links, icon buttons and dismiss controls keep
+           their own styling. */
+        main.portfolio-content button[type="submit"]:not(.no-accent) {
             background: var(--portfolio-accent) !important;
             border-color: var(--portfolio-accent) !important;
             color: #fff !important;
         }
-        main.portfolio-content button:hover, main.portfolio-content .inline-flex.items-center:hover {
+        main.portfolio-content button[type="submit"]:not(.no-accent):hover {
             filter: brightness(.92);
         }
         /* Hero overlay helper */

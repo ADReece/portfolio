@@ -26,7 +26,7 @@
 
         <div class="flex flex-wrap gap-3">
             @if($tone !== 'success' && $photo)
-                <a href="{{ route('print-purchase.show', $photo) }}" class="inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">Try again</a>
+                <a href="{{ route('print-purchase.show', $photo) }}" class="portfolio-button inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">Try again</a>
             @endif
             @if($returnUrl)
                 <a href="{{ $returnUrl }}" class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Back to gallery</a>

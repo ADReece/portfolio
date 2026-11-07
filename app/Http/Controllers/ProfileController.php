@@ -268,7 +268,7 @@ class ProfileController extends Controller
         $request->validate(['password' => 'required|string']);
 
         if (! $collection->private || ! password_verify($request->input('password'), (string) $collection->password)) {
-            return back()->withErrors(['password' => __('That password is not correct. Check the email from your photographer and try again.')]);
+            return back()->withErrors(['password' => __("That password isn't right. Check it with your photographer and try again.")]);
         }
 
         \App\Support\GalleryAccess::unlockCollection($request, $collection);

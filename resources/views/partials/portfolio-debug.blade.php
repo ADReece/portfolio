@@ -1,4 +1,4 @@
-@if(app()->environment('local') && isset($user) && method_exists($user,'canUseCustomizations'))
+@if(config('app.debug') && request()->boolean('debug_theme') && isset($user) && method_exists($user,'canUseCustomizations'))
     @php
         $apply = $user->canUseCustomizations();
     @endphp

@@ -343,16 +343,33 @@
                 isLoadingMore: false,
                 loadMoreLock: false,
                 columns: [],
+                // The photographer's column setting is the maximum; narrower
+                // screens get fewer columns so photos stay a usable size.
+                maxColumns: {{ $cols }},
+                minColumnWidth: 170,
                 columnCount: {{ $cols }},
 
+                responsiveColumnCount() {
+                    const grid = document.querySelector('#masonry');
+                    const width = grid?.clientWidth || window.innerWidth;
+                    return Math.max(1, Math.min(this.maxColumns, Math.floor(width / this.minColumnWidth)));
+                },
+
                 init() {
+                    this.columnCount = this.responsiveColumnCount();
                     this.$nextTick(() => {
                         this.initMasonry();
                     });
 
-                    // Handle window resize
+                    // Only rebuild the columns when the column count actually changes.
                     window.addEventListener('resize', () => {
-                        this.debounce(() => this.relayout(), 250);
+                        this.debounce(() => {
+                            const next = this.responsiveColumnCount();
+                            if (next !== this.columnCount) {
+                                this.columnCount = next;
+                                this.relayout();
+                            }
+                        }, 200);
                     });
                 },
 

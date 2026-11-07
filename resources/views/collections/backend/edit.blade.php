@@ -133,11 +133,11 @@
             <div class="mt-8 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <div>
                     <h3 class="font-semibold text-indigo-900 dark:text-indigo-100">Clients can't see this collection yet</h3>
-                    <p class="text-sm text-indigo-800 dark:text-indigo-200">Set the status to <strong>Published</strong> and save to get a link you can share with clients.</p>
+                    <p class="text-sm text-indigo-800 dark:text-indigo-200">Publish it to get a link you can share with clients. Any changes above are saved too.</p>
                 </div>
-                <button type="button" onclick="document.getElementById('status').value='Published'; document.getElementById('status').focus();"
+                <button type="button" onclick="const s = document.getElementById('status'); s.value = 'Published'; s.form.requestSubmit();"
                         class="shrink-0 inline-flex items-center justify-center px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
-                    Set to Published
+                    Publish now
                 </button>
             </div>
             @endif
@@ -278,7 +278,7 @@
 
     <script>
         // Toggle password field visibility and auto-check hide_from_portfolio
-        document.querySelector('input[name="private"]').addEventListener('change', function() {
+        document.getElementById('private').addEventListener('change', function() {
             document.getElementById('password-field').style.display = this.checked ? 'block' : 'none';
 
             // Auto-check "hide from portfolio" when making collection private
