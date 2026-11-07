@@ -3,12 +3,12 @@
     Validation errors for `name` show automatically and mark the input invalid.
     Pass any other attribute (wire:model, x-model, autocomplete…) straight through.
 --}}
-@props(['name' => null, 'id' => null, 'label' => null, 'help' => null, 'optional' => false, 'type' => 'text', 'errorKey' => null])
+@props(['name' => null, 'id' => null, 'label' => null, 'help' => null, 'optional' => false, 'type' => 'text', 'errorKey' => null, 'bag' => null])
 
 @php
     $id ??= $name ?? 'input-'.\Illuminate\Support\Str::random(6);
     $errorKey ??= $name ? str_replace(['[', ']'], ['.', ''], $name) : null;
-    $error = $errorKey ? $errors->first($errorKey) : null;
+    $error = $errorKey ? ($bag ? $errors->getBag($bag) : $errors)->first($errorKey) : null;
     $describedBy = trim(($help ? "$id-help " : '').($error ? "$id-error" : ''));
 @endphp
 

@@ -84,3 +84,8 @@ document.addEventListener('alpine:init', () => {
 });
 
 Livewire.start();
+
+// Rich-text editors are only needed on a few settings pages.
+if (document.querySelector('[data-rich-text]')) {
+    import('./rich-text.js');
+}

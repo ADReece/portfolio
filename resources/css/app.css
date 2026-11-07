@@ -69,6 +69,40 @@
     }
 }
 
+/* Rich-text editor (Quill) themed to match the app, in light and dark. */
+.rich-text .ql-toolbar.ql-snow {
+    border-color: var(--color-gray-300);
+    border-radius: var(--radius-control) var(--radius-control) 0 0;
+    background: var(--color-gray-50);
+}
+.rich-text .ql-container.ql-snow {
+    border-color: var(--color-gray-300);
+    border-radius: 0 0 var(--radius-control) var(--radius-control);
+    background: var(--color-white);
+    color: var(--color-gray-900);
+    font-family: inherit;
+    font-size: 0.875rem;
+}
+.rich-text .ql-editor {
+    min-height: 9rem;
+}
+.rich-text .ql-container.ql-snow:focus-within {
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 1px var(--color-brand-500);
+}
+@variant dark {
+    .rich-text .ql-toolbar.ql-snow { border-color: var(--color-gray-600); background: var(--color-gray-800); }
+    .rich-text .ql-container.ql-snow { border-color: var(--color-gray-600); background: var(--color-gray-900); color: var(--color-gray-100); }
+    .rich-text .ql-snow .ql-stroke { stroke: var(--color-gray-300); }
+    .rich-text .ql-snow .ql-fill { fill: var(--color-gray-300); }
+    .rich-text .ql-snow .ql-picker { color: var(--color-gray-300); }
+    .rich-text .ql-editor.ql-blank::before { color: var(--color-gray-500); }
+}
+.rich-text .ql-editor.ql-blank::before {
+    color: var(--color-gray-500);
+    font-style: normal;
+}
+
 [x-cloak] {
     display: none !important;
 }

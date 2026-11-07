@@ -1,85 +1,84 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Settings') }}
-        </h2>
-    </x-slot>
+<x-app-layout title="Settings">
+    <div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header title="Settings" description="Your profile, sign-in details and account." />
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+        @unless($user->hasFeature('upload_logo') || $user->isFeatureOverrideActive())
+            <x-ui.alert title="Make your portfolio look like your brand">
+                Upgrade to add your logo, choose colours and fonts, and watermark your photos.
+                <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+            </x-ui.alert>
+        @endunless
 
-            <!-- Customize Portfolio CTA Banner -->
-            @if($user->hasFeature('upload_logo') || $user->isFeatureOverrideActive())
-                <!-- Subscriber: Customize Portfolio CTA -->
-                <div class="p-6 bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-lg sm:rounded-lg border-2 border-indigo-200 dark:border-indigo-700">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                                🎨 Customize Your Portfolio
-                            </h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Personalize fonts, colors, themes, logo branding, and watermarks for your public portfolio.
-                            </p>
+        <form method="post" action="{{ route('profile.update') }}">
+            @csrf
+            @method('patch')
+            <x-ui.card title="Profile" description="Shown on your public portfolio.">
+                <div class="space-y-5">
+                    <x-ui.input name="name" label="Name" :value="old('name', $user->name)" required autocomplete="name" />
+                    <x-ui.field id="portfolio-address" label="Portfolio address" help="Your portfolio address can't be changed.">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <code id="portfolio-address" class="rounded-control bg-gray-100 px-3 py-2 text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200">{{ route('profile.view', $user->username) }}</code>
+                            <x-ui.button variant="ghost" size="sm" icon="arrow-top-right-on-square" :href="route('profile.view', $user->username)" target="_blank" rel="noopener">Open</x-ui.button>
                         </div>
-                        <a href="{{ route('profile.customize') }}" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap">
-                            Customize →
-                        </a>
+                    </x-ui.field>
+                    <div class="space-y-1">
+                        <span id="bio-label" class="block text-sm font-medium text-gray-800 dark:text-gray-200">Bio <span class="font-normal text-gray-500 dark:text-gray-400">(optional)</span></span>
+                        <div class="rich-text">
+                            <div data-rich-text data-input="bio" aria-labelledby="bio-label" data-placeholder="A few lines about you and your photography" class="min-h-40"></div>
+                        </div>
+                        <input type="hidden" name="bio" id="bio" value="{{ old('bio', $user->bioHtml()) }}">
+                        @error('bio')<p class="text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
                     </div>
                 </div>
-            @else
-                <!-- Free plan: Upgrade CTA -->
-                <div class="p-6 bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg sm:rounded-lg border-2 border-amber-200 dark:border-amber-700">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                                ✨ Unlock Portfolio Customization
-                                <span class="px-2 py-0.5 text-xs rounded-sm bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-200">Free Plan</span>
-                            </h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Upgrade to customize fonts, colors, themes, add your logo branding, watermark images, and more.
-                            </p>
-                        </div>
-                        <a href="{{ route('pricing') }}" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-colors duration-200 whitespace-nowrap">
-                            View Plans →
-                        </a>
-                    </div>
+                <div class="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                    @if (session('status') === 'profile-updated')
+                        <p x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" role="status" class="text-sm text-green-700 dark:text-green-400">Saved</p>
+                    @endif
+                    <x-ui.button type="submit">Save profile</x-ui.button>
                 </div>
-            @endif
+            </x-ui.card>
+        </form>
 
-            <!-- Profile Settings Section -->
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 px-4">
-                    📸 Profile Settings
-                </h3>
-                <div class="space-y-6">
-                    <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-                        <div class="max-w-xl">
-                            @include('profile.partials.update-profile-information-form')
-                        </div>
-                    </div>
-                </div>
+        <x-ui.card title="Email" description="Used to sign in and for account emails.">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ $user->email }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">To change your email, contact support.</p>
             </div>
+        </x-ui.card>
 
-            <!-- Account Settings Section -->
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 px-4">
-                    🔐 Account & Security
-                </h3>
-                <div class="space-y-6">
-                    <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-                        <div class="max-w-xl">
-                            @include('profile.partials.update-password-form')
-                        </div>
-                    </div>
+        <form method="post" action="{{ route('password.update') }}">
+            @csrf
+            @method('put')
+            <x-ui.card title="Password" description="Use a long password you don't use anywhere else.">
+                <div class="max-w-md space-y-5">
+                    <x-ui.input id="update_password_current_password" name="current_password" type="password" label="Current password" bag="updatePassword" autocomplete="current-password" />
+                    <x-ui.input id="update_password_password" name="password" type="password" label="New password" bag="updatePassword" autocomplete="new-password" />
+                    <x-ui.input id="update_password_password_confirmation" name="password_confirmation" type="password" label="Confirm new password" bag="updatePassword" autocomplete="new-password" />
+                </div>
+                <div class="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                    @if (session('status') === 'password-updated')
+                        <p x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" role="status" class="text-sm text-green-700 dark:text-green-400">Password updated</p>
+                    @endif
+                    <x-ui.button type="submit">Update password</x-ui.button>
+                </div>
+            </x-ui.card>
+        </form>
 
-                    <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
-                        <div class="max-w-xl">
-                            @include('profile.partials.delete-user-form')
-                        </div>
+        <x-ui.card title="Delete account">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Permanently deletes your account, portfolio, collections and photos. Clients will no longer be able to open your links. Download anything you want to keep first.</p>
+            <form method="post" action="{{ route('profile.destroy') }}" class="mt-5 space-y-4"
+                  x-data="{ confirming: {{ $errors->userDeletion->isNotEmpty() ? 'true' : 'false' }} }">
+                @csrf
+                @method('delete')
+                <x-ui.button variant="danger-outline" icon="trash" x-show="!confirming" x-on:click="confirming = true; $nextTick(() => $refs.deletePassword.focus())">Delete my account</x-ui.button>
+                <div x-show="confirming" x-cloak class="max-w-md space-y-4 rounded-card bg-red-50 p-4 ring-1 ring-red-200 dark:bg-red-950/50 dark:ring-red-900">
+                    <x-ui.input id="delete_account_password" name="password" type="password" label="Enter your password to confirm" bag="userDeletion" autocomplete="current-password" x-ref="deletePassword" />
+                    <div class="flex flex-wrap gap-2">
+                        <x-ui.button type="submit" variant="danger">Permanently delete account</x-ui.button>
+                        <x-ui.button variant="secondary" x-on:click="confirming = false">Cancel</x-ui.button>
                     </div>
                 </div>
-            </div>
-
-        </div>
+            </form>
+        </x-ui.card>
     </div>
 </x-app-layout>

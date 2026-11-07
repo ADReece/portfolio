@@ -18,6 +18,7 @@
         "filepond-plugin-image-preview": "^4.6.12",
         "fslightbox": "^3.4.1",
         "imagesloaded": "^5.0.0",
+        "quill": "^2.0.3",
         "sortablejs": "^1.15.0",
         "toastify-js": "^1.12.0"
     },
