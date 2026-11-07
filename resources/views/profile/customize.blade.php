@@ -30,6 +30,7 @@
         'mode' => old('portfolio_display_mode', $user->portfolio_display_mode ?: 'grid'),
         'columns' => (int) old('masonry_columns', $user->masonry_columns ?: 4),
         'perPage' => (int) old('photos_per_page', $user->photos_per_page ?: 20),
+        'copy' => (bool) old('copy_protection', $user->copy_protection ?? true),
     ];
     $canWatermark = $user->hasFeature('watermarking') || $user->isFeatureOverrideActive();
 @endphp
@@ -130,6 +131,10 @@
                                          :options="[2 => '2', 3 => '3', 4 => '4', 5 => '5', 6 => '6']" :selected="$initial['columns']" />
                             <x-ui.select name="photos_per_page" label="Photos loaded at a time" x-model.number="s.perPage" help="Fewer loads faster on slow connections."
                                          :options="[10 => '10', 20 => '20', 30 => '30', 40 => '40', 50 => '50']" :selected="$initial['perPage']" />
+                        </div>
+                        <div class="mt-5 border-t border-gray-200 pt-5 dark:border-gray-700">
+                            <x-ui.checkbox name="copy_protection" label="Discourage saving photos" :checked="$initial['copy']" x-model="s.copy"
+                                           description="Turns off right-click, dragging and the save shortcut on your photos. It can't stop screenshots; use watermarks for real protection." />
                         </div>
                     </x-ui.card>
 
@@ -260,7 +265,7 @@
                     Object.assign(this.s, { theme: p.theme, accent: p.accent, bg: p.bg, text: p.text, heading: p.heading });
                 },
                 resetToDefaults() {
-                    Object.assign(this.s, { theme: 'auto', font: 'system', accent: defaults.accent, bg: '', text: '', heading: '', mode: 'grid', columns: 4, perPage: 20 });
+                    Object.assign(this.s, { theme: 'auto', font: 'system', accent: defaults.accent, bg: '', text: '', heading: '', mode: 'grid', columns: 4, perPage: 20, copy: true });
                 },
             };
         }

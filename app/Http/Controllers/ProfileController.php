@@ -97,18 +97,20 @@ class ProfileController extends Controller
             'portfolio_display_mode' => 'nullable|in:grid,collections',
             'masonry_columns' => 'nullable|integer|min:2|max:6',
             'photos_per_page' => 'nullable|integer|min:10|max:100',
+            'copy_protection' => 'nullable|boolean',
         ]);
 
         $request->user()->update([
-            'portfolio_font' => $validated['portfolio_font'] ?? $request->user()->portfolio_font,
+            'copy_protection' => $request->boolean('copy_protection'),
+            'portfolio_font' => $validated['portfolio_font'] ?? $request->user()->portfolio_font ?? 'system',
             'portfolio_accent_color' => $validated['portfolio_accent_color'] ?? $request->user()->portfolio_accent_color,
-            'portfolio_theme' => $validated['portfolio_theme'] ?? $request->user()->portfolio_theme,
+            'portfolio_theme' => $validated['portfolio_theme'] ?? $request->user()->portfolio_theme ?? 'auto',
             'portfolio_background_color' => $validated['portfolio_background_color'] ?? null,
             'portfolio_text_color' => $validated['portfolio_text_color'] ?? null,
             'portfolio_heading_color' => $validated['portfolio_heading_color'] ?? null,
-            'portfolio_display_mode' => $validated['portfolio_display_mode'] ?? $request->user()->portfolio_display_mode,
-            'masonry_columns' => $validated['masonry_columns'] ?? $request->user()->masonry_columns,
-            'photos_per_page' => $validated['photos_per_page'] ?? $request->user()->photos_per_page,
+            'portfolio_display_mode' => $validated['portfolio_display_mode'] ?? $request->user()->portfolio_display_mode ?? 'grid',
+            'masonry_columns' => $validated['masonry_columns'] ?? $request->user()->masonry_columns ?? 4,
+            'photos_per_page' => $validated['photos_per_page'] ?? $request->user()->photos_per_page ?? 20,
         ]);
 
         return Redirect::route('profile.customize')->with('success', 'Your portfolio design is saved.');

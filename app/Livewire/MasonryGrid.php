@@ -114,8 +114,15 @@ class MasonryGrid extends Component
 
         $totalLoaded = $this->page * $this->perPage;
 
+        // Work out the photographer once, rather than per photo.
+        $owner = $this->userId
+            ? User::find($this->userId)
+            : Collection::find($this->collectionId)?->user;
+
         return view('livewire.masonry-grid', [
             'media' => $media,
+            'ownerCanSell' => $owner && $owner->hasFeature('selling') && $owner->enabledProdigiProducts()->exists(),
+            'copyProtection' => (bool) ($owner?->copy_protection ?? true),
             'totalCount' => $this->totalCount,
             'loadedCount' => min($totalLoaded, $this->totalCount),
             'columns' => $this->columns,

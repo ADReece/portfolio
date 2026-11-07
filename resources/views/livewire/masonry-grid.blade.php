@@ -21,25 +21,20 @@
                         $isNewItem = $index >= $previousPageCount;
                     @endphp
                     <div class="masonry-item" data-photo-id="{{ $m->id }}" wire:key="photo-{{ $m->id }}" data-new-item="{{ $isNewItem ? 'true' : 'false' }}">
-                        @php
-                            $ownerCanSell = $m->user
-                                && $m->user->hasFeature('selling')
-                                && $m->user->enabledProdigiProducts()->exists();
-                        @endphp
                         <div class="relative group overflow-hidden rounded-lg shadow-xs hover:shadow-xl transition-shadow duration-300">
                             <!-- Image (clickable for lightbox) -->
                             <a href="{{ $m->getUri() }}"
                                data-fslightbox="gallery"
                                data-caption="{{ $m->caption ?? '' }}"
                                class="block"
-                               oncontextmenu="return false;"
-                               ondragstart="return false;">
+                               @if($copyProtection) oncontextmenu="return false;" @endif
+                               @if($copyProtection) ondragstart="return false;" @endif>
                                 <img src="{{ $m->getAwsThumbnail() }}"
                                      alt="{{ $m->caption ?? 'Photo' }}"
                                      class="w-full cursor-pointer select-none"
                                      loading="{{ $index < 10 ? 'eager' : 'lazy' }}"
-                                     oncontextmenu="return false;"
-                                     ondragstart="return false;"
+                                     @if($copyProtection) oncontextmenu="return false;" @endif
+                                     @if($copyProtection) ondragstart="return false;" @endif
                                      draggable="false"
                                      style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;"
                                 />
@@ -257,68 +252,24 @@
         }
     </style>
 
+    @if($copyProtection)
     <script>
-        // DRM Protection
+        // Copy protection (photographer setting): discourage casual saving of
+        // photos. Right-click and dragging photos, and the save-page shortcut,
+        // are blocked quietly. Printing, screenshots and developer tools are not
+        // blocked: that never stopped copying and got in the way of clients.
         document.addEventListener('DOMContentLoaded', function() {
-            // Prevent right-click on images
-            document.addEventListener('contextmenu', function(e) {
-                if (e.target.tagName === 'IMG' || e.target.closest('.masonry-item')) {
-                    e.preventDefault();
-                    return false;
-                }
+            const onPhoto = (e) => e.target.tagName === 'IMG' || e.target.closest?.('.masonry-item');
+            document.addEventListener('contextmenu', (e) => { if (onPhoto(e)) e.preventDefault(); });
+            document.addEventListener('dragstart', (e) => { if (onPhoto(e)) e.preventDefault(); });
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) e.preventDefault();
             });
-
-            // Prevent keyboard shortcuts for saving and opening
-            document.addEventListener('keydown', function(e) {
-                // Ctrl+S / Cmd+S (Save)
-                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Save is disabled');
-                    return false;
-                }
-
-                // Ctrl+Shift+S / Cmd+Shift+S (Save As)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 's') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Save is disabled');
-                    return false;
-                }
-
-                // Prevent Print Screen
-                if (e.key === 'PrintScreen') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Screenshots are discouraged');
-                    return false;
-                }
-
-                // Prevent Ctrl+P / Cmd+P (Print)
-                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Printing is disabled');
-                    return false;
-                }
-
-                // Prevent Inspect Element shortcuts
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
-                    e.preventDefault();
-                    return false;
-                }
-
-                // Prevent F12 (Dev Tools)
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-
-            // Prevent drag and drop of images
-            document.addEventListener('dragstart', function(e) {
-                if (e.target.tagName === 'IMG' || e.target.closest('.masonry-item')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-
+        });
+    </script>
+    @endif
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
             // Add watermark overlay on images (subtle but visible when inspecting)
             const style = document.createElement('style');
             style.textContent = `
