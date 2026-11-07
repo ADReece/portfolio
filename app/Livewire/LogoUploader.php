@@ -28,12 +28,8 @@ class LogoUploader extends Component
     public function loadLogo(): void
     {
         if ($this->user->logo_thumb_path ?? $this->user->logo_path) {
-            $cacheKey = 'user_logo_url_'.$this->user->id;
-            $this->currentLogoUrl = Cache::remember($cacheKey, 600, function () {
-                return $this->user->logo_thumb_path
-                    ? Storage::disk('s3')->url($this->user->logo_thumb_path)
-                    : Storage::disk('s3')->url($this->user->logo_path);
-            });
+            // logoUrl() signs the URL, so it works on private buckets and the local disk.
+            $this->currentLogoUrl = $this->user->logoUrl();
         } else {
             $this->currentLogoUrl = null;
         }

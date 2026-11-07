@@ -30,6 +30,9 @@ use Laravel\Cashier\Http\Controllers\PaymentController as CashierPaymentControll
 |
 */
 
+// Cheap health check for the container: it touches no database.
+Route::get('/up', fn () => response('ok', 200, ['Content-Type' => 'text/plain']))->name('health');
+
 // Public homepage
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
