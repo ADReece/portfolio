@@ -96,7 +96,7 @@
                                 <p class="text-lg mb-4">{{ _('@' . $user->username) }}</p>
                                 @if($user->bio)
                                     <div class="text-base mb-6 prose prose-sm dark:prose-invert mx-auto">
-                                        {!! $user->bio !!}
+                                        {!! $user->bioHtml() !!}
                                     </div>
                                 @endif
                                 <button class="px-6 py-3 rounded-lg font-semibold">Sample Button</button>

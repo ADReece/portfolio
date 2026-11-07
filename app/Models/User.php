@@ -282,4 +282,13 @@ class User extends Authenticatable
         }
         return $this->subscriptionPlan->hasFeature('custom_templates') || $this->subscriptionPlan->hasFeature('upload_logo');
     }
+
+    /**
+     * The bio as safe HTML for display. Sanitised on output too, so bios
+     * saved before sanitising was tightened are safe.
+     */
+    public function bioHtml(): string
+    {
+        return \App\Support\HtmlSanitizer::clean($this->bio);
+    }
 }

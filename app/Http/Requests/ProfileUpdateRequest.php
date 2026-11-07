@@ -31,10 +31,9 @@ class ProfileUpdateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->has('bio') && $this->bio) {
-            // Sanitize HTML - only allow safe tags from Quill editor
-            $allowedTags = '<p><br><strong><em><u><ol><ul><li><a>';
+            // Allow-list sanitise: basic formatting and safe links only.
             $this->merge([
-                'bio' => strip_tags($this->bio, $allowedTags)
+                'bio' => \App\Support\HtmlSanitizer::clean($this->bio),
             ]);
         }
     }

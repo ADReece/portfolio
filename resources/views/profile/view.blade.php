@@ -17,7 +17,7 @@
             </h2>
             @if($user->bio)
             <div class="mt-2 text-gray-600 dark:text-gray-400 text-center max-w-2xl prose prose-sm dark:prose-invert mx-auto">
-                {!! $user->bio !!}
+                {!! $user->bioHtml() !!}
             </div>
             @endif
         </div>
