@@ -8,7 +8,7 @@
                 $tiles = [
                     ['Total users', number_format($totalUsers), null],
                     ['New users', number_format($newUsers30), 'Last 30 days'],
-                    ['Active subscribers', number_format($activeSubscribers), null],
+                    ['Active subscribers', number_format($activeSubscribers), $pastDueSubscribers ? number_format($pastDueSubscribers).' more past due (payment failed)' : null],
                     ['Orders', number_format($ordersLast30), 'Last 30 days'],
                     ['Sales volume', $currencySymbol.number_format($gmvLast30, 2), 'Completed orders, last 30 days'],
                 ];
