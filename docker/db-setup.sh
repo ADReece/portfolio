@@ -28,5 +28,13 @@ SQL
 
 echo "[db-setup] Running migrations"
 su -s /bin/sh nginx -c "php artisan migrate --force"
+
+# First boot: add the default plans (Free, Photographer, Videographer).
+# Skipped once any plan exists, so edits made in the admin are kept.
+PLAN_COUNT=$(mariadb --protocol=socket -N -B -e "SELECT COUNT(*) FROM \`${DB_DATABASE}\`.subscription_plans")
+if [ "$PLAN_COUNT" = "0" ]; then
+    echo "[db-setup] Seeding default subscription plans"
+    su -s /bin/sh nginx -c "php artisan db:seed --class=SubscriptionPlanSeeder --force"
+fi
 touch /run/portfolio-ready
 echo "[db-setup] Ready"
