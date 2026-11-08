@@ -27,6 +27,7 @@
     "QUEUE_CONNECTION": "database",
     "FILESYSTEM_DISK": "local",
     "MAIL_MAILER": "log",
-    "MAIL_FROM_ADDRESS": "noreply@portfolio.hydrodactyl.duckdns.org"
+    "MAIL_FROM_ADDRESS": "noreply@portfolio.hydrodactyl.duckdns.org",
+    "ADMIN_EMAILS": "reece@ascend-digital.co.uk"
   }
 }
