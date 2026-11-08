@@ -52,8 +52,8 @@ COPY docker/php-fpm.conf /etc/php83/php-fpm.d/www.conf
 COPY docker/php.ini /etc/php83/conf.d/99-portfolio.ini
 COPY docker/mariadb.cnf /etc/my.cnf.d/zz-portfolio.cnf
 COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY docker/entrypoint.sh docker/db-setup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/db-setup.sh
 
 EXPOSE 8080
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint.sh"]
