@@ -13,7 +13,7 @@
                 {{ $user->name ?? $user->username }}
             </h1>
             <h2 class="text-lg font-semibold mb-4 opacity-80">
-                 {{ _('@'.$user->username) }}
+                 {{ '@'.$user->username }}
             </h2>
             @if($user->bio)
             <div class="mt-2 text-sm leading-relaxed text-center break-words opacity-90 mx-auto [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5 [&_p+p]:mt-2">
