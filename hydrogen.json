@@ -28,6 +28,7 @@
     "FILESYSTEM_DISK": "local",
     "MAIL_MAILER": "log",
     "MAIL_FROM_ADDRESS": "noreply@portfolio.hydrodactyl.duckdns.org",
-    "ADMIN_EMAILS": "reece@ascend-digital.co.uk"
+    "ADMIN_EMAILS": "reece@ascend-digital.co.uk",
+    "CHATMESH_KEY": "pk_EPynMNm91cwrsQ4Fx5dBZBkk"
   }
 }
