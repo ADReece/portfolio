@@ -166,7 +166,7 @@ Route::get('/orders/{order}/purchase-cancel', [PrintPurchaseController::class, '
 Route::post('/stripe/webhook', [App\Http\Controllers\WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 // Cashier payment confirmation (SCA) route
-Route::get('/stripe/payment/{payment_intent}', [CashierPaymentController::class, 'show'])
+Route::get('/stripe/payment/{id}', [CashierPaymentController::class, 'show'])
     ->name('cashier.payment');
 
 Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){

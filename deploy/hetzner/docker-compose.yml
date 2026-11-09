@@ -1,0 +1,125 @@
+# Portfolio production stack for Coolify on the Hetzner server.
+#
+# Pull-based: the server watches ghcr.io/adreece/portfolio:prod and redeploys
+# when the tag moves. Traefik (managed by Coolify) routes
+# portfolio.ascend-digital.co.uk to the web service on port 8080 and
+# terminates TLS, so no host ports are published here.
+#
+# The database is Coolify's managed MariaDB/MySQL: point DB_HOST etc. at it.
+# No Redis is needed (database queue, database sessions, file cache).
+# Memory budget: 176m + 160m + 64m = 400m.
+
+x-environment: &environment
+  APP_NAME: ${APP_NAME:-Portfol.io}
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_KEY: ${APP_KEY:?APP_KEY is required}
+  APP_URL: ${APP_URL:-https://portfolio.ascend-digital.co.uk}
+  SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
+  ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+
+  LOG_CHANNEL: stderr
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  LOG_DEPRECATIONS_CHANNEL: "null"
+
+  DB_CONNECTION: ${DB_CONNECTION:-mysql}
+  DB_HOST: ${DB_HOST:?DB_HOST is required}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_DATABASE: ${DB_DATABASE:-portfolio}
+  DB_USERNAME: ${DB_USERNAME:-portfolio}
+  DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+
+  QUEUE_CONNECTION: database
+  SESSION_DRIVER: database
+  SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
+  SESSION_SECURE_COOKIE: "true"
+  CACHE_DRIVER: file
+  BROADCAST_DRIVER: log
+  FILESYSTEM_DISK: local
+
+  # Leave AWS_BUCKET empty to keep uploads on the "storage" volume. Set the
+  # AWS_* values to use S3 instead (the app's original storage).
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-eu-west-2}
+  AWS_BUCKET: ${AWS_BUCKET:-}
+  AWS_URL: ${AWS_URL:-}
+  AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+  AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-false}
+
+  MAIL_MAILER: ${MAIL_MAILER:-smtp}
+  MAIL_HOST: ${MAIL_HOST:-}
+  MAIL_PORT: ${MAIL_PORT:-587}
+  MAIL_USERNAME: ${MAIL_USERNAME:-}
+  MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+  MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+  MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@ascend-digital.co.uk}
+  MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Portfol.io}
+
+  STRIPE_KEY: ${STRIPE_KEY:-}
+  STRIPE_SECRET: ${STRIPE_SECRET:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  STRIPE_CONNECT_CLIENT_ID: ${STRIPE_CONNECT_CLIENT_ID:-}
+  PLATFORM_FEE_PERCENT: ${PLATFORM_FEE_PERCENT:-10}
+
+  PRODIGI_API_KEY: ${PRODIGI_API_KEY:-}
+  PRODIGI_MERCHANT_ID: ${PRODIGI_MERCHANT_ID:-}
+  PRODIGI_ENVIRONMENT: ${PRODIGI_ENVIRONMENT:-live}
+
+  CHATMESH_KEY: ${CHATMESH_KEY:-}
+  CHATMESH_URL: ${CHATMESH_URL:-https://chatmesh.hydrodactyl.duckdns.org}
+
+x-app: &app
+  image: ghcr.io/adreece/portfolio:prod
+  restart: unless-stopped
+  environment: *environment
+  volumes:
+    - storage:/var/www/html/storage/app
+
+services:
+  web:
+    <<: *app
+    command: ["web"]
+    expose:
+      - "8080"
+    environment:
+      <<: *environment
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+    mem_limit: 176m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  queue:
+    <<: *app
+    command: ["queue"]
+    mem_limit: 160m
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan queue:work' >/dev/null"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  scheduler:
+    <<: *app
+    command: ["scheduler"]
+    mem_limit: 64m
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'artisan schedule:work' >/dev/null"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  storage:
