@@ -109,5 +109,7 @@
 
         @livewireScriptConfig
         @stack('scripts')
+        {{-- Site support chat on the pricing page only, not the photographer's workspace. --}}
+        @includeWhen(request()->routeIs('pricing'), 'partials.chatmesh')
     </body>
 </html>

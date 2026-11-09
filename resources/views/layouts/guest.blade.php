@@ -39,6 +39,8 @@
     </div>
 
     @include('partials.portfolio-debug', ['user' => $user ?? null])
+    {{-- Site support chat on sign-in pages only; client gallery pages also use this layout. --}}
+    @includeWhen(request()->routeIs(['login', 'register', 'password.request', 'password.reset', 'verification.notice', 'password.confirm', 'pricing']), 'partials.chatmesh')
     @livewireScriptConfig
 </body>
 </html>

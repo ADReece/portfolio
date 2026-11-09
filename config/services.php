@@ -31,6 +31,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Support chat on Portfol.io's own pages (not photographers' portfolios).
+    'chatmesh' => [
+        'key' => env('CHATMESH_KEY'),
+        'url' => env('CHATMESH_URL', 'https://chatmesh.hydrodactyl.duckdns.org'),
+    ],
+
     'stripe' => [
         'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
     ],

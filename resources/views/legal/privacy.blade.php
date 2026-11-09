@@ -155,5 +155,6 @@
         </div>
     </footer>
     @livewireScriptConfig
+    @include('partials.chatmesh')
 </body>
 </html>
