@@ -30,4 +30,34 @@ class HtmlSanitizerTest extends TestCase
 
         $this->assertSame('<a href="https://example.com" rel="nofollow noopener" target="_blank">site</a>', $out);
     }
+
+    /**
+     * Quill 2.0.3 (GHSA-v3m3-f69x-jf25) can produce unsafe HTML, so the bio is
+     * sanitised server-side on save and on render. These are payloads that
+     * slip past naive filters.
+     */
+    public function test_strips_obfuscated_xss_payloads(): void
+    {
+        $payloads = [
+            '<a href="&#106;avascript:alert(1)">x</a>',
+            '<a href="  javascript:alert(1)">x</a>',
+            '<a href="JaVaScRiPt:alert(1)">x</a>',
+            '<a href="java&#x09;script:alert(1)">x</a>',
+            '<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">x</a>',
+            '<a href="vbscript:msgbox(1)">x</a>',
+            '<svg onload=alert(1)><circle /></svg>',
+            '<iframe srcdoc="<script>alert(1)</script>"></iframe>',
+            '<p style="background:url(javascript:alert(1))">x</p>',
+            '<math><mtext><table><mglyph><style><img src=x onerror=alert(1)>',
+            '<p><a href="https://example.com" onmouseover="alert(1)">ok</a></p>',
+        ];
+
+        foreach ($payloads as $payload) {
+            $out = strtolower(HtmlSanitizer::clean($payload));
+
+            foreach (['javascript', 'vbscript', 'data:', 'onload', 'onerror', 'onmouseover', '<svg', '<iframe', '<img', '<style', 'srcdoc', 'style='] as $needle) {
+                $this->assertStringNotContainsString($needle, $out, "Payload kept {$needle}: {$payload}");
+            }
+        }
+    }
 }

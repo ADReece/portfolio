@@ -12,6 +12,11 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
+    // '*' trusts X-Forwarded-* from whichever proxy reaches the container.
+    // That's safe only because the container is never exposed directly:
+    // production sits on an isolated Docker network with only Traefik in
+    // front, and staging (the Pi) is only reachable through its own proxy.
+    // Without it, URLs and secure cookies would be built as http.
     protected $proxies = '*';
 
     /**

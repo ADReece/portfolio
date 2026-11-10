@@ -63,6 +63,11 @@ jobs:
     name: Build and push image
     needs: test
     runs-on: ubuntu-latest
+    # Pushing :prod deploys production. Add required reviewers to the
+    # "production" environment (Settings → Environments) to approve each one.
+    environment:
+      name: production
+      url: https://portfolio.ascend-digital.co.uk
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
