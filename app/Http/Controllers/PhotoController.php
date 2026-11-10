@@ -28,25 +28,46 @@ class PhotoController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $user = auth()->user();
         $uploadedFile = $request->file('file');
-        $fileName = time() . '_' . uniqid() . '.' . $uploadedFile->getClientOriginalExtension();
+        $extension = strtolower($uploadedFile->guessExtension() ?: $uploadedFile->getClientOriginalExtension() ?: 'jpg');
+        $fileName = time().'_'.uniqid().'.'.$extension;
+        $key = 'photos/'.$user->id.'/'.$fileName;
 
-        // Store temporarily
-        $temporaryPath = $uploadedFile->storeAs('temp', $fileName);
+        // The request only stores the original, streamed straight to storage
+        // without decoding it. Thumbnails and the watermarked copy are made
+        // by the queue worker (ProcessImageUpload), one photo per job, so a
+        // large camera file can't exhaust the web container's memory.
+        try {
+            Storage::disk('s3')->putFileAs('photos/'.$user->id, $uploadedFile, $fileName);
+        } catch (\Throwable $e) {
+            report($e);
 
-        // Process image synchronously so the Photo record exists in DB before
-        // the response returns and FilePond triggers the Livewire refresh.
-        \App\Jobs\ProcessImageUpload::dispatchSync(
-            auth()->user(),
-            $temporaryPath,
-            $set,
-            $fileName
-        );
+            return response()->json(['message' => "That photo couldn't be saved. Please try again."], 500);
+        }
+
+        try {
+            $photo = $set->photos()->create([
+                'user_id' => $user->id,
+                'url' => $key,
+                'private' => $set->collection->private,
+                'size' => $uploadedFile->getSize(),
+                'status' => Photo::PROCESSING,
+            ]);
+        } catch (\Throwable $e) {
+            Storage::disk('s3')->delete($key); // never leave an orphaned file
+
+            throw $e;
+        }
+
+        \App\Jobs\ProcessImageUpload::dispatch($photo->id);
 
         return response()->json([
             'success' => true,
             'fileName' => $fileName,
-            'message' => 'File uploaded successfully'
+            'photo_id' => $photo->id,
+            'status' => $photo->status,
+            'message' => 'Uploaded. Preparing your photo…',
         ]);
     }
 
@@ -219,7 +240,7 @@ class PhotoController extends Controller
 
     public function downloadOptions(Request $request, Photo $photo)
     {
-        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+        abort_unless($photo->isReady() && GalleryAccess::canViewPhoto($request, $photo), 404);
 
         $set       = $photo->set?->load('templates.generatedPrints');
         $templates = $set?->templates ?? collect();

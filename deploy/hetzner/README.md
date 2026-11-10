@@ -42,8 +42,8 @@ All three use the same image; the command picks the role.
 
 | Service | Command | Port | Health check | Memory |
 |---|---|---|---|---|
-| `web` | `web`: nginx + PHP-FPM | 8080 (internal; Traefik routes to it) | `GET /up` returns 200 | 176m |
-| `queue` | `queue`: `php artisan queue:work` | – | `queue:work` process running | 160m |
+| `web` | `web`: nginx + PHP-FPM | 8080 (internal; Traefik routes to it) | `GET /up` returns 200 | 512m |
+| `queue` | `queue`: `php artisan queue:work` | – | `queue:work` process running | 384m |
 | `scheduler` | `scheduler`: `php artisan schedule:work` | – | `schedule:work` process running | 64m |
 
 Total is 400 MB. The queue resizes uploaded photos with Imagick, so if very

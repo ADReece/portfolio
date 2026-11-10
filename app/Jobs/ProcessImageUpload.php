@@ -2,185 +2,225 @@
 
 namespace App\Jobs;
 
-use App\Models\Set;
+use App\Models\Photo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Intervention\Image\ImageManager;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
+use Intervention\Image\ImageManager;
+use Throwable;
 
+/**
+ * Makes an uploaded photo's thumbnail and watermarked copy, in the queue
+ * worker (never the web request), one photo per job. Memory stays bounded
+ * whatever the upload size:
+ *  - JPEGs are decoded at reduced size (libjpeg's "jpeg:size" hint), so a
+ *    6000×4000 file is never fully expanded in memory;
+ *  - Imagick's resource limits cap its own (native) memory, spilling to
+ *    disk instead of growing past them;
+ *  - the watermark is drawn on a display-size copy (2048 px), not the original.
+ * The original is stored untouched by the upload request.
+ */
 class ProcessImageUpload implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 300;
+    public int $tries = 2;
+    public int $timeout = 300;
+    public int $backoff = 30;
 
-    public $user;
-    public $temporaryPath;
-    public $set;
-    public $fileName;
-    public $username;
-    public $filepath;
-    protected $imageManager; // ImageManager instance
+    /** Longest edge of the thumbnail and of the watermarked display copy. */
+    public const THUMB_EDGE = 800;
+    public const DISPLAY_EDGE = 2048;
 
-    /**
-     * Create a new job instance.
-     *
-     * @param string $temporaryPath
-     * @param Set $set
-     * @param string $fileName
-     */
-    public function __construct($user, $temporaryPath, Set $set, $fileName)
+    public function __construct(public string $photoId)
     {
-        // Assign the constructor parameters to the class properties
-        $this->user = $user;
-        $this->temporaryPath = $temporaryPath;
-        $this->set = $set;
-        $this->fileName = $fileName;
-        $this->imageManager = new ImageManager(['driver' => 'imagick']);
-
-        // Use the passed user's username
-        $this->username = $user->username;
-        $this->filepath = $this->user->id."/".$this->fileName;
+        $this->afterCommit();
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle()
+    public function handle(): void
     {
-        $temporaryFile = storage_path('app/' . $this->temporaryPath);
-
-        if (!is_file($temporaryFile)) {
-            throw new RuntimeException('Temporary upload file is missing: '.$this->temporaryPath);
+        $photo = Photo::find($this->photoId);
+        if (! $photo || $photo->status !== Photo::PROCESSING) {
+            return; // deleted meanwhile, or already done
         }
+
+        $original = $this->downloadOriginal($photo->url);
 
         try {
-            $photoSize = $this->uploadFullResolutionImage($temporaryFile);
-
-            $thumbnail = $this->createThumbnail($temporaryFile);
-            Storage::disk('s3')->put('thumbnails/'.$this->filepath, $thumbnail->stream()->__toString());
-
-            $watermarkedImage = $this->processWatermarkedImage($temporaryFile);
-            Storage::disk('s3')->put('watermarked/'.$this->filepath, $watermarkedImage->stream()->__toString());
-
-            $this->set->photos()->create([
-                'user_id' => $this->user->id,
-                'url' => "photos/{$this->filepath}",
-                'private' => $this->set->collection->private,
-                'size' => $photoSize,
-            ]);
+            $derivatives = self::makeDerivatives($original, $photo->user->watermark_text ?: '@'.$photo->user->username);
+            Storage::disk('s3')->put(self::derivativeKey($photo->url, 'thumbnails'), $derivatives['thumbnail']);
+            Storage::disk('s3')->put(self::derivativeKey($photo->url, 'watermarked'), $derivatives['watermarked']);
         } finally {
-            Storage::delete($this->temporaryPath);
+            @unlink($original);
         }
+
+        $photo->update(['status' => Photo::READY, 'processing_error' => null]);
+    }
+
+    /** After the last attempt: mark the photo failed so the owner sees why. */
+    public function failed(?Throwable $e): void
+    {
+        Log::warning('Photo processing failed', ['photo_id' => $this->photoId, 'error' => $e?->getMessage()]);
+
+        Photo::whereKey($this->photoId)->update([
+            'status' => Photo::FAILED,
+            'processing_error' => Photo::FAILED_MESSAGE,
+        ]);
     }
 
     /**
-     * Upload the full-resolution image to S3.
+     * The thumbnail and watermarked display copy for an image file. The
+     * original is decoded once, at reduced size, into the display copy; the
+     * thumbnail is made from that copy.
+     *
+     * @return array{thumbnail: string, watermarked: string} encoded images
      */
-    protected function uploadFullResolutionImage($file)
+    public static function makeDerivatives(string $path, string $watermarkText): array
     {
-        // Load the image and fix orientation based on EXIF data
-        $image = $this->imageManager->make($file);
-        $image->orientate();
+        self::limitImagick();
 
-        // Upload the full-resolution image to S3
-        Storage::disk('s3')->put("photos/".$this->filepath, $image->stream()->__toString());
-        return Storage::disk('s3')->size("photos/".$this->filepath);
+        $display = self::load($path, self::DISPLAY_EDGE);
+        $display->thumbnailImage(self::DISPLAY_EDGE, self::DISPLAY_EDGE, true);
+
+        $thumb = clone $display;
+        $thumb->thumbnailImage(self::THUMB_EDGE, self::THUMB_EDGE, true);
+        $thumb->setImageCompressionQuality(82);
+        $thumbnail = $thumb->getImageBlob();
+        $thumb->clear();
+
+        $image = (new ImageManager(['driver' => 'imagick']))->make($display);
+        self::applyTextWatermark($image, $watermarkText);
+        $watermarked = (string) $image->stream(null, 85);
+        $image->destroy();
+
+        return ['thumbnail' => $thumbnail, 'watermarked' => $watermarked];
     }
 
-    /**
-     * Create a thumbnail of the image while retaining the aspect ratio.
-     */
-    protected function createThumbnail($file)
+    public static function derivativeKey(string $originalKey, string $folder): string
     {
-        // Load the image using ImageManager
-        $image = $this->imageManager->make($file);
-
-        // Fix orientation based on EXIF data
-        $image->orientate();
-
-        // Resize the image to a thumbnail (e.g., max width or height of 300px, keeping aspect ratio)
-        $image->resize(800, 800, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize(); // Avoid enlarging the image if it's smaller than the target dimensions
-        });
-
-        return $image;
+        return preg_replace('#^photos/#', $folder.'/', $originalKey);
     }
 
-    /**
-     * Process the image by adding a tiled watermark with the username.
-     */
-    protected function processWatermarkedImage($file)
+    /** Caps Imagick's native memory so one image can't take the container down. */
+    public static function limitImagick(): void
     {
-        // Load the image using ImageManager
-        $image = $this->imageManager->make($file);
-
-        // Fix orientation based on EXIF data
-        $image->orientate();
-
-        // Apply the tiled watermark with the username
-        $this->applyTextWatermark($image);
-
-        return $image;
-    }
-
-    /**
-     * Apply a tiled text watermark to the image - VERY OBNOXIOUS!
-     */
-    protected function applyTextWatermark($image)
-    {
-        // Use custom watermark text or default to @username
-        $text = $this->user->watermark_text ?: '@'.$this->username;
-
-        // Make it MUCH more visible and repeated
-        $fontSize = 80;  // Slightly smaller but more frequent
-        $textColor = 'rgba(255, 255, 255, 0.6)';  // More opaque (60% vs 50%)
-        $horizontalSpacing = 300;  // Closer together (300 vs 600)
-        $verticalSpacing = 150;    // Much closer vertically (150 vs 100)
-
-        // Get image dimensions
-        $imageWidth = $image->width();
-        $imageHeight = $image->height();
-
-        // Loop to tile the watermark VERY DENSELY over the image
-        for ($y = -$fontSize; $y < $imageHeight + $fontSize; $y += $verticalSpacing) {
-            for ($x = -200; $x < $imageWidth + 200; $x += $horizontalSpacing) {
-                // Draw the text on the image at a 45-degree angle for extra obnoxiousness
-                $image->text($text, $x, $y, function ($font) use ($fontSize, $textColor) {
-                    // Use custom font if it exists, otherwise use system default
-                    $fontPath = public_path('fonts/OpenSans-Bold.ttf');
-                    if (file_exists($fontPath)) {
-                        $font->file($fontPath);
-                    }
-                    $font->size($fontSize);
-                    $font->color($textColor);
-                    $font->align('center');
-                    $font->valign('middle');
-                    $font->angle(-45);  // Diagonal watermark
-                });
+        $mb = 1024 * 1024;
+        $limits = [
+            // Guard rails only, sized so a normal photo (decoded at reduced
+            // size) stays in RAM: anything bigger spills to the slower disk
+            // cache instead of being killed.
+            // A JPEG (decoded at reduced size) stays well inside these; only a
+            // huge non-JPEG (e.g. a 24 MP PNG) reaches them and spills to disk.
+            'RESOURCETYPE_MEMORY' => 160 * $mb,
+            'RESOURCETYPE_MAP' => 160 * $mb,
+            'RESOURCETYPE_AREA' => 40 * 1000 * 1000,
+            'RESOURCETYPE_DISK' => 2048 * $mb,
+            'RESOURCETYPE_WIDTH' => 20000,
+            'RESOURCETYPE_HEIGHT' => 20000,
+            'RESOURCETYPE_THREAD' => 1,
+        ];
+        foreach ($limits as $constant => $value) {
+            if (defined(\Imagick::class.'::'.$constant)) {
+                \Imagick::setResourceLimit(constant(\Imagick::class.'::'.$constant), $value);
             }
         }
+    }
 
-        // Add a second layer with different angle for MAXIMUM obnoxiousness
-        for ($y = 0; $y < $imageHeight; $y += $verticalSpacing * 1.5) {
-            for ($x = 150; $x < $imageWidth; $x += $horizontalSpacing) {
-                $image->text($text, $x, $y, function ($font) use ($fontSize, $textColor) {
-                    $fontPath = public_path('fonts/OpenSans-Bold.ttf');
-                    if (file_exists($fontPath)) {
-                        $font->file($fontPath);
-                    }
-                    $font->size($fontSize * 0.8);  // Slightly smaller for variety
-                    $font->color($textColor);
-                    $font->align('center');
-                    $font->valign('middle');
-                    $font->angle(45);  // Opposite diagonal
-                });
+    /** Streams the original to a temporary file (never into PHP memory). */
+    private function downloadOriginal(string $key): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'photo-');
+        $in = Storage::disk('s3')->readStream($key);
+        if (! $in) {
+            throw new \RuntimeException('Original photo is missing: '.$key);
+        }
+        $out = fopen($path, 'wb');
+        stream_copy_to_stream($in, $out);
+        fclose($out);
+        if (is_resource($in)) {
+            fclose($in);
+        }
+
+        return $path;
+    }
+
+    /**
+     * Reads the first frame, decoding JPEGs at roughly $edge px, then applies
+     * the EXIF orientation and strips metadata (camera details, GPS).
+     */
+    private static function load(string $path, int $edge): \Imagick
+    {
+        // Ask libjpeg to decode at the smallest scale (1/2, 1/4, 1/8) whose
+        // long edge is still at least $edge: a cheap header read gives the shape.
+        $probe = new \Imagick();
+        $probe->pingImage($path.'[0]');
+        $landscape = $probe->getImageWidth() >= $probe->getImageHeight();
+        $probe->clear();
+
+        $im = new \Imagick();
+        $im->setOption('jpeg:size', $landscape ? $edge.'x1' : '1x'.$edge);
+        $im->readImage($path.'[0]');
+        self::orient($im);
+        $im->stripImage();
+
+        return $im;
+    }
+
+    private static function orient(\Imagick $im): void
+    {
+        switch ($im->getImageOrientation()) {
+            case \Imagick::ORIENTATION_TOPRIGHT: $im->flopImage(); break;
+            case \Imagick::ORIENTATION_BOTTOMRIGHT: $im->rotateImage('#000', 180); break;
+            case \Imagick::ORIENTATION_BOTTOMLEFT: $im->flipImage(); break;
+            case \Imagick::ORIENTATION_LEFTTOP: $im->transposeImage(); break;
+            case \Imagick::ORIENTATION_RIGHTTOP: $im->rotateImage('#000', 90); break;
+            case \Imagick::ORIENTATION_RIGHTBOTTOM: $im->transverseImage(); break;
+            case \Imagick::ORIENTATION_LEFTBOTTOM: $im->rotateImage('#000', -90); break;
+        }
+        $im->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
+    }
+
+    /** A dense tiled text watermark, scaled to the (display-size) image. */
+    private static function applyTextWatermark($image, string $text): void
+    {
+        $scale = max($image->width(), $image->height()) / 2048;
+        $fontSize = max(16, (int) round(36 * $scale));
+        $color = 'rgba(255, 255, 255, 0.55)';
+        $dx = max(160, (int) round(340 * $scale)); // between marks in a row
+        $dy = max(90, (int) round(190 * $scale));  // between rows
+        $fontPath = public_path('fonts/OpenSans-Bold.ttf');
+
+        $draw = function ($x, $y, $size, $angle) use ($image, $text, $color, $fontPath) {
+            $image->text($text, $x, $y, function ($font) use ($size, $angle, $color, $fontPath) {
+                if (file_exists($fontPath)) {
+                    $font->file($fontPath);
+                }
+                $font->size($size);
+                $font->color($color);
+                $font->align('center');
+                $font->valign('middle');
+                $font->angle($angle);
+            });
+        };
+
+        // Staggered rows of diagonal marks, then a lighter cross-hatch layer
+        // between them, so no part of the photo is left clean.
+        $row = 0;
+        for ($y = 0; $y < $image->height() + $dy; $y += $dy, $row++) {
+            $offset = $row % 2 ? (int) ($dx / 2) : 0;
+            for ($x = $offset; $x < $image->width() + $dx; $x += $dx) {
+                $draw($x, $y, $fontSize, -30);
+            }
+        }
+        $row = 0;
+        for ($y = (int) ($dy / 2); $y < $image->height(); $y += $dy, $row++) {
+            $offset = $row % 2 ? 0 : (int) ($dx / 2);
+            for ($x = $offset; $x < $image->width(); $x += $dx) {
+                $draw($x, $y, (int) round($fontSize * 0.7), 30);
             }
         }
     }

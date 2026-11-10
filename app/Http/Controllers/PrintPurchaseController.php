@@ -244,6 +244,7 @@ class PrintPurchaseController extends Controller
         $collection = $photo->set?->collection;
 
         if (! \App\Billing\Payouts::available()
+            || ! $photo->isReady()
             || ! $photographer || ! $collection
             || ! $photographer->hasFeature('selling')
             || ! $photographer->enabledProdigiProducts()->exists()) {

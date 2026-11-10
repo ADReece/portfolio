@@ -117,6 +117,9 @@ class SetPhotos extends Component
         if ($photo->set_id !== $this->setId || $photo->user_id !== auth()->id()) {
             abort(403);
         }
+        if (! $photo->isReady()) {
+            return; // only finished photos can be the cover
+        }
 
         // Update collection cover photo
         $this->set->collection->update([
@@ -124,6 +127,12 @@ class SetPhotos extends Component
         ]);
 
         session()->flash('message', 'Cover photo updated successfully.');
+        $this->loadSet();
+    }
+
+    /** Called by wire:poll while photos are being prepared. */
+    public function refreshPhotos(): void
+    {
         $this->loadSet();
     }
 

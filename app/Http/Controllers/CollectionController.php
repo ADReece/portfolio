@@ -93,7 +93,7 @@ class CollectionController extends Controller
         $collection = auth()->user()->collections()->withCount(['sets', 'photos'])->findOrFail($collectionId);
 
         // Photos to choose a cover from: the most recent, plus the current cover.
-        $coverChoices = $collection->photos()->latest('photos.created_at')->take(24)->get();
+        $coverChoices = $collection->photos()->ready()->latest('photos.created_at')->take(24)->get();
         if ($collection->cover_photo_id && ! $coverChoices->contains('id', $collection->cover_photo_id) && $collection->coverPhoto) {
             $coverChoices->prepend($collection->coverPhoto);
         }
@@ -117,7 +117,7 @@ class CollectionController extends Controller
             // A private collection needs a password, unless it already has one.
             'password' => [$collection->password ? 'nullable' : 'required_if:private,1', 'nullable', 'string', 'min:4'],
             // Only photos from this collection can be its cover.
-            'cover_photo_id' => ['nullable', \Illuminate\Validation\Rule::in($collection->photos()->pluck('photos.id')->map(fn ($id) => (string) $id)->all())],
+            'cover_photo_id' => ['nullable', \Illuminate\Validation\Rule::in($collection->photos()->ready()->pluck('photos.id')->map(fn ($id) => (string) $id)->all())],
             'watermarked' => 'nullable|boolean',
             'hide_from_portfolio' => 'nullable|boolean',
             'cover_photo_object_position' => 'nullable|string|in:center,top,bottom,top-right,bottom-right',
