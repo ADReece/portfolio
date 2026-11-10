@@ -35,7 +35,7 @@ jobs:
           php-version: '8.3'
           extensions: gd, intl, pdo_mysql, zip
           coverage: none
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -72,7 +72,7 @@ jobs:
           php-version: '8.3'
           extensions: gd, intl, pdo_mysql, zip
           coverage: none
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -95,8 +95,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/hetzner/Dockerfile

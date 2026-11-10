@@ -16,11 +16,11 @@
         "laravel/tinker": "^2.10",
         "league/flysystem-aws-s3-v3": "^3.0",
         "livewire/livewire": "^3.6",
-        "plesk/ext-laravel-integration": "^7.0",
+        "plesk/ext-laravel-integration": "^8.0",
         "stripe/stripe-php": "^16.2"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.14",
+        "barryvdh/laravel-debugbar": "^4.4",
         "fakerphp/faker": "^1.9.1",
         "laravel/breeze": "^2.3",
         "laravel/pint": "^1.0",

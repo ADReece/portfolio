@@ -10,6 +10,11 @@ updates:
     groups:
       laravel:
         patterns: ["laravel/*", "livewire/*"]
+    ignore:
+      # PHPUnit 13 needs PHP 8.4; the app, CI and images run PHP 8.3.
+      # Remove this when moving to PHP 8.4.
+      - dependency-name: phpunit/phpunit
+        versions: [">=13"]
 
   - package-ecosystem: npm
     directory: /
