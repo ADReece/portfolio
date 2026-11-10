@@ -34,7 +34,7 @@ return [
     // Support chat on Portfol.io's own pages (not photographers' portfolios).
     'chatmesh' => [
         'key' => env('CHATMESH_KEY'),
-        'url' => env('CHATMESH_URL', 'https://chatmesh.hydrodactyl.duckdns.org'),
+        'url' => env('CHATMESH_URL', 'https://chatmesh.ascend-digital.co.uk'),
     ],
 
     'stripe' => [

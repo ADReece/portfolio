@@ -67,7 +67,7 @@ x-environment: &environment
   PRODIGI_ENVIRONMENT: ${PRODIGI_ENVIRONMENT:-live}
 
   CHATMESH_KEY: ${CHATMESH_KEY:-}
-  CHATMESH_URL: ${CHATMESH_URL:-https://chatmesh.hydrodactyl.duckdns.org}
+  CHATMESH_URL: ${CHATMESH_URL:-https://chatmesh.ascend-digital.co.uk}
 
 x-app: &app
   image: ghcr.io/adreece/portfolio:prod
