@@ -120,6 +120,29 @@ class ProdigiProduct extends Model
             : Storage::disk('s3')->temporaryUrl($this->image_path, now()->addHour());
     }
 
+    /** A starting category from the SKU (then the description); admins can change it. */
+    public static function guessCategory(string $sku, ?string $description): string
+    {
+        $rules = [
+            'Canvas' => '/CANVAS|(^|-)(CAN|SLIMCAN|ECO-CAN)(-|$)/',
+            'Framed' => '/FRAME|(^|-)(CFP\w*|FRA|BOX|SPACE)(-|$)/',
+            'Cards' => '/CARD|(^|-)(GRE|POST)(-|$)/',
+            'Photo books' => '/BOOK/',
+            'Gifts' => '/MUG|CUSHION|PUZZLE|TOTE|PHONE|COASTER/',
+            'Wall art' => '/ACRYLIC|METAL|DIBOND|(^|-)(ACRY|MET|ALU)(-|$)/',
+            'Fine art prints' => '/FINE ART|(^|-)(FAP|HPR|HGE|SMG|BAP)(-|$)/',
+        ];
+        foreach ([strtoupper($sku), strtoupper((string) $description)] as $text) {
+            foreach ($rules as $category => $pattern) {
+                if (preg_match($pattern, $text)) {
+                    return $category;
+                }
+            }
+        }
+
+        return 'Prints';
+    }
+
     public static function labelAttribute(string $name): string
     {
         return ucfirst(trim(preg_replace('/(?<!^)[A-Z]/', ' $0', $name)));

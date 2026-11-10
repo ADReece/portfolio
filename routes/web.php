@@ -204,6 +204,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
     Route::get('/print-catalogue/create', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'create'])->name('print-catalogue.create');
     Route::post('/print-catalogue/lookup', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'lookup'])->middleware('throttle:30,1')->name('print-catalogue.lookup');
     Route::post('/print-catalogue', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'store'])->name('print-catalogue.store');
+    Route::post('/print-catalogue/bulk', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'storeMany'])->middleware('throttle:10,1')->name('print-catalogue.store-many');
     Route::post('/print-catalogue/refresh-all', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'refreshAll'])->middleware('throttle:5,1')->name('print-catalogue.refresh-all');
     Route::get('/print-catalogue/{product}/edit', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'edit'])->name('print-catalogue.edit');
     Route::put('/print-catalogue/{product}', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'update'])->name('print-catalogue.update');

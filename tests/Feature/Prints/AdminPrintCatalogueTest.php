@@ -105,13 +105,13 @@ class AdminPrintCatalogueTest extends PrintCatalogueTestCase
 
     public function test_default_price_cannot_be_below_the_minimum(): void
     {
-        $product = $this->catalogueProduct(); // cost 14.50 -> minimum 16.80
+        $product = $this->catalogueProduct(); // cost 14.50 -> minimum 14.50 / 0.9 = 16.12
         $admin = $this->admin();
         $form = ['name' => 'Framed', 'category' => 'Framed', 'sort_order' => 1, 'is_active' => '1',
             'allowed_attributes' => ['color' => ['black', 'white']]];
 
-        $this->assertSame(16.80, $product->minimumRetailPrice());
-        $this->actingAs($admin)->put(route('admin.print-catalogue.update', $product), $form + ['default_retail_price' => '16.79'])
+        $this->assertSame(16.12, $product->minimumRetailPrice());
+        $this->actingAs($admin)->put(route('admin.print-catalogue.update', $product), $form + ['default_retail_price' => '16.11'])
             ->assertSessionHasErrors('default_retail_price');
         $this->actingAs($admin)->put(route('admin.print-catalogue.update', $product), $form + ['default_retail_price' => '24.00'])
             ->assertSessionHasNoErrors();
@@ -142,7 +142,31 @@ class AdminPrintCatalogueTest extends PrintCatalogueTestCase
             ->assertOk()
             ->assertSee('GLOBAL-CFPM-16X20')
             ->assertSee('£14.50')
-            ->assertSee('£16.80')
+            ->assertSee('£16.12')
             ->assertSee('1 below cost');
+    }
+
+    public function test_bulk_add_pasted_skus(): void
+    {
+        $this->catalogueProduct(['sku' => 'GLOBAL-OLD-1', 'name' => 'Existing']);
+        Http::fake([
+            self::BASE.'/products/GLOBAL-CAN-16X20' => Http::response($this->productPayload('GLOBAL-CAN-16X20', [])),
+            self::BASE.'/products/GLOBAL-FAP-10X8' => Http::response($this->productPayload('GLOBAL-FAP-10X8', [])),
+            self::BASE.'/products/*' => Http::response(['outcome' => 'NotFound'], 404),
+            self::BASE.'/quotes' => Http::response($this->quotePayload()),
+        ]);
+
+        $this->actingAs($this->admin())->post(route('admin.print-catalogue.store-many'), [
+            'skus' => "global-can-16x20\nGLOBAL-FAP-10X8, GLOBAL-OLD-1\nNOPE-1",
+        ])->assertSessionHas('error', fn ($m) => str_contains($m, 'Added 2 (inactive): GLOBAL-CAN-16X20, GLOBAL-FAP-10X8.')
+            && str_contains($m, 'Already in the catalogue: GLOBAL-OLD-1.')
+            && str_contains($m, 'Not found on Prodigi: NOPE-1.'));
+
+        $canvas = ProdigiProduct::where('sku', 'GLOBAL-CAN-16X20')->sole();
+        $this->assertFalse($canvas->is_active);
+        $this->assertSame('Canvas', $canvas->category);
+        $this->assertSame('Fine art prints', ProdigiProduct::where('sku', 'GLOBAL-FAP-10X8')->value('category'));
+        $this->assertSame('10.00', $canvas->cost_item);
+        $this->assertSafeProdigiCalls();
     }
 }

@@ -115,7 +115,7 @@ class HomePage
         ];
         $faqs[] = [
             'q' => 'Can my clients buy prints?',
-            'a' => "Print sales are coming soon. When they're ready, clients will order prints from your galleries and you'll be paid the price you set, minus our fee.",
+            'a' => "Print sales are coming soon. When they're ready, clients will order prints from your galleries and you'll be paid the price you set, minus the cost of printing and delivery and our fee.",
         ];
 
         return $faqs;
