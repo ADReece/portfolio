@@ -65,7 +65,9 @@
                             <tr><th scope="col" class="px-3 py-2 font-medium">Type</th><th scope="col" class="px-3 py-2 font-medium">Name</th><th scope="col" class="px-3 py-2 font-medium">Value</th></tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 font-mono text-gray-900 dark:divide-gray-700 dark:text-gray-100">
-                            <tr><td class="px-3 py-2">TXT</td><td class="px-3 py-2 break-all">{{ $domain->txtRecordName() }}</td><td class="px-3 py-2 break-all">{{ $domain->verification_token }}</td></tr>
+                            @unless($domain->ownership_trusted)
+                                <tr><td class="px-3 py-2">TXT</td><td class="px-3 py-2 break-all">{{ $domain->txtRecordName() }}</td><td class="px-3 py-2 break-all">{{ $domain->verification_token }}</td></tr>
+                            @endunless
                             @foreach($hosts as $host)
                                 @if($host === $domain->hostname && $domain->isApex())
                                     <tr><td class="px-3 py-2">A</td><td class="px-3 py-2 break-all">{{ $host }} <span class="font-sans text-gray-500">(often written “@”)</span></td><td class="px-3 py-2">{{ $targetIp }}</td></tr>

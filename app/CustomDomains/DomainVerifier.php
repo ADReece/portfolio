@@ -18,8 +18,8 @@ class DomainVerifier
     {
         $problems = [];
 
-        $txt = $this->dns->txt($domain->txtRecordName());
-        if (! in_array($domain->verification_token, $txt, true)) {
+        $txt = $domain->ownership_trusted ? [] : $this->dns->txt($domain->txtRecordName());
+        if (! $domain->ownership_trusted && ! in_array($domain->verification_token, $txt, true)) {
             $problems[] = "The TXT record {$domain->txtRecordName()} doesn't contain {$domain->verification_token} yet.";
         }
 

@@ -23,6 +23,7 @@ class CustomDomain extends Model
 
     protected $casts = [
         'include_www' => 'boolean',
+        'ownership_trusted' => 'boolean',
         'primary_www' => 'boolean',
         'verified_at' => 'datetime',
         'last_checked_at' => 'datetime',
