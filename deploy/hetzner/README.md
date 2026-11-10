@@ -6,21 +6,35 @@ Production runs at **https://portfolio.ascend-digital.co.uk** on the Hetzner VPS
 
 ## How a release reaches the server
 
-1. Push a version tag: `git tag v1.2.3 && git push origin v1.2.3`, or run the
-   **Release** workflow by hand from the Actions tab.
-2. `.github/workflows/release.yml` runs the syntax check and PHP tests, builds
+**Merging a PR into `develop` releases it.** Nobody runs git or tag commands.
+
+1. `.github/workflows/release.yml` runs on every push to `develop`. Pushes
+   that only change Markdown or `docs/` are skipped. It can also be started
+   from the Actions tab.
+2. It runs the syntax check and the PHP tests, then builds
    `deploy/hetzner/Dockerfile` for `linux/amd64` and pushes
    `ghcr.io/adreece/portfolio` with three tags:
    - `prod`: the moving tag the server watches
-   - the version tag, e.g. `v1.2.3` (tag pushes only)
+   - the version, e.g. `v1.2.3`
    - `sha-<short commit>`
-3. A timer on the server sees `:prod` change and redeploys through Coolify
+3. After the image is pushed, the workflow creates the version tag and a
+   GitHub release with generated notes. The version comes from
+   `.github/scripts/next-version.sh`:
+   - **patch** by default;
+   - **minor** if a merged commit starts with `feat:` or `feat(scope):`;
+   - **major** for `BREAKING CHANGE` or a `type!:` subject.
+
+   A failed build never gets a tag, and a re-run reuses the commit's
+   existing tag.
+4. A timer on the server sees `:prod` change and redeploys through Coolify
    within about a minute. CI never connects to the server and needs no
    secrets beyond `GITHUB_TOKEN`.
 
-To roll back, re-point `prod` at an earlier image (for example re-run the
-workflow on the earlier tag) or pin the compose `image:` to `sha-<short>` in
-Coolify.
+To roll back, pin the compose `image:` to an earlier `vX.Y.Z` or
+`sha-<short>` in Coolify, or revert the PR (that merge releases too).
+
+If a tag ruleset protects `v*`, allow **GitHub Actions** to bypass it, or the
+workflow can't create release tags.
 
 ## Services
 
