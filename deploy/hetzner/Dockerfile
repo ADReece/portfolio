@@ -7,11 +7,11 @@
 # Build from the repository root:
 #   docker build -f deploy/hetzner/Dockerfile -t ghcr.io/adreece/portfolio:dev .
 
-# --- PHP runtime and Composer packages -----------------------------------------
-FROM alpine:3.21 AS php
+# --- PHP runtime (shared by the build and final stages) --------------------------
+FROM alpine:3.24 AS php
 
 RUN apk add --no-cache \
-        nginx supervisor tini composer \
+        nginx supervisor tini \
         php83 php83-fpm php83-opcache php83-pdo php83-pdo_mysql php83-mysqli \
         php83-mbstring php83-xml php83-dom php83-xmlreader php83-xmlwriter php83-simplexml \
         php83-tokenizer php83-ctype php83-fileinfo php83-bcmath php83-zip php83-gd \
@@ -22,9 +22,13 @@ RUN apk add --no-cache \
 
 WORKDIR /var/www/html
 
+# --- Composer packages (Composer stays in this stage only) ----------------------
+FROM php AS vendor
+
+RUN apk add --no-cache composer
+
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist \
-    && rm -rf /root/.composer/cache
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 
 # --- Front-end assets ---------------------------------------------------------
 FROM node:22-alpine AS assets
@@ -32,32 +36,39 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 # app.js imports Livewire's ESM build and app.css scans Laravel's pagination views.
-COPY --from=php /var/www/html/vendor/livewire/livewire/dist ./vendor/livewire/livewire/dist
-COPY --from=php /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views ./vendor/laravel/framework/src/Illuminate/Pagination/resources/views
+COPY --from=vendor /var/www/html/vendor/livewire/livewire/dist ./vendor/livewire/livewire/dist
+COPY --from=vendor /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views ./vendor/laravel/framework/src/Illuminate/Pagination/resources/views
 COPY vite.config.js ./
 COPY resources ./resources
 COPY public ./public
 RUN npm run build
 
-# --- Final image --------------------------------------------------------------
-FROM php
+# --- Application (source, optimised autoloader, built assets) -------------------
+FROM vendor AS app
 
 COPY . .
 COPY --from=assets /app/public/build ./public/build
 
 RUN composer dump-autoload --optimize --no-dev --no-interaction \
-    && rm -rf docker hydrogen.json deploy/hetzner/.env.example \
+    && rm -rf docker deploy hydrogen.json \
     && ln -sfn ../storage/app/public public/storage \
     && mkdir -p storage/app/public storage/app/media storage/framework/cache/data \
-                storage/framework/sessions storage/framework/views storage/logs \
-    && chown -R app:app storage bootstrap/cache
+                storage/framework/sessions storage/framework/views storage/logs
+
+# --- Final image: runtime only, no Composer -------------------------------------
+FROM php
+
+# Code stays root-owned (read-only to the app); only storage and the
+# framework cache are writable by the "app" user.
+COPY --from=app /var/www/html /var/www/html
+RUN chown -R app:app storage bootstrap/cache && rm -f /etc/php83/php-fpm.d/www.conf
 
 COPY deploy/hetzner/docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/security-headers.conf /etc/nginx/security-headers.conf
 COPY deploy/hetzner/docker/php-fpm.conf /etc/php83/php-fpm.conf
 COPY deploy/hetzner/docker/php.ini /etc/php83/conf.d/99-portfolio.ini
 COPY deploy/hetzner/docker/supervisord.conf /etc/supervisord.conf
 COPY --chmod=755 deploy/hetzner/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN rm -f /etc/php83/php-fpm.d/www.conf
 
 USER app
 EXPOSE 8080

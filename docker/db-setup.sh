@@ -14,6 +14,10 @@ until mariadb-admin --protocol=socket ping >/dev/null 2>&1; do
     sleep 1
 done
 
+# After a MariaDB version change (e.g. a newer Alpine base), bring the system
+# tables up to date. It's a no-op when they already match the server version.
+mariadb-upgrade --protocol=socket --silent || echo "[db-setup] mariadb-upgrade reported a problem; continuing"
+
 PW_SQL=$(printf '%s' "$DB_PASSWORD" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")
 mariadb --protocol=socket <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -2,7 +2,7 @@
 # nginx + PHP-FPM + MariaDB + a queue worker, run by supervisord.
 
 # --- PHP runtime and Composer packages -----------------------------------------
-FROM alpine:3.21 AS app
+FROM alpine:3.24 AS app
 
 RUN apk add --no-cache \
         nginx supervisor mariadb mariadb-client tini \
@@ -13,13 +13,13 @@ RUN apk add --no-cache \
         php83-phar php83-sodium php83-pcntl php83-posix php83-pecl-imagick \
     && ln -sf /usr/bin/php83 /usr/bin/php
 
-RUN apk add --no-cache composer
-
 WORKDIR /var/www/html
 
+# --- Composer packages (Composer stays in this stage only) ----------------------
+FROM app AS vendor
+RUN apk add --no-cache composer
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist \
-    && rm -rf /root/.composer/cache
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 
 
 # --- Front-end assets ---------------------------------------------------------
@@ -28,26 +28,30 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 # app.js imports Livewire's ESM build and app.css scans Laravel's pagination views.
-COPY --from=app /var/www/html/vendor/livewire/livewire/dist ./vendor/livewire/livewire/dist
-COPY --from=app /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views ./vendor/laravel/framework/src/Illuminate/Pagination/resources/views
+COPY --from=vendor /var/www/html/vendor/livewire/livewire/dist ./vendor/livewire/livewire/dist
+COPY --from=vendor /var/www/html/vendor/laravel/framework/src/Illuminate/Pagination/resources/views ./vendor/laravel/framework/src/Illuminate/Pagination/resources/views
 COPY vite.config.js ./
 COPY resources ./resources
 COPY public ./public
 RUN npm run build
 
-# --- Final image --------------------------------------------------------------
-FROM app
-WORKDIR /var/www/html
+# --- Application (source, optimised autoloader, built assets) -------------------
+FROM vendor AS build
 COPY . .
 COPY --from=assets /app/public/build ./public/build
-
 RUN composer dump-autoload --optimize --no-dev --no-interaction \
+    && rm -rf deploy \
     && ln -sfn ../storage/app/public public/storage \
     && mkdir -p storage/app/public storage/app/media storage/framework/cache/data \
-                storage/framework/sessions storage/framework/views storage/logs \
-    && chown -R nginx:nginx storage bootstrap/cache
+                storage/framework/sessions storage/framework/views storage/logs
+
+# --- Final image: runtime only, no Composer -------------------------------------
+FROM app
+COPY --from=build /var/www/html /var/www/html
+RUN chown -R nginx:nginx storage bootstrap/cache
 
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/security-headers.conf /etc/nginx/security-headers.conf
 COPY docker/php-fpm.conf /etc/php83/php-fpm.d/www.conf
 COPY docker/php.ini /etc/php83/conf.d/99-portfolio.ini
 COPY docker/mariadb.cnf /etc/my.cnf.d/zz-portfolio.cnf

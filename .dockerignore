@@ -13,3 +13,20 @@ bootstrap/cache/*.php
 .env.*
 test-results
 playwright-report
+
+# Not needed at runtime: docs, tests, dev tooling and helper scripts.
+/*.md
+deploy/**/*.md
+deploy/hetzner/.env.example
+tests
+phpunit.xml
+playwright.config.js
+docker-compose.yml
+deploy/hetzner/docker-compose.yml
+check-payment-ready.sh
+create-github-issues.sh
+.github
+.editorconfig
+.gitattributes
+.DS_Store
+**/.DS_Store
