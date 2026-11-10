@@ -103,7 +103,9 @@ services:
     environment:
       <<: *environment
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
-    mem_limit: 176m
+    # Photo uploads are stored as-is and processed by the queue worker; this
+    # leaves room for 50 MB request bodies and Imagick reading image headers.
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/up"]
       interval: 30s
@@ -114,7 +116,9 @@ services:
   queue:
     <<: *app
     command: ["queue"]
-    mem_limit: 160m
+    # One photo per job; Imagick is capped (ProcessImageUpload::limitImagick)
+    # and a 6000x4000 JPEG peaks around 160-170 MB.
+    mem_limit: 384m
     depends_on:
       web:
         condition: service_healthy

@@ -33,7 +33,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, intl, pdo_mysql, zip
+          extensions: gd, imagick, intl, pdo_mysql, zip
           coverage: none
       - uses: actions/setup-node@v7
         with:
@@ -70,7 +70,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, intl, pdo_mysql, zip
+          extensions: gd, imagick, intl, pdo_mysql, zip
           coverage: none
       - uses: actions/setup-node@v7
         with:

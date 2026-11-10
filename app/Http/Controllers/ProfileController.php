@@ -77,7 +77,7 @@ class ProfileController extends Controller
         return view('profile.customize', [
             'user' => $user,
             // A few real photos and collections, so the preview looks like their portfolio.
-            'previewPhotos' => $user->photos()->latest()->take(8)->get(),
+            'previewPhotos' => $user->photos()->ready()->latest()->take(8)->get(),
             'previewCollections' => $user->collections()->where('status', 'Published')->with('coverPhoto')->take(3)->get(),
         ]);
     }

@@ -84,7 +84,7 @@
                                     }
                                 },
                                 onerror: (responseText) => {
-                                    let message = "That photo didn't upload. Check your connection and try again.";
+                                    let message = "That photo didn't upload. Try again, or try a smaller file.";
 
                                     try {
                                         const response = JSON.parse(responseText);

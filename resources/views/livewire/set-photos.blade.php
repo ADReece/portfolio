@@ -1,4 +1,5 @@
-<div>
+{{-- Polls while photos are still being prepared, so they appear without a reload. --}}
+<div @if($set->photos->contains('status', \App\Models\Photo::PROCESSING)) wire:poll.4s="refreshPhotos" @endif>
     @if (session()->has('message'))
         <x-ui.alert tone="green" role="status" class="mb-4">{{ session('message') }}</x-ui.alert>
     @endif
@@ -50,8 +51,21 @@
                         <li class="group relative" wire:key="photo-{{ $photo->id }}">
                             <div class="relative overflow-hidden rounded-control bg-gray-100 ring-2 transition dark:bg-gray-900"
                                  :class="selected.includes(@js((string) $photo->id)) ? 'ring-brand-500' : 'ring-transparent'">
-                                <img src="{{ $photo->getAwsThumbnail() }}" alt="{{ $photo->caption ?: 'Photo '.$loop->iteration }}" loading="lazy"
-                                     class="aspect-square w-full object-cover">
+                                @if($photo->status === \App\Models\Photo::PROCESSING)
+                                    <div class="flex aspect-square w-full flex-col items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-300" role="status">
+                                        <svg class="size-6 animate-spin text-brand-600" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                                        Preparing…
+                                    </div>
+                                @elseif($photo->status === \App\Models\Photo::FAILED)
+                                    <div class="flex aspect-square w-full flex-col items-center justify-center gap-2 bg-red-50 p-3 text-center text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200" role="alert">
+                                        <x-ui.icon name="exclamation-triangle" class="size-6" />
+                                        <span>{{ $photo->processing_error ?: \App\Models\Photo::FAILED_MESSAGE }}</span>
+                                        <button type="button" wire:click="deletePhoto('{{ $photo->id }}')" class="font-semibold underline underline-offset-4">Remove</button>
+                                    </div>
+                                @else
+                                    <img src="{{ $photo->getAwsThumbnail() }}" alt="{{ $photo->caption ?: 'Photo '.$loop->iteration }}" loading="lazy"
+                                         class="aspect-square w-full object-cover">
+                                @endif
                                 <input type="checkbox" x-model="selected" value="{{ $photo->id }}"
                                        aria-label="Select {{ $photo->caption ?: 'photo '.$loop->iteration }}"
                                        class="absolute top-2 left-2 size-5 rounded-sm border-gray-300 text-brand-600 shadow-sm focus:ring-brand-500">

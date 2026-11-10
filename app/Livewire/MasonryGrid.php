@@ -48,7 +48,8 @@ class MasonryGrid extends Component
 
     protected function getQuery(): Builder
     {
-        $query = Photo::query();
+        // Only photos whose thumbnail and watermarked copy exist.
+        $query = Photo::query()->ready();
 
         if ($this->collectionId) {
             // Get photos from all sets in the collection

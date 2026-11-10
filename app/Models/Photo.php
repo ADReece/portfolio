@@ -25,8 +25,27 @@ class Photo extends Model
         'size',
         'watermarked',
         'purchased',
-        'hide_from_portfolio'
+        'hide_from_portfolio',
+        'status',
+        'processing_error',
     ];
+
+    public const PROCESSING = 'processing';
+    public const READY = 'ready';
+    public const FAILED = 'failed';
+
+    public const FAILED_MESSAGE = "This photo couldn't be processed. Try a smaller file, or save it as a JPEG and upload it again.";
+
+    /** Photos whose thumbnail and watermarked copy exist (safe to show publicly). */
+    public function scopeReady($query)
+    {
+        return $query->where('photos.status', self::READY);
+    }
+
+    public function isReady(): bool
+    {
+        return ($this->status ?? self::READY) === self::READY;
+    }
 
     protected $casts = [
         'private' => 'boolean',
