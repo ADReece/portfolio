@@ -20,6 +20,9 @@
                 <li><a href="{{ route('privacy') }}" class="hover:text-white">Privacy Policy</a></li>
                 <li><a href="{{ route('sla') }}" class="hover:text-white">SLA</a></li>
                 <li><a href="{{ route('photo-credits') }}" class="hover:text-white">Photo credits</a></li>
+                @if(\App\Tracking\Tracking::configured())
+                    <li><a href="{{ route('privacy') }}#cookies" data-cookie-settings class="hover:text-white">Cookie settings</a></li>
+                @endif
             </ul>
         </nav>
         <div>

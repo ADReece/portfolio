@@ -73,6 +73,12 @@ x-environment: &environment
   # Platform CRM reporting; [SECRET] token, empty = off
   PLATFORM_CRM_URL: ${PLATFORM_CRM_URL:-https://crm.ascend-digital.co.uk}
   PLATFORM_CRM_TOKEN: ${PLATFORM_CRM_TOKEN:-}
+  # Conversion tracking (consent-gated); empty = off
+  GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID:-}
+  GOOGLE_ADS_ID: ${GOOGLE_ADS_ID:-}
+  GOOGLE_ADS_SIGNUP_LABEL: ${GOOGLE_ADS_SIGNUP_LABEL:-}
+  GOOGLE_ADS_PURCHASE_LABEL: ${GOOGLE_ADS_PURCHASE_LABEL:-}
+  META_PIXEL_ID: ${META_PIXEL_ID:-}
   CUSTOM_DOMAINS_TARGET_IP: ${CUSTOM_DOMAINS_TARGET_IP:-2.28.38.210}
   CUSTOM_DOMAINS_TARGET_IPV6: ${CUSTOM_DOMAINS_TARGET_IPV6:-}
   CUSTOM_DOMAINS_CNAME_TARGETS: ${CUSTOM_DOMAINS_CNAME_TARGETS:-portfolio.ascend-digital.co.uk,custom.portfolio.ascend-digital.co.uk}

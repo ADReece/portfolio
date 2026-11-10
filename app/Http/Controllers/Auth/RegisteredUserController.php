@@ -49,12 +49,17 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
+        $user = new User([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+        // Where they came from (first-landing UTMs, gclid/fbclid), if known.
+        // Set before saving so the CRM's account.created event includes it.
+        $user->attribution = \App\Tracking\Attribution::current();
+        $user->save();
+        \App\Tracking\Tracking::queue('sign_up', 'signup-'.$user->id, ['method' => 'email']);
 
         event(new Registered($user));
 

@@ -23,6 +23,15 @@ class BillingController extends Controller
             Auth::user()->update(['subscription_plan_id' => $plan->id]);
             return redirect()->route('dashboard')->with('success', "You're now on the Free plan.");
         }
+        // begin_checkout, once per plan and interval per day.
+        $offer = app(\App\Billing\LaunchOffer::class);
+        \App\Tracking\Tracking::queue('begin_checkout', 'checkout-'.Auth::id().'-'.$plan->id.'-'.$interval.'-'.now()->toDateString(), [
+            'currency' => \App\Support\Currency::code(),
+            'value' => (float) ($offer->appliesTo($plan, $interval) ? $offer->discountedMonthlyPrice($plan) : $plan->priceFor($interval)),
+            'plan' => $plan->slug,
+            'interval' => $interval,
+        ]);
+
         return view('billing.checkout', compact('plan', 'interval'));
     }
 
@@ -47,11 +56,23 @@ class BillingController extends Controller
             }
 
             // New monthly subscriptions get the launch offer coupon while it runs.
-            app(\App\Billing\LaunchOffer::class)
+            $offer = app(\App\Billing\LaunchOffer::class);
+            $coupon = $offer->couponFor($interval);
+            $subscription = $offer
                 ->apply($user->newSubscription('default', $priceId), $interval)
                 ->create($request->payment_method);
 
             $user->update(['subscription_plan_id' => $plan->id]);
+
+            // purchase: the first payment, keyed by the Stripe subscription id.
+            \App\Tracking\Tracking::queue('purchase', (string) $subscription->stripe_id, array_filter([
+                'transaction_id' => (string) $subscription->stripe_id,
+                'currency' => \App\Support\Currency::code(),
+                'value' => (float) ($coupon ? $offer->discountedMonthlyPrice($plan) : $plan->priceFor($interval)),
+                'coupon' => $coupon,
+                'plan' => $plan->slug,
+                'interval' => $interval,
+            ], fn ($v) => $v !== null));
 
             return redirect()->route('dashboard')->with('success', 'Subscription activated successfully!');
         } catch (IncompletePayment $exception) {

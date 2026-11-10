@@ -76,6 +76,7 @@ class User extends Authenticatable
         'stripe_connect_enabled' => 'boolean',
         'copy_protection' => 'boolean',
         'feature_override' => 'boolean',
+        'attribution' => 'array',
         'feature_override_expires_at' => 'datetime',
         'is_admin' => 'boolean',
     ];

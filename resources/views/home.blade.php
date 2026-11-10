@@ -455,5 +455,6 @@
     @include('partials.marketing-footer')
     @livewireScriptConfig
     @include('partials.chatmesh')
+    @include('partials.tracking')
 </body>
 </html>

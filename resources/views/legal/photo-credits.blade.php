@@ -32,5 +32,6 @@
             @endif
         </div>
     </main>
+    @include('partials.tracking')
 </body>
 </html>

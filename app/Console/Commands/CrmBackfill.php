@@ -36,6 +36,8 @@ class CrmBackfill extends Command
                     (string) $user->id,
                     ($user->created_at ?? now())->toIso8601ZuluString(),
                     AccountSnapshot::for($user),
+                    null,
+                    CrmReporter::attributionFor($user),
                 );
                 $this->option('sync') ? dispatch_sync($job) : dispatch($job);
                 $count++;

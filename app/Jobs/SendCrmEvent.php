@@ -38,6 +38,7 @@ class SendCrmEvent implements ShouldQueue
         public string $occurredAt,
         public ?array $account = null,
         public ?string $debounceToken = null,
+        public ?array $extra = null,
     ) {
         $this->afterCommit();
     }
@@ -73,7 +74,7 @@ class SendCrmEvent implements ShouldQueue
                 'type' => $this->type,
                 'occurred_at' => $this->occurredAt,
                 'account' => $account,
-            ]);
+            ] + ($this->extra ?? []));
 
         if ($response->successful()) {
             return;
