@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Prints;
 
+use App\Models\ProdigiImport;
 use App\Models\ProdigiProduct;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
@@ -158,9 +159,16 @@ class AdminPrintCatalogueTest extends PrintCatalogueTestCase
 
         $this->actingAs($this->admin())->post(route('admin.print-catalogue.store-many'), [
             'skus' => "global-can-16x20\nGLOBAL-FAP-10X8, GLOBAL-OLD-1\nNOPE-1",
-        ])->assertSessionHas('error', fn ($m) => str_contains($m, 'Added 2 (inactive): GLOBAL-CAN-16X20, GLOBAL-FAP-10X8.')
-            && str_contains($m, 'Already in the catalogue: GLOBAL-OLD-1.')
-            && str_contains($m, 'Not found on Prodigi: NOPE-1.'));
+        ])->assertSessionHas('success', fn ($m) => str_contains($m, 'Checking 3 SKUs') && str_contains($m, '1 already in the catalogue'));
+
+        // The queue is synchronous in tests, so the import has finished.
+        $import = ProdigiImport::sole();
+        $this->assertSame([4, 2, 1, 1, 0], [$import->total, $import->added, $import->skipped, $import->not_found, $import->failed]);
+        $this->assertSame(['NOPE-1'], $import->not_found_skus);
+        $this->assertNotNull($import->finished_at);
+
+        $this->actingAs($this->admin())->get(route('admin.print-catalogue.index'))
+            ->assertSee('Pasted SKUs')->assertSee('2 added')->assertSee('NOPE-1');
 
         $canvas = ProdigiProduct::where('sku', 'GLOBAL-CAN-16X20')->sole();
         $this->assertFalse($canvas->is_active);

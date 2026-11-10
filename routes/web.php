@@ -1,22 +1,27 @@
 <?php
 
-use App\Http\Controllers\CollectionController;
-use App\Http\Controllers\FontController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\PrintPurchaseController;
-use App\Http\Controllers\ProdigiProductSettingsController;
-use App\Http\Controllers\PhotoController;
-use App\Http\Controllers\SetController;
-use App\Http\Controllers\TemplateController;
-use App\Livewire\ManageSets;
-use App\Livewire\PhotoUpload;
-use App\Livewire\TemplateBatch;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrdersController;
+use App\Http\Controllers\Admin\AdminPrintCatalogueController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminSubscriptionsController;
 use App\Http\Controllers\Admin\AdminUsersController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\CustomDomainController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FontController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\PrintPurchaseController;
+use App\Http\Controllers\ProdigiProductSettingsController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SetController;
+use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\WebhookController;
+use App\Livewire\TemplateBatch;
+use Illuminate\Support\Facades\Route;
 use Laravel\Cashier\Http\Controllers\PaymentController as CashierPaymentController;
 
 /*
@@ -34,42 +39,41 @@ use Laravel\Cashier\Http\Controllers\PaymentController as CashierPaymentControll
 Route::get('/up', fn () => response('ok', 200, ['Content-Type' => 'text/plain']))->name('health');
 
 // Per-host robots.txt and sitemap (main site or a photographer's own domain)
-Route::get('/robots.txt', [App\Http\Controllers\SeoController::class, 'robots'])->name('robots');
-Route::get('/sitemap.xml', [App\Http\Controllers\SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 // Public homepage
-Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Legal pages
-Route::get('/terms', [App\Http\Controllers\HomeController::class, 'terms'])->name('terms');
-Route::get('/privacy', [App\Http\Controllers\HomeController::class, 'privacy'])->name('privacy');
-Route::get('/sla', [App\Http\Controllers\HomeController::class, 'sla'])->name('sla');
-Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->name('about');
+Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
+Route::get('/privacy', [HomeController::class, 'privacy'])->name('privacy');
+Route::get('/sla', [HomeController::class, 'sla'])->name('sla');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::view('/photo-credits', 'legal.photo-credits')->name('photo-credits');
-Route::get('/examples/{slug}', [App\Http\Controllers\HomeController::class, 'example'])
+Route::get('/examples/{slug}', [HomeController::class, 'example'])
     ->whereIn('slug', array_keys(config('marketing.showcases')))->name('examples.show');
 
 // Pricing
-Route::get('/pricing', [App\Http\Controllers\BillingController::class, 'pricing'])->name('pricing');
+Route::get('/pricing', [BillingController::class, 'pricing'])->name('pricing');
 
-Route::get('/dashboard', App\Http\Controllers\DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
-
-//Backend Routes
+// Backend Routes
 Route::middleware('auth')->group(function () {
     // Billing routes
-    Route::get('/checkout/{plan}', [App\Http\Controllers\BillingController::class, 'checkout'])->name('checkout');
-    Route::post('/checkout/{plan}', [App\Http\Controllers\BillingController::class, 'processCheckout'])->name('checkout.process');
-    Route::get('/billing/portal', [App\Http\Controllers\BillingController::class, 'billingPortal'])->name('billing.portal');
-    Route::post('/subscription/cancel', [App\Http\Controllers\BillingController::class, 'cancel'])->name('subscription.cancel');
-    Route::post('/subscription/resume', [App\Http\Controllers\BillingController::class, 'resume'])->name('subscription.resume');
-    Route::post('/subscription/swap/{plan}', [App\Http\Controllers\BillingController::class, 'swap'])->name('subscription.swap');
-    Route::get('/billing/invoices/{invoiceId}', [App\Http\Controllers\BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
+    Route::get('/checkout/{plan}', [BillingController::class, 'checkout'])->name('checkout');
+    Route::post('/checkout/{plan}', [BillingController::class, 'processCheckout'])->name('checkout.process');
+    Route::get('/billing/portal', [BillingController::class, 'billingPortal'])->name('billing.portal');
+    Route::post('/subscription/cancel', [BillingController::class, 'cancel'])->name('subscription.cancel');
+    Route::post('/subscription/resume', [BillingController::class, 'resume'])->name('subscription.resume');
+    Route::post('/subscription/swap/{plan}', [BillingController::class, 'swap'])->name('subscription.swap');
+    Route::get('/billing/invoices/{invoiceId}', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
 
     // Stripe Connect routes
-    Route::get('/connect/stripe', [App\Http\Controllers\BillingController::class, 'connectStripe'])->name('connect.stripe');
-    Route::get('/connect/stripe/callback', [App\Http\Controllers\BillingController::class, 'handleConnectCallback'])->name('connect.stripe.callback');
-    Route::post('/connect/stripe/disconnect', [App\Http\Controllers\BillingController::class, 'disconnectStripe'])->name('connect.stripe.disconnect');
+    Route::get('/connect/stripe', [BillingController::class, 'connectStripe'])->name('connect.stripe');
+    Route::get('/connect/stripe/callback', [BillingController::class, 'handleConnectCallback'])->name('connect.stripe.callback');
+    Route::post('/connect/stripe/disconnect', [BillingController::class, 'disconnectStripe'])->name('connect.stripe.disconnect');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -97,7 +101,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/sets/{set}/templates', [SetController::class, 'syncTemplates'])->name('sets.templates.sync');
 
     Route::post('/collections/{collection}/email-client', [CollectionController::class, 'emailClient'])->name('collections.email-client');
-
 
     // Photo management
     Route::group(['prefix' => 'photos'], function () {
@@ -130,21 +133,20 @@ Route::middleware('auth')->group(function () {
 
 // Custom domains (e.g. stephshoots.com); plan limits in config/custom_domains.php
 Route::middleware('auth')->prefix('/settings/domain')->group(function () {
-    Route::get('/', [App\Http\Controllers\CustomDomainController::class, 'index'])->name('custom-domains.index');
-    Route::post('/', [App\Http\Controllers\CustomDomainController::class, 'store'])->middleware('throttle:10,1')->name('custom-domains.store');
-    Route::patch('/{domain}', [App\Http\Controllers\CustomDomainController::class, 'update'])->name('custom-domains.update');
-    Route::post('/{domain}/verify', [App\Http\Controllers\CustomDomainController::class, 'verify'])->name('custom-domains.verify');
-    Route::delete('/{domain}', [App\Http\Controllers\CustomDomainController::class, 'destroy'])->name('custom-domains.destroy');
+    Route::get('/', [CustomDomainController::class, 'index'])->name('custom-domains.index');
+    Route::post('/', [CustomDomainController::class, 'store'])->middleware('throttle:10,1')->name('custom-domains.store');
+    Route::patch('/{domain}', [CustomDomainController::class, 'update'])->name('custom-domains.update');
+    Route::post('/{domain}/verify', [CustomDomainController::class, 'verify'])->name('custom-domains.verify');
+    Route::delete('/{domain}', [CustomDomainController::class, 'destroy'])->name('custom-domains.destroy');
 });
 
-Route::middleware(['auth','subscription:upload_logo'])->group(function(){
+Route::middleware(['auth', 'subscription:upload_logo'])->group(function () {
     Route::get('/profile/customize', [ProfileController::class, 'customize'])->name('profile.customize');
     Route::patch('/profile/customize', [ProfileController::class, 'updateCustomization'])->name('profile.customize.update');
 });
 
-
-//Public facing Routes
-Route::prefix('/@{username}')->group(function(){
+// Public facing Routes
+Route::prefix('/@{username}')->group(function () {
     Route::get('/', [ProfileController::class, 'view'])->name('profile.view');
 
     Route::get('/collections', [ProfileController::class, 'collections'])->name('profile.collections');
@@ -179,13 +181,13 @@ Route::get('/orders/{order}/purchase-success', [PrintPurchaseController::class, 
 Route::get('/orders/{order}/purchase-cancel', [PrintPurchaseController::class, 'cancel'])->name('print-purchase.cancel');
 
 // Stripe Webhooks
-Route::post('/stripe/webhook', [App\Http\Controllers\WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
+Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 // Cashier payment confirmation (SCA) route
 Route::get('/stripe/payment/{id}', [CashierPaymentController::class, 'show'])
     ->name('cashier.payment');
 
-Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(function(){
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/users', [AdminUsersController::class, 'index'])->name('users.index');
     Route::post('/users/{user}/toggle-override', [AdminUsersController::class, 'toggleOverride'])->name('users.toggle-override');
@@ -200,16 +202,18 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
     Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
 
     // Print catalogue (Prodigi products Portfolio offers)
-    Route::get('/print-catalogue', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'index'])->name('print-catalogue.index');
-    Route::get('/print-catalogue/create', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'create'])->name('print-catalogue.create');
-    Route::post('/print-catalogue/lookup', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'lookup'])->middleware('throttle:30,1')->name('print-catalogue.lookup');
-    Route::post('/print-catalogue', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'store'])->name('print-catalogue.store');
-    Route::post('/print-catalogue/bulk', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'storeMany'])->middleware('throttle:10,1')->name('print-catalogue.store-many');
-    Route::post('/print-catalogue/refresh-all', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'refreshAll'])->middleware('throttle:5,1')->name('print-catalogue.refresh-all');
-    Route::get('/print-catalogue/{product}/edit', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'edit'])->name('print-catalogue.edit');
-    Route::put('/print-catalogue/{product}', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'update'])->name('print-catalogue.update');
-    Route::post('/print-catalogue/{product}/refresh', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'refresh'])->middleware('throttle:30,1')->name('print-catalogue.refresh');
-    Route::post('/print-catalogue/{product}/toggle', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'toggle'])->name('print-catalogue.toggle');
+    Route::get('/print-catalogue', [AdminPrintCatalogueController::class, 'index'])->name('print-catalogue.index');
+    Route::get('/print-catalogue/create', [AdminPrintCatalogueController::class, 'create'])->name('print-catalogue.create');
+    Route::post('/print-catalogue/lookup', [AdminPrintCatalogueController::class, 'lookup'])->middleware('throttle:30,1')->name('print-catalogue.lookup');
+    Route::post('/print-catalogue', [AdminPrintCatalogueController::class, 'store'])->name('print-catalogue.store');
+    Route::post('/print-catalogue/bulk', [AdminPrintCatalogueController::class, 'storeMany'])->middleware('throttle:10,1')->name('print-catalogue.store-many');
+    Route::post('/print-catalogue/import', [AdminPrintCatalogueController::class, 'import'])->middleware('throttle:10,1')->name('print-catalogue.import');
+    Route::post('/print-catalogue/discover', [AdminPrintCatalogueController::class, 'discover'])->middleware('throttle:5,1')->name('print-catalogue.discover');
+    Route::post('/print-catalogue/refresh-all', [AdminPrintCatalogueController::class, 'refreshAll'])->middleware('throttle:5,1')->name('print-catalogue.refresh-all');
+    Route::get('/print-catalogue/{product}/edit', [AdminPrintCatalogueController::class, 'edit'])->name('print-catalogue.edit');
+    Route::put('/print-catalogue/{product}', [AdminPrintCatalogueController::class, 'update'])->name('print-catalogue.update');
+    Route::post('/print-catalogue/{product}/refresh', [AdminPrintCatalogueController::class, 'refresh'])->middleware('throttle:30,1')->name('print-catalogue.refresh');
+    Route::post('/print-catalogue/{product}/toggle', [AdminPrintCatalogueController::class, 'toggle'])->name('print-catalogue.toggle');
 
     // Subscription Plan CRUD
     Route::get('/plans', [AdminSettingsController::class, 'plansIndex'])->name('plans.index');

@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RefreshProdigiProduct;
+use App\Models\ProdigiImport;
 use App\Models\ProdigiProduct;
+use App\Prints\CatalogueImporter;
 use App\Prints\CatalogueRefresher;
 use App\Prints\PrintPricing;
 use App\Service\ProdigiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -58,12 +62,16 @@ class AdminPrintCatalogueController extends Controller
             'categories' => ProdigiProduct::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
             'prodigiReady' => ProdigiService::configured(),
             'environment' => config('services.prodigi.environment'),
+            // Bulk adds still running, or finished in the last day.
+            'imports' => ProdigiImport::query()
+                ->where(fn ($q) => $q->whereNull('finished_at')->orWhere('finished_at', '>', now()->subDay()))
+                ->latest('id')->limit(5)->get(),
         ]);
     }
 
     public function create(): View
     {
-        return view('admin.print-catalogue.create', ['lookup' => null, 'prodigiReady' => ProdigiService::configured()]);
+        return view('admin.print-catalogue.create', $this->createData(null, ProdigiService::configured()));
     }
 
     /** Looks a SKU up on Prodigi and shows what it is before saving. */
@@ -77,7 +85,7 @@ class AdminPrintCatalogueController extends Controller
 
         $lookup = $this->fetch($sku);
 
-        return view('admin.print-catalogue.create', ['lookup' => $lookup, 'prodigiReady' => true]);
+        return view('admin.print-catalogue.create', $this->createData($lookup, true));
     }
 
     public function store(Request $request, CatalogueRefresher $refresher): RedirectResponse
@@ -116,70 +124,61 @@ class AdminPrintCatalogueController extends Controller
     }
 
     /**
-     * Adds several SKUs at once (pasted from Prodigi's dashboard or catalogue).
-     * Prodigi's API can't list an account's products, so they're added by SKU.
-     * Each is looked up, added inactive with Prodigi's description as its name
-     * and a guessed category, and its cost quoted. Existing SKUs are skipped.
+     * Adds several SKUs at once, pasted from Prodigi's dashboard or catalogue.
+     * Each is looked up in the queue and added inactive with Prodigi's
+     * description as its name and a guessed category. Existing SKUs are skipped.
      */
-    public function storeMany(Request $request, CatalogueRefresher $refresher): RedirectResponse
+    public function storeMany(Request $request, CatalogueImporter $importer): RedirectResponse
     {
-        $request->validate(['skus' => ['required', 'string', 'max:5000']]);
+        $request->validate(['skus' => ['required', 'string', 'max:100000']]);
         $this->requireProdigi();
 
-        $skus = collect(preg_split('/[\s,;]+/', strtoupper($request->input('skus'))))
-            ->map(fn ($s) => trim($s))
-            ->filter(fn ($s) => preg_match('/^[A-Z0-9][A-Z0-9._\-]*$/', $s))
-            ->unique()->values();
-        if ($skus->isEmpty()) {
+        $entries = CatalogueImporter::skusFromText($request->input('skus'));
+        if (! $entries) {
             throw ValidationException::withMessages(['skus' => 'Paste one or more Prodigi SKUs, one per line.']);
         }
-        if ($skus->count() > 25) {
-            throw ValidationException::withMessages(['skus' => 'Add up to 25 SKUs at a time.']);
+
+        return $this->queued($importer->queue($entries, 'paste', 'Pasted SKUs'));
+    }
+
+    /** Imports SKUs from a CSV, e.g. a price sheet downloaded from Prodigi's dashboard. */
+    public function import(Request $request, CatalogueImporter $importer): RedirectResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:csv,txt', 'max:10240']]);
+        $this->requireProdigi('file');
+
+        $entries = CatalogueImporter::skusFromCsv($request->file('file')->getRealPath());
+        if (! $entries) {
+            throw ValidationException::withMessages(['file' => 'No SKUs found. The sheet needs a column headed "SKU", or cells like GLOBAL-FAP-16X24.']);
         }
 
-        $added = $skipped = $notFound = $failed = [];
-        $sort = (int) ProdigiProduct::max('sort_order');
-        foreach ($skus as $sku) {
-            if (ProdigiProduct::where('sku', $sku)->exists()) {
-                $skipped[] = $sku;
+        return $this->queued($importer->queue($entries, 'csv', Str::limit($request->file('file')->getClientOriginalName(), 200)));
+    }
 
-                continue;
-            }
-            try {
-                $lookup = $refresher->lookup($sku);
-            } catch (\Throwable $e) {
-                $failed[] = $sku;
+    /** Tries known Prodigi SKU patterns and adds the ones that exist. */
+    public function discover(Request $request, CatalogueImporter $importer): RedirectResponse
+    {
+        $families = array_keys(config('prints.discovery.families'));
+        $data = $request->validate([
+            'families' => ['required', 'array', 'min:1'],
+            'families.*' => ['string', Rule::in($families)],
+        ], ['families.required' => 'Choose at least one product family.']);
+        $this->requireProdigi('families');
 
-                continue;
-            }
-            if (! $lookup) {
-                $notFound[] = $sku;
+        $entries = CatalogueImporter::discoveryCandidates($data['families']);
 
-                continue;
-            }
-            $product = ProdigiProduct::create([
-                'sku' => $lookup['sku'],
-                'name' => \Illuminate\Support\Str::limit($lookup['description'] ?: $lookup['sku'], 250, ''),
-                'category' => ProdigiProduct::guessCategory($lookup['sku'], $lookup['description']),
-                'description' => $lookup['description'],
-                'size_label' => $lookup['size_label'],
-                'raw_payload' => $lookup['raw'],
-                'sort_order' => $sort += 10,
-                'is_active' => false,
-            ]);
-            $refresher->refresh($product);
-            $added[] = $sku;
-        }
+        return $this->queued($importer->queue($entries, 'discover', 'Discover: '.implode(', ', $data['families'])));
+    }
 
-        $parts = array_filter([
-            $added ? 'Added '.count($added).' (inactive): '.implode(', ', $added).'.' : null,
-            $skipped ? 'Already in the catalogue: '.implode(', ', $skipped).'.' : null,
-            $notFound ? 'Not found on Prodigi: '.implode(', ', $notFound).'.' : null,
-            $failed ? 'Couldn\'t reach Prodigi for: '.implode(', ', $failed).'. Try again.' : null,
-        ]);
+    private function queued(ProdigiImport $import): RedirectResponse
+    {
+        $new = $import->total - $import->skipped;
+        $minutes = max(1, (int) ceil($new / max(1, (int) config('prints.import_per_minute'))));
 
-        return redirect()->route('admin.print-catalogue.index', ['status' => $added ? 'inactive' : null])
-            ->with(($notFound || $failed) ? 'error' : 'success', implode(' ', $parts));
+        return redirect()->route('admin.print-catalogue.index', ['status' => 'inactive'])->with('success', $new
+            ? "Checking {$new} SKU".($new === 1 ? '' : 's')." with Prodigi (about {$minutes} min). New products are added as inactive; progress is shown below."
+                .($import->skipped ? " {$import->skipped} already in the catalogue." : '')
+            : 'Every one of those SKUs is already in the catalogue.');
     }
 
     public function edit(ProdigiProduct $product, PrintPricing $pricing): View
@@ -258,17 +257,17 @@ class AdminPrintCatalogueController extends Controller
         );
     }
 
-    public function refreshAll(CatalogueRefresher $refresher): RedirectResponse
+    /** Queues a refresh of every product (too many to do within one request). */
+    public function refreshAll(): RedirectResponse
     {
         $this->requireProdigi();
-        $failed = ProdigiProduct::query()->orderBy('id')->get()
-            ->map(fn ($p) => $refresher->refresh($p))
-            ->filter(fn ($p) => $p->refresh_error);
+        $gap = 60 / max(1, (int) config('prints.import_per_minute'));
+        $ids = ProdigiProduct::query()->orderBy('id')->pluck('id');
+        foreach ($ids->values() as $i => $id) {
+            RefreshProdigiProduct::dispatch((int) $id)->delay(now()->addMilliseconds((int) round($i * $gap * 1000)));
+        }
 
-        return back()->with(
-            $failed->isEmpty() ? 'success' : 'error',
-            $failed->isEmpty() ? 'Refreshed every product from Prodigi.' : 'Some products failed to refresh: '.$failed->pluck('sku')->implode(', ')
-        );
+        return back()->with('success', 'Refreshing '.$ids->count().' products from Prodigi in the background. Products whose refresh fails show the reason.');
     }
 
     public function toggle(ProdigiProduct $product): RedirectResponse
@@ -280,6 +279,16 @@ class AdminPrintCatalogueController extends Controller
             : "{$product->name} is hidden from photographers and clients. Past orders are unaffected.");
     }
 
+    private function createData(?array $lookup, bool $prodigiReady): array
+    {
+        return [
+            'lookup' => $lookup,
+            'prodigiReady' => $prodigiReady,
+            'families' => config('prints.discovery.families'),
+            'candidatesPerFamily' => count(CatalogueImporter::discoveryCandidates([array_key_first(config('prints.discovery.families'))])),
+        ];
+    }
+
     private function validatedSku(Request $request): string
     {
         $request->validate(['sku' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9][A-Za-z0-9._\-]*$/']]);
@@ -287,10 +296,10 @@ class AdminPrintCatalogueController extends Controller
         return strtoupper(trim($request->input('sku')));
     }
 
-    private function requireProdigi(): void
+    private function requireProdigi(string $field = 'sku'): void
     {
         if (! ProdigiService::configured()) {
-            throw ValidationException::withMessages(['sku' => 'Prodigi isn\'t configured: set PRODIGI_API_KEY.']);
+            throw ValidationException::withMessages([$field => 'Prodigi isn\'t configured: set PRODIGI_API_KEY.']);
         }
     }
 
