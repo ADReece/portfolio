@@ -29,6 +29,7 @@
     "MAIL_MAILER": "log",
     "MAIL_FROM_ADDRESS": "noreply@portfolio.hydrodactyl.duckdns.org",
     "ADMIN_EMAILS": "reece@ascend-digital.co.uk",
-    "CHATMESH_KEY": "pk_EPynMNm91cwrsQ4Fx5dBZBkk"
+    "CHATMESH_KEY": "pk_EPynMNm91cwrsQ4Fx5dBZBkk",
+    "CHATMESH_URL": "https://chatmesh.hydrodactyl.duckdns.org"
   }
 }
