@@ -57,7 +57,9 @@
                         acceptedFileTypes: ['image/*'],
                         maxFiles: 100,
                         maxFileSize: '100MB',
-                        maxParallelUploads: 1,
+                        // Two at a time: the request only stores the file, so this stays fast;
+                        // thumbnails are made one by one in the queue.
+                        maxParallelUploads: 2,
                         credits: false,
                         labelIdle: 'Drag photos here or <span class="filepond--label-action">choose files</span>',
                         server: {

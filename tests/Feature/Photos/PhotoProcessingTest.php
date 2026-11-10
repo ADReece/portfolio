@@ -155,4 +155,51 @@ class PhotoProcessingTest extends TestCase
         $this->assertGreaterThan(0, $data['thumbnail_bytes']);
         $this->assertGreaterThan(0, $data['watermarked_bytes']);
     }
+
+    public function test_uploading_eight_photos_creates_eight_rows_and_queues_eight_jobs(): void
+    {
+        Queue::fake();
+        $this->user->forceFill(['feature_override' => true])->save(); // no free-plan photo limit in the way
+        $path = $this->largeJpeg(1200, 800);
+
+        $started = microtime(true);
+        foreach (range(1, 8) as $n) {
+            $this->actingAs($this->user)->post(route('upload-files'), [
+                'file' => new UploadedFile($path, "IMG_{$n}.jpg", 'image/jpeg', null, true),
+                'set_id' => $this->set->id,
+            ], ['Accept' => 'application/json'])->assertOk()->assertJson(['status' => 'processing']);
+        }
+
+        $this->assertSame(8, Photo::where('status', Photo::PROCESSING)->count());
+        Queue::assertPushed(ProcessImageUpload::class, 8);
+        $this->assertSame(8, Photo::pluck('id')->unique()->count());
+        // No image work in the request: eight uploads together stay quick.
+        $this->assertLessThan(8, microtime(true) - $started);
+    }
+
+    public function test_a_failed_photo_can_be_retried_by_its_owner(): void
+    {
+        Queue::fake();
+        $photo = $this->set->photos()->create(['user_id' => $this->user->id, 'url' => 'photos/'.$this->user->id.'/retry.jpg', 'private' => false, 'size' => 1, 'status' => Photo::FAILED, 'processing_error' => Photo::FAILED_MESSAGE]);
+        Storage::disk('s3')->put($photo->url, 'original bytes');
+
+        \Livewire\Livewire::actingAs($this->user)->test(\App\Livewire\SetPhotos::class, ['setId' => $this->set->id])
+            ->assertSee('Retry')
+            ->call('retryPhoto', (string) $photo->id)
+            ->assertSee('Preparing…');
+
+        $this->assertSame(Photo::PROCESSING, $photo->fresh()->status);
+        $this->assertNull($photo->fresh()->processing_error);
+        Queue::assertPushed(ProcessImageUpload::class, fn ($job) => $job->photoId === (string) $photo->id);
+
+        // Someone else can't.
+        $other = User::factory()->create();
+        $photo->update(['status' => Photo::FAILED]);
+        \Livewire\Livewire::actingAs($other)->test(\App\Livewire\SetPhotos::class, ['setId' => $this->set->id])->assertForbidden();
+    }
+
+    public function test_job_timeout_stays_below_the_queue_retry_window(): void
+    {
+        $this->assertLessThan(config('queue.connections.database.retry_after'), (new ProcessImageUpload('x'))->timeout);
+    }
 }
