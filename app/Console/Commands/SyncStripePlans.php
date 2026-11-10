@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Billing\LaunchOffer;
 use App\Billing\StripeCatalog;
 use App\Models\SubscriptionPlan;
 use App\Support\Currency;
@@ -13,6 +14,10 @@ use Illuminate\Console\Command;
  * metadata.plan_slug and prices by amount, currency and interval. When a
  * plan's price changes, a new Price is created and the old one archived
  * (existing subscriptions keep the price they're on). Prices are never edited.
+ *
+ * The Stripe account is shared with other Ascend Digital apps, so this only
+ * ever touches objects tagged metadata app=portfolio, and never archives
+ * anything else. The launch coupon is shared too: create-if-missing only.
  */
 class SyncStripePlans extends Command
 {
@@ -20,11 +25,11 @@ class SyncStripePlans extends Command
                             {--apply : Create the Stripe objects and save the IDs (default is a dry run)}
                             {--dry-run : Only show what would change (the default)}';
 
-    protected $description = 'Create or find Stripe products and prices for the paid subscription plans';
+    protected $description = 'Create or find Stripe products and prices for the paid plans, and the launch offer coupon';
 
     private const INTERVALS = ['month' => ['price', 'stripe_price_id'], 'year' => ['annual_price', 'annual_stripe_price_id']];
 
-    public function handle(StripeCatalog $stripe): int
+    public function handle(StripeCatalog $stripe, LaunchOffer $offer): int
     {
         $apply = $this->option('apply') && ! $this->option('dry-run');
         $currency = Currency::stripeCode();
@@ -33,6 +38,8 @@ class SyncStripePlans extends Command
 
         $plans = SubscriptionPlan::where('active', true)->orderBy('sort_order')->get()
             ->filter(fn (SubscriptionPlan $plan) => ! $plan->isFree() && (float) $plan->price > 0);
+
+        $this->launchCoupon($stripe, $offer, $apply);
 
         if ($plans->isEmpty()) {
             $this->components->warn('No active paid plans.');
@@ -81,6 +88,30 @@ class SyncStripePlans extends Command
         return self::SUCCESS;
     }
 
+    /** Creates the launch offer coupon if it doesn't exist yet. Never edits an existing one. */
+    private function launchCoupon(StripeCatalog $stripe, LaunchOffer $offer, bool $apply): void
+    {
+        $id = $offer->couponId();
+        if (! $id) {
+            return;
+        }
+        if (! $offer->isActive()) {
+            $this->line("Launch offer ended: coupon {$id} not needed");
+
+            return;
+        }
+        if ($stripe->findCoupon($id)) {
+            $this->line("Launch offer coupon {$id} exists");
+
+            return;
+        }
+        $params = $offer->stripeCouponParams();
+        $this->line(($apply ? 'Creating' : 'Would create')." launch offer coupon {$id}: {$params['percent_off']}% off {$params['duration_in_months']} months, redeemable until ".gmdate('Y-m-d H:i', $params['redeem_by']).' UTC');
+        if ($apply) {
+            $stripe->createCoupon($params);
+        }
+    }
+
     private function product(StripeCatalog $stripe, SubscriptionPlan $plan, bool $apply): array
     {
         $existing = $stripe->findProductsByPlanSlug($plan->slug);
@@ -98,7 +129,7 @@ class SyncStripePlans extends Command
 
             return $stripe->createProduct([
                 'name' => $plan->name,
-                'metadata' => ['plan_slug' => $plan->slug],
+                'metadata' => ['app' => 'portfolio', 'plan_slug' => $plan->slug],
             ]);
         }
 
@@ -134,14 +165,17 @@ class SyncStripePlans extends Command
                     'currency' => $currency,
                     'unit_amount' => $unitAmount,
                     'recurring' => ['interval' => $interval],
-                    'metadata' => ['plan_slug' => $plan->slug],
+                    'metadata' => ['app' => 'portfolio', 'plan_slug' => $plan->slug],
+                    // Moves the key from the previous price for this plan and interval.
+                    'lookup_key' => "portfolio_{$plan->slug}_{$interval}",
+                    'transfer_lookup_key' => true,
                 ])['id']
                 : '(new)';
         }
 
         // Archive this plan's other prices for the interval (old amounts).
         foreach ($forInterval as $old) {
-            if ($old['id'] !== $id && ($old['metadata']['plan_slug'] ?? null) === $plan->slug) {
+            if ($old['id'] !== $id && ($old['metadata']['app'] ?? null) === 'portfolio' && ($old['metadata']['plan_slug'] ?? null) === $plan->slug) {
                 $this->line('  '.($apply ? 'archiving' : 'would archive')." old {$label} price {$old['id']} (".strtoupper($old['currency']).' '.number_format($old['unit_amount'] / 100, 2).')');
                 if ($apply) {
                     $stripe->archivePrice($old['id']);

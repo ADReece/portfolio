@@ -16,7 +16,8 @@ class StripeApiCatalog implements StripeCatalog
         // found immediately; search results lag by up to a minute.
         $found = [];
         foreach ($this->stripe->products->all(['active' => true, 'limit' => 100])->autoPagingIterator() as $product) {
-            if (($product->metadata['plan_slug'] ?? null) === $slug) {
+            // The account is shared with other apps: only Portfolio's own products.
+            if (($product->metadata['app'] ?? null) === 'portfolio' && ($product->metadata['plan_slug'] ?? null) === $slug) {
                 $found[] = $product->toArray();
             }
         }
@@ -52,5 +53,22 @@ class StripeApiCatalog implements StripeCatalog
     public function archivePrice(string $id): void
     {
         $this->stripe->prices->update($id, ['active' => false]);
+    }
+
+    public function findCoupon(string $id): ?array
+    {
+        try {
+            return $this->stripe->coupons->retrieve($id)->toArray();
+        } catch (\Stripe\Exception\InvalidRequestException $e) {
+            if ($e->getHttpStatus() === 404) {
+                return null;
+            }
+            throw $e;
+        }
+    }
+
+    public function createCoupon(array $params): array
+    {
+        return $this->stripe->coupons->create($params)->toArray();
     }
 }

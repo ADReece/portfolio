@@ -8,7 +8,7 @@ namespace App\Billing;
  */
 interface StripeCatalog
 {
-    /** Active products whose metadata.plan_slug matches, newest first. */
+    /** Active Portfolio products (metadata app=portfolio) whose metadata.plan_slug matches. */
     public function findProductsByPlanSlug(string $slug): array;
 
     public function createProduct(array $params): array;
@@ -22,4 +22,9 @@ interface StripeCatalog
 
     /** Archive (deactivate) a price; Stripe prices can't be edited or deleted. */
     public function archivePrice(string $id): void;
+
+    /** The coupon with this id, or null if Stripe has none. */
+    public function findCoupon(string $id): ?array;
+
+    public function createCoupon(array $params): array;
 }

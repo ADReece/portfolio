@@ -24,7 +24,8 @@
                         <p id="card-errors" role="alert" class="text-sm text-red-700 dark:text-red-400"></p>
                     </div>
                     <x-ui.button type="submit" id="submit-button" size="lg" class="w-full" icon="lock-closed" :disabled="empty($stripePk)">
-                        Pay {{ $currencySymbol }}{{ $plan->priceFor($interval) }} and subscribe
+                        @php($offer = app(\App\Billing\LaunchOffer::class))
+                        Pay {{ $currencySymbol }}{{ $offer->appliesTo($plan, $interval) ? $offer->discountedMonthlyPrice($plan) : $plan->priceFor($interval) }} and subscribe
                     </x-ui.button>
                     <p class="text-center text-sm text-gray-600 dark:text-gray-400">
                         Cancel any time. By subscribing you agree to our <a href="{{ route('terms') }}" class="font-medium text-brand-600 underline-offset-4 hover:underline dark:text-brand-400">Terms of Service</a>.
@@ -36,11 +37,16 @@
                 <div class="space-y-4">
                     <div class="flex items-baseline justify-between gap-4">
                         <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $plan->name }}</span>
+                        @unless(app(\App\Billing\LaunchOffer::class)->appliesTo($plan, $interval))
                         <span class="text-right">
                             <span class="text-xl font-bold text-gray-900 tabular-nums dark:text-gray-100">{{ $currencySymbol }}{{ $plan->priceFor($interval) }}</span>
                             <span class="text-sm text-gray-600 dark:text-gray-400">/ {{ $interval }}</span>
                         </span>
+                        @endunless
                     </div>
+                    @if(app(\App\Billing\LaunchOffer::class)->appliesTo($plan, $interval))
+                        @include('partials.launch-offer-price', ['plan' => $plan, 'offer' => app(\App\Billing\LaunchOffer::class), 'size' => 'sm'])
+                    @endif
                     <ul role="list" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                         @foreach($plan->features ?? [] as $feature)
                             <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />{{ $feature }}</li>

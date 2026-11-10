@@ -38,9 +38,10 @@
 
                 <h3 class="text-xl font-semibold mt-6 mb-3">Subscription Plans:</h3>
                 <ul class="list-disc pl-6 mb-4 space-y-2">
+                    @php($termsPlans = \App\Models\SubscriptionPlan::whereIn('slug', ['free', 'photographer', 'videographer'])->get()->keyBy('slug'))
                     <li><strong>Free Plan:</strong> Limited to 100 photos and 5 collections</li>
-                    <li><strong>Photographer Plan ($9.99/mo):</strong> Unlimited photos and collections with additional features</li>
-                    <li><strong>Videographer Plan ($14.99/mo):</strong> All Photographer features plus video upload capabilities</li>
+                    <li><strong>Photographer Plan @isset($termsPlans['photographer'])({{ $currencySymbol }}{{ $termsPlans['photographer']->priceFor('month') }}/mo)@endisset:</strong> Unlimited photos and collections with additional features</li>
+                    <li><strong>Videographer Plan @isset($termsPlans['videographer'])({{ $currencySymbol }}{{ $termsPlans['videographer']->priceFor('month') }}/mo)@endisset:</strong> All Photographer features plus video upload capabilities</li>
                 </ul>
 
                 <h2 class="text-2xl font-bold mt-8 mb-4">5. Refunds</h2>

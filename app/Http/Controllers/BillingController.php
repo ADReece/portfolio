@@ -46,8 +46,9 @@ class BillingController extends Controller
                 return back()->with('error', 'This plan is not configured for '.($interval === 'year' ? 'yearly' : 'monthly').' billing. Please contact support.');
             }
 
-            // Create subscription with the selected price; Cashier will handle trial if configured
-            $user->newSubscription('default', $priceId)
+            // New monthly subscriptions get the launch offer coupon while it runs.
+            app(\App\Billing\LaunchOffer::class)
+                ->apply($user->newSubscription('default', $priceId), $interval)
                 ->create($request->payment_method);
 
             $user->update(['subscription_plan_id' => $plan->id]);
@@ -145,6 +146,10 @@ class BillingController extends Controller
     // Stripe Connect methods for receiving payments
     public function connectStripe(Request $request)
     {
+        if (! \App\Billing\Payouts::available()) {
+            return view('billing.connect-stripe', ['connectUrl' => null, 'comingSoon' => true]);
+        }
+
         // The OAuth "state" ties Stripe's redirect back to this browser session,
         // so nobody can trick a photographer into linking someone else's account.
         $state = \Illuminate\Support\Str::random(40);
@@ -163,6 +168,10 @@ class BillingController extends Controller
 
     public function handleConnectCallback(Request $request)
     {
+        if (! \App\Billing\Payouts::available()) {
+            return redirect()->route('connect.stripe');
+        }
+
         // Handle OAuth callback from Stripe Connect
         $code = $request->query('code');
         $expectedState = $request->session()->pull('stripe_connect_state');

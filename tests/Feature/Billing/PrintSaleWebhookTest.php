@@ -81,7 +81,7 @@ class PrintSaleWebhookTest extends TestCase
         return ['type' => $type, 'data' => ['object' => [
             'id' => 'pi_123',
             'latest_charge' => 'ch_123',
-            'metadata' => [],
+            'metadata' => ['app' => 'portfolio'],
         ]]];
     }
 
