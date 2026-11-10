@@ -17,9 +17,48 @@
             <x-ui.alert tone="amber" title="Prodigi isn't configured">Set PRODIGI_API_KEY to look up products and refresh costs.</x-ui.alert>
         @endunless
         <p class="text-sm text-gray-600 dark:text-gray-400">
-            Prodigi's API can't list the products saved in your Prodigi account, so add them here by SKU (you can paste several at once).
+            Prodigi's API can't list its catalogue, so add products by SKU: one at a time, pasted, from a CSV, or with “Discover”, which finds the common sizes of each product family.
             “Refresh” updates the details and costs of products already in this catalogue.
         </p>
+        @if($imports->isNotEmpty())
+            @php $running = $imports->contains(fn ($i) => ! $i->isFinished()); @endphp
+            <x-ui.card title="Bulk adds" description="New products are added as inactive. Check their prices and options, then make them active.">
+                @if($running)
+                    {{-- Reload while an import runs, so the counts move. --}}
+                    <div x-data x-init="setTimeout(() => location.reload(), 8000)"></div>
+                @endif
+                <ul class="divide-y divide-gray-200 text-sm dark:divide-gray-700">
+                    @foreach($imports as $import)
+                        <li class="py-3">
+                            <div class="flex flex-wrap items-baseline justify-between gap-2">
+                                <span class="font-medium text-gray-900 dark:text-gray-100">{{ $import->label ?? ucfirst($import->source) }}</span>
+                                <span class="text-gray-600 dark:text-gray-400">
+                                    @if($import->isFinished())
+                                        Finished {{ $import->finished_at->diffForHumans() }}
+                                    @else
+                                        Checking: {{ $import->processed() }} of {{ $import->total }}
+                                    @endif
+                                </span>
+                            </div>
+                            @unless($import->isFinished())
+                                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="{{ $import->total }}" aria-valuenow="{{ $import->processed() }}">
+                                    <div class="h-full bg-brand-600" style="width: {{ $import->total ? round(100 * $import->processed() / $import->total) : 0 }}%"></div>
+                                </div>
+                            @endunless
+                            <p class="mt-1 text-gray-700 dark:text-gray-300">
+                                {{ $import->added }} added · {{ $import->skipped }} already in the catalogue · {{ $import->not_found }} not on Prodigi @if($import->failed) · <span class="font-medium text-red-700 dark:text-red-400">{{ $import->failed }} couldn't be checked</span>@endif
+                            </p>
+                            @if($import->failed_skus)
+                                <p class="mt-1 break-words text-xs text-gray-600 dark:text-gray-400">Couldn't reach Prodigi for: <span class="font-mono">{{ implode(', ', $import->failed_skus) }}</span>. Add them again to retry.</p>
+                            @endif
+                            @if($import->not_found_skus && $import->source !== 'discover')
+                                <p class="mt-1 break-words text-xs text-gray-600 dark:text-gray-400">Not on Prodigi: <span class="font-mono">{{ implode(', ', $import->not_found_skus) }}</span>@if($import->not_found > count($import->not_found_skus)) and {{ $import->not_found - count($import->not_found_skus) }} more @endif</p>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </x-ui.card>
+        @endif
         @unless(\App\Billing\Payouts::available())
             <x-ui.alert title="Selling prints is still “coming soon” for photographers">
                 The catalogue works fully now, so it's ready when Stripe Connect is switched on.

@@ -17,12 +17,48 @@
         </x-ui.card>
 
         @unless($lookup)
-            <x-ui.card title="Or add several at once" description="Paste SKUs from your Prodigi dashboard or Prodigi's catalogue, one per line (up to 25). Each is looked up, added as inactive with Prodigi's description as its name, and its cost quoted.">
-                <form method="POST" action="{{ route('admin.print-catalogue.store-many') }}" class="space-y-3">
-                    @csrf
-                    <x-ui.textarea name="skus" label="Prodigi SKUs" rows="6" placeholder="GLOBAL-FAP-10X8&#10;GLOBAL-CAN-16X20&#10;GLOBAL-CFPM-16X20">{{ old('skus') }}</x-ui.textarea>
-                    <x-ui.button type="submit" icon="plus" variant="secondary" :disabled="! $prodigiReady">Add all</x-ui.button>
-                </form>
+            <x-ui.card title="Or add many at once" description="Each SKU is checked with Prodigi in the background, added as inactive with Prodigi's description as its name and a guessed category, and its cost quoted. SKUs already in the catalogue are skipped. Lookups and quotes are free.">
+                <div class="space-y-8">
+                    <form method="POST" action="{{ route('admin.print-catalogue.discover') }}" class="space-y-3">
+                        @csrf
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Discover Prodigi products</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Tries every common size of each family (GLOBAL-<em>family</em>-<em>size</em>, about {{ $candidatesPerFamily }} per family) and adds the ones Prodigi has.
+                            Sizes that don't exist are simply skipped.
+                        </p>
+                        <fieldset>
+                            <legend class="sr-only">Product families</legend>
+                            <div class="grid gap-2 sm:grid-cols-2">
+                                @foreach($families as $code => $label)
+                                    <x-ui.checkbox name="families[]" id="family_{{ $code }}" :value="$code" :unchecked-value="null"
+                                                   :checked="in_array($code, old('families', array_keys($families)), true)"
+                                                   label="{{ $label }}" description="GLOBAL-{{ $code }}-…" />
+                                @endforeach
+                            </div>
+                        </fieldset>
+                        @error('families')<p class="text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
+                        <x-ui.button type="submit" icon="magnifying-glass" :disabled="! $prodigiReady">Discover products</x-ui.button>
+                    </form>
+
+                    <form method="POST" action="{{ route('admin.print-catalogue.import') }}" enctype="multipart/form-data" class="space-y-3 border-t border-gray-200 pt-6 dark:border-gray-700">
+                        @csrf
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Import a CSV</h3>
+                        <p id="file-help" class="text-sm text-gray-600 dark:text-gray-400">
+                            For example a price sheet from your Prodigi dashboard (Product information → pricing and shipping), or any spreadsheet saved as CSV.
+                            It needs a column headed “SKU”; optional “Name” and “Category” columns are used too. Prices in the sheet are ignored: costs are quoted from Prodigi.
+                        </p>
+                        <input id="file" name="file" type="file" accept=".csv,text/csv,text/plain" required aria-describedby="file-help" class="block text-sm">
+                        @error('file')<p class="text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
+                        <x-ui.button type="submit" icon="arrow-up-tray" variant="secondary" :disabled="! $prodigiReady">Import CSV</x-ui.button>
+                    </form>
+
+                    <form method="POST" action="{{ route('admin.print-catalogue.store-many') }}" class="space-y-3 border-t border-gray-200 pt-6 dark:border-gray-700">
+                        @csrf
+                        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Paste SKUs</h3>
+                        <x-ui.textarea name="skus" label="Prodigi SKUs, one per line (or separated by commas)" rows="6" placeholder="GLOBAL-FAP-10X8&#10;GLOBAL-CAN-16X20&#10;GLOBAL-CFPM-16X20">{{ old('skus') }}</x-ui.textarea>
+                        <x-ui.button type="submit" icon="plus" variant="secondary" :disabled="! $prodigiReady">Add all</x-ui.button>
+                    </form>
+                </div>
             </x-ui.card>
         @endunless
 
