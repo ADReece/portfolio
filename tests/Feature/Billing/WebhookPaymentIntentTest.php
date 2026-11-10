@@ -59,7 +59,7 @@ class WebhookPaymentIntentTest extends TestCase
         ]);
 
         $controller = app(WebhookController::class);
-        $response = $controller->handlePaymentIntentFailed([
+        $response = $controller->handlePaymentIntentPaymentFailed([
             'data' => [
                 'object' => [
                     'id' => 'pi_test_failed_1',
@@ -83,7 +83,7 @@ class WebhookPaymentIntentTest extends TestCase
             ],
         ]);
 
-        $failedResponse = $controller->handlePaymentIntentFailed([
+        $failedResponse = $controller->handlePaymentIntentPaymentFailed([
             'data' => [
                 'object' => [
                     'id' => 'pi_does_not_exist',

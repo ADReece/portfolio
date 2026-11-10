@@ -21,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
         // (the webhook uses App\Http\Controllers\WebhookController). Cashier's
         // own copies duplicated the route names, which broke route:cache.
         \Laravel\Cashier\Cashier::ignoreRoutes();
+
+        $this->app->bind(\Stripe\StripeClient::class, fn () => \Laravel\Cashier\Cashier::stripe());
+        $this->app->bind(\App\Billing\StripeCatalog::class, fn () => new \App\Billing\StripeApiCatalog(\Laravel\Cashier\Cashier::stripe()));
     }
 
     /**

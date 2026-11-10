@@ -21,7 +21,7 @@ class WebhookControllerTest extends TestCase
     {
         $order = Order::factory()->create(['stripe_payment_intent_id' => 'pi_failed_123']);
 
-        $response = (new WebhookController())->handlePaymentIntentFailed([
+        $response = (new WebhookController())->handlePaymentIntentPaymentFailed([
             'data' => ['object' => ['id' => 'pi_failed_123']],
         ]);
 
