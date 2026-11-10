@@ -5,7 +5,21 @@ import AxeBuilder from '@axe-core/playwright';
 
 const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
+// Let the page settle before measuring: the portfolio grid places photos
+// after their images load and animates them in, and axe's target-size rule
+// sees overlapping links if it runs mid-animation.
+async function settle(page) {
+    await page.waitForLoadState('networkidle');
+    if (await page.locator('#masonry').count()) {
+        await page.waitForSelector('#masonry[data-masonry-initialized="true"]');
+        // Photos get .loaded one by one (50ms apart), which starts their fade-in.
+        await page.waitForFunction(() => [...document.querySelectorAll('#masonry .masonry-item')].every(i => i.classList.contains('loaded')));
+    }
+    await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {}))));
+}
+
 async function expectNoViolations(page, name) {
+    await settle(page);
     const results = await new AxeBuilder({ page })
         .withTags(WCAG)
         // Third-party card field iframe (Stripe) is outside our control.
