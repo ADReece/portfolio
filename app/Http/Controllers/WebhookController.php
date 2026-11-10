@@ -43,50 +43,67 @@ class WebhookController extends CashierController
     }
 
     /**
-     * Handle payment succeeded.
-     *
-     * @param  array  $payload
-     * @return \Symfony\Component\HttpFoundation\Response
+     * A print sale was paid (payment_intent.succeeded). Stripe retries webhooks,
+     * so this runs its side effects (Prodigi order, photographer transfer) only
+     * the first time an order is marked paid.
      */
     public function handlePaymentIntentSucceeded($payload)
     {
-        // Handle successful payment for orders
         $paymentIntent = $payload['data']['object'];
 
-        // Find order by payment intent ID and mark as completed
-        $order = \App\Models\Order::where('stripe_payment_intent_id', $paymentIntent['id'])->first();
+        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($paymentIntent) {
+            $order = \App\Models\Order::where('stripe_payment_intent_id', $paymentIntent['id'])->lockForUpdate()->first();
 
-        if (!$order && !empty($paymentIntent['metadata']['order_id'])) {
-            $order = \App\Models\Order::find($paymentIntent['metadata']['order_id']);
-        }
+            if (! $order && ! empty($paymentIntent['metadata']['order_id'])) {
+                $order = \App\Models\Order::whereKey($paymentIntent['metadata']['order_id'])->lockForUpdate()->first();
+            }
 
-        if ($order) {
+            if (! $order || $order->paid_at) {
+                return null; // unknown order, or a retry of one already handled
+            }
+
             $order->update([
                 'status' => 'completed',
                 'paid_at' => now(),
                 'stripe_payment_intent_id' => $paymentIntent['id'],
             ]);
 
-            if ($order->hasPrintItems()) {
-                \App\Jobs\SubmitOrderToProdigi::dispatch($order);
-            }
+            return $order;
+        });
 
-            // Transfer funds to photographer via Stripe Connect
-            if ($order->user->stripe_connect_enabled) {
-                try {
-                    $stripe = new \Stripe\StripeClient(config('cashier.secret'));
+        if (! $order) {
+            return $this->successMethod();
+        }
 
-                    $transfer = $stripe->transfers->create([
-                        'amount' => $order->photographer_amount * 100, // Convert to cents
-                        'currency' => \App\Support\Currency::stripeCode(),
-                        'destination' => $order->user->stripe_connect_id,
-                        'transfer_group' => 'ORDER_' . $order->id,
-                    ]);
+        if ($order->hasPrintItems()) {
+            \App\Jobs\SubmitOrderToProdigi::dispatch($order);
+        }
 
-                    $order->update(['stripe_transfer_id' => $transfer->id]);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to transfer funds: ' . $e->getMessage());
+        // Pay the photographer their share via Stripe Connect. The charge is on
+        // the platform account; this is a separate transfer to theirs.
+        if ($order->user->stripe_connect_enabled && $order->user->stripe_connect_id) {
+            try {
+                $params = [
+                    // Whole pence: 12.35 * 100 is 1234.999… in floating point.
+                    'amount' => (int) round((float) $order->photographer_amount * 100),
+                    'currency' => \App\Support\Currency::stripeCode(),
+                    'destination' => $order->user->stripe_connect_id,
+                    'transfer_group' => 'ORDER_'.$order->id,
+                ];
+
+                // Tie the transfer to the charge so it can be paid from funds
+                // that haven't settled yet (otherwise it needs available balance).
+                if (! empty($paymentIntent['latest_charge'])) {
+                    $params['source_transaction'] = $paymentIntent['latest_charge'];
                 }
+
+                $transfer = app(\Stripe\StripeClient::class)->transfers->create($params, [
+                    'idempotency_key' => 'order-transfer-'.$order->id,
+                ]);
+
+                $order->update(['stripe_transfer_id' => $transfer->id]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to transfer funds for order '.$order->id.': '.$e->getMessage());
             }
         }
 
@@ -94,22 +111,23 @@ class WebhookController extends CashierController
     }
 
     /**
-     * Handle payment failed.
-     *
-     * @param  array  $payload
-     * @return \Symfony\Component\HttpFoundation\Response
+     * A print sale payment failed (payment_intent.payment_failed). Cashier calls
+     * handle + the event name in StudlyCase, hence the method name.
      */
-    public function handlePaymentIntentFailed($payload)
+    public function handlePaymentIntentPaymentFailed($payload)
     {
         $paymentIntent = $payload['data']['object'];
 
         $order = \App\Models\Order::where('stripe_payment_intent_id', $paymentIntent['id'])->first();
 
-        if ($order) {
+        if (! $order && ! empty($paymentIntent['metadata']['order_id'])) {
+            $order = \App\Models\Order::find($paymentIntent['metadata']['order_id']);
+        }
+
+        if ($order && ! $order->paid_at) {
             $order->update(['status' => 'failed']);
         }
 
         return $this->successMethod();
     }
 }
-
