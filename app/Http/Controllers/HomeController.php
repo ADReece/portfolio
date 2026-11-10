@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Billing\LaunchOffer;
 use App\Models\SubscriptionPlan;
+use App\Seo\HomePage;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -12,8 +14,28 @@ class HomeController extends Controller
         $plans = SubscriptionPlan::where('active', true)
             ->orderBy('sort_order')
             ->get();
+        $offer = app(LaunchOffer::class);
+        $page = new HomePage($offer, $plans);
 
-        return view('home', compact('plans'));
+        return view('home', [
+            'plans' => $plans,
+            'offer' => $offer,
+            'page' => $page,
+            'starterPlan' => $page->cheapestPaidPlan(),
+            'showcases' => config('marketing.showcases'),
+        ]);
+    }
+
+    /** A sample portfolio linked from the homepage showcases. */
+    public function example(string $slug)
+    {
+        $showcases = config('marketing.showcases');
+
+        return view('examples.show', [
+            'slug' => $slug,
+            'showcase' => $showcases[$slug],
+            'others' => collect($showcases)->except($slug),
+        ]);
     }
 
     public function terms()

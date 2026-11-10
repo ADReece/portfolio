@@ -41,6 +41,9 @@ Route::get('/terms', [App\Http\Controllers\HomeController::class, 'terms'])->nam
 Route::get('/privacy', [App\Http\Controllers\HomeController::class, 'privacy'])->name('privacy');
 Route::get('/sla', [App\Http\Controllers\HomeController::class, 'sla'])->name('sla');
 Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->name('about');
+Route::view('/photo-credits', 'legal.photo-credits')->name('photo-credits');
+Route::get('/examples/{slug}', [App\Http\Controllers\HomeController::class, 'example'])
+    ->whereIn('slug', array_keys(config('marketing.showcases')))->name('examples.show');
 
 // Pricing
 Route::get('/pricing', [App\Http\Controllers\BillingController::class, 'pricing'])->name('pricing');
