@@ -16,7 +16,8 @@ class StripeApiCatalog implements StripeCatalog
         // found immediately; search results lag by up to a minute.
         $found = [];
         foreach ($this->stripe->products->all(['active' => true, 'limit' => 100])->autoPagingIterator() as $product) {
-            if (($product->metadata['plan_slug'] ?? null) === $slug) {
+            // The account is shared with other apps: only Portfolio's own products.
+            if (($product->metadata['app'] ?? null) === 'portfolio' && ($product->metadata['plan_slug'] ?? null) === $slug) {
                 $found[] = $product->toArray();
             }
         }

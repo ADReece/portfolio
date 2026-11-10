@@ -34,6 +34,7 @@ class WebhookPaymentIntentTest extends TestCase
             'data' => [
                 'object' => [
                     'id' => 'pi_test_success_1',
+                    'metadata' => ['app' => 'portfolio'],
                 ],
             ],
         ]);
@@ -63,6 +64,7 @@ class WebhookPaymentIntentTest extends TestCase
             'data' => [
                 'object' => [
                     'id' => 'pi_test_failed_1',
+                    'metadata' => ['app' => 'portfolio'],
                 ],
             ],
         ]);
@@ -79,6 +81,7 @@ class WebhookPaymentIntentTest extends TestCase
             'data' => [
                 'object' => [
                     'id' => 'pi_does_not_exist',
+                    'metadata' => ['app' => 'portfolio'],
                 ],
             ],
         ]);
@@ -87,6 +90,7 @@ class WebhookPaymentIntentTest extends TestCase
             'data' => [
                 'object' => [
                     'id' => 'pi_does_not_exist',
+                    'metadata' => ['app' => 'portfolio'],
                 ],
             ],
         ]);

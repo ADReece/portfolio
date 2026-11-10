@@ -22,7 +22,7 @@ class WebhookControllerTest extends TestCase
         $order = Order::factory()->create(['stripe_payment_intent_id' => 'pi_failed_123']);
 
         $response = (new WebhookController())->handlePaymentIntentPaymentFailed([
-            'data' => ['object' => ['id' => 'pi_failed_123']],
+            'data' => ['object' => ['id' => 'pi_failed_123', 'metadata' => ['app' => 'portfolio']]],
         ]);
 
         $this->assertSame('failed', $order->fresh()->status);
@@ -38,7 +38,7 @@ class WebhookControllerTest extends TestCase
         ]);
 
         $response = (new WebhookController())->handlePaymentIntentSucceeded([
-            'data' => ['object' => ['id' => 'pi_success_123']],
+            'data' => ['object' => ['id' => 'pi_success_123', 'metadata' => ['app' => 'portfolio']]],
         ]);
 
         $order->refresh();

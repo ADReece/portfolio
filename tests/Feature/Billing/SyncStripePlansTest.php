@@ -52,7 +52,10 @@ class SyncStripePlansTest extends TestCase
         $annual = $this->stripe->prices[$plan->annual_stripe_price_id];
 
         $this->assertSame($plan->stripe_product_id, $monthly['product']);
-        $this->assertSame(['plan_slug' => 'photographer'], $this->stripe->products[$plan->stripe_product_id]['metadata']);
+        $this->assertSame(['app' => 'portfolio', 'plan_slug' => 'photographer'], $this->stripe->products[$plan->stripe_product_id]['metadata']);
+        $this->assertSame(['app' => 'portfolio', 'plan_slug' => 'photographer'], $monthly['metadata']);
+        $this->assertSame('portfolio_photographer_month', $monthly['lookup_key']);
+        $this->assertSame('portfolio_photographer_year', $annual['lookup_key']);
         $this->assertSame([999, 'gbp', 'month'], [$monthly['unit_amount'], $monthly['currency'], $monthly['recurring']['interval']]);
         $this->assertSame([9999, 'gbp', 'year'], [$annual['unit_amount'], $annual['currency'], $annual['recurring']['interval']]);
         $this->assertNull(SubscriptionPlan::where('slug', 'free')->value('stripe_product_id'));
@@ -102,6 +105,21 @@ class SyncStripePlansTest extends TestCase
         $this->assertSame(0, $this->stripe->priceEdits, 'only archiving touches existing prices');
     }
 
+    public function test_never_uses_or_archives_another_apps_objects_on_the_shared_account(): void
+    {
+        // Another Ascend Digital app on the same Stripe account, with a clashing plan_slug.
+        $this->stripe->products['prod_other'] = ['id' => 'prod_other', 'active' => true, 'name' => 'Photographer', 'metadata' => ['app' => 'bookit', 'plan_slug' => 'photographer']];
+        $this->stripe->prices['price_other'] = ['id' => 'price_other', 'active' => true, 'product' => 'prod_other', 'unit_amount' => 500, 'currency' => 'gbp', 'recurring' => ['interval' => 'month'], 'metadata' => ['app' => 'bookit', 'plan_slug' => 'photographer']];
+
+        $this->artisan('stripe:sync-plans --apply')->assertSuccessful();
+        SubscriptionPlan::where('slug', 'photographer')->update(['price' => 12.00]);
+        $this->artisan('stripe:sync-plans --apply')->assertSuccessful();
+
+        $this->assertNotSame('prod_other', SubscriptionPlan::where('slug', 'photographer')->value('stripe_product_id'));
+        $this->assertTrue($this->stripe->prices['price_other']['active'], "another app's price is never archived");
+        $this->assertSame(['app' => 'bookit', 'plan_slug' => 'photographer'], $this->stripe->products['prod_other']['metadata']);
+    }
+
     public function test_apply_creates_the_launch_coupon_once(): void
     {
         \Illuminate\Support\Carbon::setTestNow('2026-11-10 12:00:00');
@@ -149,7 +167,7 @@ class FakeStripeCatalog implements StripeCatalog
 
     public function findProductsByPlanSlug(string $slug): array
     {
-        return array_values(array_filter($this->products, fn ($p) => $p['active'] && ($p['metadata']['plan_slug'] ?? null) === $slug));
+        return array_values(array_filter($this->products, fn ($p) => $p['active'] && ($p['metadata']['app'] ?? null) === 'portfolio' && ($p['metadata']['plan_slug'] ?? null) === $slug));
     }
 
     public function createProduct(array $params): array

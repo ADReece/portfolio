@@ -133,8 +133,12 @@ class PrintPurchaseController extends Controller
             'cancel_url' => route('print-purchase.cancel', ['order' => $order->id]),
             'payment_method_types' => ['card'],
             'customer_email' => $validated['customer_email'],
+            // The Stripe account is shared with other Ascend Digital apps; tag
+            // everything so webhooks and reports can tell Portfolio's apart.
+            'metadata' => ['app' => 'portfolio', 'order_id' => (string) $order->id],
             'payment_intent_data' => [
                 'metadata' => [
+                    'app' => 'portfolio',
                     'order_id' => (string) $order->id,
                     'photo_id' => (string) $photo->id,
                     'photographer_id' => (string) $photographer->id,
@@ -195,7 +199,8 @@ class PrintPurchaseController extends Controller
         $photographer = $photo->user;
         $collection = $photo->set?->collection;
 
-        if (! $photographer || ! $collection
+        if (! \App\Billing\Payouts::available()
+            || ! $photographer || ! $collection
             || ! $photographer->hasFeature('selling')
             || ! $photographer->enabledProdigiProducts()->exists()) {
             return false;

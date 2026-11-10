@@ -293,4 +293,13 @@ class User extends Authenticatable
     {
         return \App\Support\HtmlSanitizer::clean($this->bio);
     }
+
+    /**
+     * Metadata on this user's Stripe customer. The Stripe account is shared
+     * with other Ascend Digital apps, so customers are tagged app=portfolio.
+     */
+    public function stripeMetadata()
+    {
+        return ['app' => 'portfolio', 'user_id' => (string) $this->getKey()];
+    }
 }

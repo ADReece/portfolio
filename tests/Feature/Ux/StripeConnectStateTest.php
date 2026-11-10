@@ -12,6 +12,7 @@ class StripeConnectStateTest extends TestCase
 
     public function test_connect_link_includes_a_state_that_the_callback_checks(): void
     {
+        config(['services.stripe.connect_client_id' => 'ca_test']);
         $user = User::factory()->create();
 
         $this->actingAs($user)->get(route('connect.stripe'))

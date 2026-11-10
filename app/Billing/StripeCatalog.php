@@ -8,7 +8,7 @@ namespace App\Billing;
  */
 interface StripeCatalog
 {
-    /** Active products whose metadata.plan_slug matches, newest first. */
+    /** Active Portfolio products (metadata app=portfolio) whose metadata.plan_slug matches. */
     public function findProductsByPlanSlug(string $slug): array;
 
     public function createProduct(array $params): array;

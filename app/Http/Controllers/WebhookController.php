@@ -7,6 +7,28 @@ use Laravel\Cashier\Http\Controllers\WebhookController as CashierController;
 class WebhookController extends CashierController
 {
     /**
+     * Rejects payloads that aren't a Stripe event (400) instead of erroring.
+     * With STRIPE_WEBHOOK_SECRET set, Cashier's signature check runs first and
+     * a bad signature gets 403. Events for customers or payments that aren't
+     * Portfolio's (the account is shared) are acknowledged with 200 and ignored.
+     */
+    public function handleWebhook(\Illuminate\Http\Request $request)
+    {
+        $payload = json_decode($request->getContent(), true);
+        if (! is_array($payload) || ! is_string($payload['type'] ?? null) || ! is_array($payload['data']['object'] ?? null)) {
+            return new \Symfony\Component\HttpFoundation\Response('Invalid payload', 400);
+        }
+
+        return parent::handleWebhook($request);
+    }
+
+    /** Print-sale payments are tagged app=portfolio; anything else belongs to another app. */
+    private function isPortfolioPayment(array $paymentIntent): bool
+    {
+        return ($paymentIntent['metadata']['app'] ?? null) === 'portfolio';
+    }
+
+    /**
      * Handle subscription updated.
      *
      * @param  array  $payload
@@ -50,6 +72,9 @@ class WebhookController extends CashierController
     public function handlePaymentIntentSucceeded($payload)
     {
         $paymentIntent = $payload['data']['object'];
+        if (! $this->isPortfolioPayment($paymentIntent)) {
+            return $this->successMethod();
+        }
 
         $order = \Illuminate\Support\Facades\DB::transaction(function () use ($paymentIntent) {
             $order = \App\Models\Order::where('stripe_payment_intent_id', $paymentIntent['id'])->lockForUpdate()->first();
@@ -117,6 +142,9 @@ class WebhookController extends CashierController
     public function handlePaymentIntentPaymentFailed($payload)
     {
         $paymentIntent = $payload['data']['object'];
+        if (! $this->isPortfolioPayment($paymentIntent)) {
+            return $this->successMethod();
+        }
 
         $order = \App\Models\Order::where('stripe_payment_intent_id', $paymentIntent['id'])->first();
 

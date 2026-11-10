@@ -29,6 +29,13 @@
                     </form>
                 </div>
             </x-ui.card>
+        @elseif($comingSoon ?? false)
+            <x-ui.card title="Selling prints is coming soon">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                    Soon your clients will be able to order prints straight from your galleries, and you'll be paid the price you set, minus our fee, into your own Stripe account.
+                    We're finishing the payouts side now. Your print products and prices are saved, and you'll be able to connect Stripe here as soon as it's ready.
+                </p>
+            </x-ui.card>
         @else
             @unless($canSell)
                 <x-ui.alert tone="amber" title="Selling prints isn't included in your plan">

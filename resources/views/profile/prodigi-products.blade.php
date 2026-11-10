@@ -18,10 +18,16 @@
         @endunless
 
         @unless($user->stripe_connect_enabled)
+            @if(\App\Billing\Payouts::available())
             <x-ui.alert title="Connect Stripe to get paid">
                 Print earnings are paid to your Stripe account. Connect it before clients start ordering.
                 <x-slot:actions><x-ui.button size="sm" variant="secondary" :href="route('connect.stripe')">Set up payouts</x-ui.button></x-slot:actions>
             </x-ui.alert>
+            @else
+            <x-ui.alert title="Selling prints is coming soon">
+                You can set up your print products and prices now. Clients will be able to order once payouts are ready.
+            </x-ui.alert>
+            @endif
         @endunless
 
         @if($products->isEmpty())

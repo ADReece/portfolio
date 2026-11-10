@@ -17,6 +17,7 @@ class PrintPurchaseAccessTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['services.stripe.connect_client_id' => 'ca_test']);
         // Photo thumbnails are presigned S3 URLs; signing is local, so fake credentials are enough.
         config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3'), [
             'key' => 'test', 'secret' => 'test', 'region' => 'eu-west-2', 'bucket' => 'test-bucket',
@@ -66,5 +67,15 @@ class PrintPurchaseAccessTest extends TestCase
         $photo = $this->sellingPhotoIn($collection);
 
         $this->get(route('print-purchase.show', $photo))->assertOk();
+    }
+
+    public function test_prints_cannot_be_bought_while_payouts_are_unavailable(): void
+    {
+        config(['services.stripe.connect_client_id' => null]);
+        $owner = User::factory()->create();
+        $collection = Collection::factory()->published()->create(['user_id' => $owner->id]);
+        $photo = $this->sellingPhotoIn($collection);
+
+        $this->get(route('print-purchase.show', $photo))->assertNotFound();
     }
 }

@@ -14,6 +14,10 @@ use Illuminate\Console\Command;
  * metadata.plan_slug and prices by amount, currency and interval. When a
  * plan's price changes, a new Price is created and the old one archived
  * (existing subscriptions keep the price they're on). Prices are never edited.
+ *
+ * The Stripe account is shared with other Ascend Digital apps, so this only
+ * ever touches objects tagged metadata app=portfolio, and never archives
+ * anything else. The launch coupon is shared too: create-if-missing only.
  */
 class SyncStripePlans extends Command
 {
@@ -125,7 +129,7 @@ class SyncStripePlans extends Command
 
             return $stripe->createProduct([
                 'name' => $plan->name,
-                'metadata' => ['plan_slug' => $plan->slug],
+                'metadata' => ['app' => 'portfolio', 'plan_slug' => $plan->slug],
             ]);
         }
 
@@ -161,14 +165,17 @@ class SyncStripePlans extends Command
                     'currency' => $currency,
                     'unit_amount' => $unitAmount,
                     'recurring' => ['interval' => $interval],
-                    'metadata' => ['plan_slug' => $plan->slug],
+                    'metadata' => ['app' => 'portfolio', 'plan_slug' => $plan->slug],
+                    // Moves the key from the previous price for this plan and interval.
+                    'lookup_key' => "portfolio_{$plan->slug}_{$interval}",
+                    'transfer_lookup_key' => true,
                 ])['id']
                 : '(new)';
         }
 
         // Archive this plan's other prices for the interval (old amounts).
         foreach ($forInterval as $old) {
-            if ($old['id'] !== $id && ($old['metadata']['plan_slug'] ?? null) === $plan->slug) {
+            if ($old['id'] !== $id && ($old['metadata']['app'] ?? null) === 'portfolio' && ($old['metadata']['plan_slug'] ?? null) === $plan->slug) {
                 $this->line('  '.($apply ? 'archiving' : 'would archive')." old {$label} price {$old['id']} (".strtoupper($old['currency']).' '.number_format($old['unit_amount'] / 100, 2).')');
                 if ($apply) {
                     $stripe->archivePrice($old['id']);
