@@ -14,11 +14,11 @@ use Illuminate\View\View;
 
 class PrintPurchaseController extends Controller
 {
-    public function show(Photo $photo): View
+    public function show(Request $request, Photo $photo): View
     {
         $photographer = $photo->user;
 
-        abort_if(!$this->isPhotoPurchasable($photo), 404);
+        abort_if(!$this->isPhotoPurchasable($request, $photo), 404);
 
         $enabledProducts = $photographer->enabledProdigiProducts()
             ->select('prodigi_products.*')
@@ -26,7 +26,16 @@ class PrintPurchaseController extends Controller
             ->orderBy('prodigi_products.name')
             ->get();
 
+        // Remember where the client came from so we can send them back there.
+        $previous = url()->previous();
+        if ($previous && $previous !== $request->fullUrl() && str_starts_with($previous, url('/'))) {
+            $request->session()->put('print_purchase_return_url', $previous);
+        }
+
         return view('photos.buy-print', [
+            'returnUrl' => $request->session()->get('print_purchase_return_url'),
+            'countries' => \App\Support\Countries::LIST,
+            'defaultCountry' => \App\Support\Countries::defaultCode(),
             'photo' => $photo,
             'photographer' => $photographer,
             'enabledProducts' => $enabledProducts,
@@ -37,7 +46,7 @@ class PrintPurchaseController extends Controller
     {
         $photographer = $photo->user;
 
-        abort_if(!$this->isPhotoPurchasable($photo), 404);
+        abort_if(!$this->isPhotoPurchasable($request, $photo), 404);
 
         $validated = $request->validate([
             'prodigi_product_id' => ['required', 'integer', 'exists:prodigi_products,id'],
@@ -50,7 +59,7 @@ class PrintPurchaseController extends Controller
             'shipping_city' => ['required', 'string', 'max:255'],
             'shipping_county' => ['required', 'string', 'max:255'],
             'shipping_postcode' => ['required', 'string', 'max:32'],
-            'shipping_country_code' => ['required', 'string', 'size:2'],
+            'shipping_country_code' => ['required', 'string', 'size:2', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::LIST))],
         ]);
 
         $prodigiProduct = ProdigiProduct::query()->findOrFail((int) $validated['prodigi_product_id']);
@@ -65,7 +74,7 @@ class PrintPurchaseController extends Controller
         $unitPrice = (float) ($pivot->pivot->retail_price ?? 29.99);
         $quantity = (int) $validated['quantity'];
         $total = $unitPrice * $quantity;
-        $platformFeeRate = 0.10;
+        $platformFeeRate = config('services.platform_fee_percent') / 100;
         $platformFee = round($total * $platformFeeRate, 2);
         $photographerAmount = round($total - $platformFee, 2);
 
@@ -135,7 +144,7 @@ class PrintPurchaseController extends Controller
                 [
                     'quantity' => $quantity,
                     'price_data' => [
-                        'currency' => 'usd',
+                        'currency' => \App\Support\Currency::stripeCode(),
                         'unit_amount' => (int) round($unitPrice * 100),
                         'product_data' => [
                             'name' => $prodigiProduct->name,
@@ -152,28 +161,46 @@ class PrintPurchaseController extends Controller
         return redirect()->away($session->url);
     }
 
-    public function success(Order $order): View
+    public function success(Request $request, Order $order): View
     {
-        return view('photos.purchase-success', ['order' => $order]);
+        return view('photos.purchase-success', $this->resultViewData($request, $order));
     }
 
-    public function cancel(Order $order): View
+    public function cancel(Request $request, Order $order): View
     {
-        return view('photos.purchase-cancel', ['order' => $order]);
+        return view('photos.purchase-cancel', $this->resultViewData($request, $order));
     }
 
-    private function isPhotoPurchasable(Photo $photo): bool
+    private function resultViewData(Request $request, Order $order): array
+    {
+        $order->load(['user', 'items.product.photo']);
+        $item = $order->items->first();
+
+        return [
+            'order' => $order,
+            'photographer' => $order->user,
+            'item' => $item,
+            'photo' => $item?->product?->photo,
+            'returnUrl' => $request->session()->get('print_purchase_return_url'),
+        ];
+    }
+
+    /**
+     * A photo can be bought when its photographer sells prints and the client
+     * can see it: either it's on the public portfolio, or it's in a private
+     * gallery the client has unlocked (password or share link).
+     */
+    private function isPhotoPurchasable(Request $request, Photo $photo): bool
     {
         $photographer = $photo->user;
+        $collection = $photo->set?->collection;
 
-        return $photographer
-            && $photographer->hasFeature('selling')
-            && $photographer->enabledProdigiProducts()->exists()
-            && !$photo->hide_from_portfolio
-            && $photo->set
-            && $photo->set->collection
-            && !$photo->set->hide_from_portfolio
-            && !$photo->set->collection->hide_from_portfolio
-            && !$photo->set->collection->private;
+        if (! $photographer || ! $collection
+            || ! $photographer->hasFeature('selling')
+            || ! $photographer->enabledProdigiProducts()->exists()) {
+            return false;
+        }
+
+        return \App\Support\GalleryAccess::canViewPhoto($request, $photo);
     }
 }

@@ -7,8 +7,7 @@
     <title>{{ isset($user) ? ($user->name ?? $user->username).' | '.config('app.name') : config('app.name') }}</title>
 
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=nunito:400,600,700|inter:400,500,600,700|roboto:400,500,700|open-sans:400,600,700|lato:400,700|montserrat:400,500,600,700|playfair-display:400,700|merriweather:400,700" rel="stylesheet">
+    @include('partials.portfolio-fonts', ['user' => $user ?? null])
 
     <!-- App Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -30,7 +29,7 @@
                 @if(isset($user) && ($user->logo_path || $user->logo_thumb_path) && isset($logoUrl))
                     <img src="{{ $logoUrl }}" alt="Logo" class="w-20 h-20 object-contain" />
                 @else
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
+                    <x-application-logo class="w-16 h-16 text-brand-600 dark:text-brand-400" />
                 @endif
             </a>
         </div>
@@ -40,5 +39,8 @@
     </div>
 
     @include('partials.portfolio-debug', ['user' => $user ?? null])
+    {{-- Site support chat on sign-in pages only; client gallery pages also use this layout. --}}
+    @includeWhen(request()->routeIs(['login', 'register', 'password.request', 'password.reset', 'verification.notice', 'password.confirm', 'pricing']), 'partials.chatmesh')
+    @livewireScriptConfig
 </body>
 </html>

@@ -1,212 +1,162 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Pricing Plans') }}
-        </h2>
-    </x-slot>
+@php
+    $user = auth()->user();
+    $interval = ($interval ?? request('interval', 'month')) === 'year' ? 'year' : 'month';
+    $maxSaving = (int) $plans->max('annual_discount_percent');
+    $subscription = $user?->subscription('default');
+    $isSubscribed = $subscription && $subscription->valid();
+    $onGrace = $subscription && $subscription->onGracePeriod();
+    $unlimited = $user?->isFeatureOverrideActive();
+    $nextBilling = null;
+    if ($isSubscribed && ! $onGrace && ! $unlimited) {
+        // Ask Stripe at most every 10 minutes per user, rather than on every page load.
+        $nextBilling = \Illuminate\Support\Facades\Cache::remember('billing.next.'.$user->id, 600, function () use ($subscription) {
+            try {
+                $end = $subscription->asStripeSubscription()->current_period_end ?? null;
+                return $end ? \Carbon\Carbon::createFromTimestamp($end) : null;
+            } catch (\Throwable $e) {
+                return null;
+            }
+        });
+    }
+@endphp
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    {{ session('success') }}
-                </div>
-            @endif
+<x-app-layout :title="$user ? 'Plan & billing' : 'Pricing'">
+    <div class="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+        @auth
+            <x-ui.page-header title="Plan & billing" description="Your plan, usage and payment details." />
 
-            @if(session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            @auth
-                @php
-                    $subscription = auth()->user()->subscription('default');
-                    $isSubscribed = $subscription && $subscription->valid();
-                    $onGrace = $subscription && $subscription->onGracePeriod();
-                    $nextBilling = null;
-                    if ($isSubscribed) {
-                        try {
-                            $stripeSub = $subscription->asStripeSubscription();
-                            if (isset($stripeSub->current_period_end)) {
-                                $nextBilling = \Carbon\Carbon::createFromTimestamp($stripeSub->current_period_end);
-                            }
-                        } catch (\Exception $e) {
-                            $nextBilling = null;
-                        }
-                    }
-                @endphp
-                @if($isSubscribed)
-                    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
-                        <div class="flex items-start">
-                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div class="flex-1">
-                                <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                                    @if($onGrace)
-                                        Your subscription is scheduled to cancel
-                                    @else
-                                        You're subscribed to {{ auth()->user()->subscriptionPlan->name }}
-                                        @if(auth()->user()->isFeatureOverrideActive())
-                                            <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200">Unlimited</span>
-                                        @endif
-                                    @endif
-                                </h3>
-                                <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                                    @if($onGrace)
-                                        Your subscription will end on {{ optional($subscription->ends_at)->format('M d, Y') }}. You can resume it anytime before then.
-                                    @else
-                                        @if(auth()->user()->isFeatureOverrideActive())
-                                            You have unlimited access to all features.
-                                        @else
-                                            Next billing date: {{ $nextBilling ? $nextBilling->format('M d, Y') : 'Not available' }}
-                                        @endif
-                                    @endif
-                                </p>
-                            </div>
-                            <a href="{{ route('dashboard') }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 whitespace-nowrap ml-4">Manage →</a>
-                        </div>
+            <x-ui.card :padding="false">
+                <div class="grid gap-6 p-5 sm:p-6 md:grid-cols-[1fr_auto] md:items-start">
+                    <div class="space-y-1">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Current plan</p>
+                        <p class="flex flex-wrap items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100">
+                            {{ $user->subscriptionPlan->name ?? 'No plan' }}
+                            @if($unlimited)<x-ui.badge tone="green">Unlimited access</x-ui.badge>@endif
+                            @if($onGrace)<x-ui.badge tone="amber">Cancels {{ $subscription->ends_at->toFormattedDateString() }}</x-ui.badge>@endif
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            @if($unlimited)
+                                You have access to every feature.
+                            @elseif($onGrace)
+                                You keep your plan until {{ $subscription->ends_at->toFormattedDateString() }}. Resume any time before then.
+                            @elseif($isSubscribed)
+                                {{ $nextBilling ? 'Renews on '.$nextBilling->toFormattedDateString().'.' : 'Active subscription.' }}
+                            @elseif($user->subscriptionPlan?->isFree())
+                                Upgrade any time for private galleries, print sales and your own branding.
+                            @elseif($user->subscriptionPlan)
+                                Your account is on this plan.
+                            @else
+                                Choose a plan below to get started.
+                            @endif
+                        </p>
                     </div>
-                @endif
-            @endauth
-
-            <div class="text-center mb-12">
-                <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Choose Your Plan</h1>
-                <p class="text-xl text-gray-600 dark:text-gray-300">Select the perfect plan for your photography or videography business</p>
-            </div>
-
-            @php($interval = $interval ?? request('interval', 'month'))
-
-            <div class="flex justify-center mb-8">
-                <div class="inline-flex items-center rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <a href="{{ route('pricing', ['interval' => 'month']) }}"
-                       class="px-4 py-2 text-sm font-medium {{ $interval === 'month' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300' }}">
-                        Monthly
-                    </a>
-                    <a href="{{ route('pricing', ['interval' => 'year']) }}"
-                       class="px-4 py-2 text-sm font-medium {{ $interval === 'year' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300' }}">
-                        Yearly <span class="ml-1 text-xs text-gray-500 dark:text-gray-400">(Save {{ $plans->firstWhere('slug','photographer')->annual_discount_percent ?? 0 }}%)</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                @foreach($plans as $plan)
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 {{ ($plan->recommended ?? false) ? 'ring-2 ring-indigo-600 transform scale-105' : '' }}">
-                    @if($plan->recommended)
-                    <div class="bg-indigo-600 text-white text-sm font-semibold px-3 py-1 rounded-full inline-block mb-4">RECOMMENDED</div>
-                    @endif
-
-                    <h3 class="text-2xl font-bold mb-2 dark:text-white">{{ $plan->name }}</h3>
-                    <div class="mb-6">
-                        <span class="text-4xl font-bold dark:text-white">{{ $currencySymbol }}{{ $plan->priceFor($interval) }}</span>
-                        @if(!$plan->isFree())
-                            <span class="text-gray-600 dark:text-gray-400">/{{ $interval === 'year' ? 'year' : 'month' }}</span>
-                        @endif
-                        @if($interval === 'year' && $plan->annual_discount_percent)
-                            <span class="ml-2 text-xs text-green-600 dark:text-green-400">Save {{ $plan->annual_discount_percent }}%</span>
-                        @endif
-                    </div>
-
-                    <ul class="space-y-3 mb-8 min-h-[300px]">
-                        @foreach($plan->features as $feature)
-                        <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span class="text-sm dark:text-gray-300">{{ $feature }}</span>
-                        </li>
-                        @endforeach
-                    </ul>
-
-                    @auth
-                        @if(auth()->user()->subscription_plan_id === $plan->id)
-                            <button disabled class="block w-full text-center bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 px-6 py-3 rounded-lg font-semibold cursor-not-allowed">
-                                Current Plan
-                            </button>
-                        @else
-                            <a href="{{ route('checkout', ['plan' => $plan->id, 'interval' => $interval]) }}"
-                               class="block w-full text-center {{ $plan->slug === 'photographer' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
-                                {{ $plan->isFree() ? 'Switch to Free' : 'Subscribe Now' }}
-                            </a>
-                        @endif
-                    @else
-                        <a href="{{ route('checkout', ['plan' => $plan->id, 'interval' => $interval]) }}" class="block w-full text-center {{ $plan->slug === 'photographer' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white' }} px-6 py-3 rounded-lg font-semibold transition">
-                            {{ $plan->isFree() ? 'Choose Free' : 'Subscribe Now' }}
-                        </a>
-                    @endauth
-                </div>
-                @endforeach
-            </div>
-
-            @auth
-                @if(optional(auth()->user())->subscriptionPlan)
-                <div class="mt-12 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h3 class="text-xl font-bold mb-4 dark:text-white">
-                        Current Plan: {{ auth()->user()->subscriptionPlan->name }}
-                        @if(auth()->user()->isFeatureOverrideActive())
-                            <span class="ml-2 px-3 py-1 text-sm rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">Unlimited Access</span>
-                        @endif
-                    </h3>
-
-                    @if(!auth()->user()->subscriptionPlan->isFree())
-                    <div class="flex gap-4">
-                        <a href="{{ route('billing.portal') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
-                            Manage Billing
-                        </a>
-
-                        @if(auth()->user()->subscribed('default'))
-                            @if(auth()->user()->subscription('default')->onGracePeriod())
+                    @if($isSubscribed)
+                        <div class="flex flex-wrap gap-2">
+                            <x-ui.button variant="secondary" icon="credit-card" :href="route('billing.portal')">Payment details & invoices</x-ui.button>
+                            @if($onGrace)
                                 <form action="{{ route('subscription.resume') }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                                        Resume Subscription
-                                    </button>
+                                    <x-ui.button type="submit">Resume subscription</x-ui.button>
                                 </form>
                             @else
-                                <form action="{{ route('subscription.cancel') }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel your subscription?');">
+                                <form action="{{ route('subscription.cancel') }}" method="POST"
+                                      data-confirm="You'll keep your current plan until the end of this billing period. You can resume any time before then."
+                                      data-confirm-title="Cancel your subscription?" data-confirm-button="Cancel subscription" data-confirm-danger>
                                     @csrf
-                                    <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
-                                        Cancel Subscription
-                                    </button>
+                                    <x-ui.button type="submit" variant="ghost">Cancel subscription</x-ui.button>
                                 </form>
                             @endif
-                        @endif
-                    </div>
+                        </div>
                     @endif
-
-                    <div class="mt-6 grid grid-cols-2 gap-4">
-                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Photos Used</p>
-                            <p class="text-2xl font-bold dark:text-white">
-                                {{ auth()->user()->photos()->count() }}
-                                @if(auth()->user()->isFeatureOverrideActive())
-                                    / <span class="text-green-600 dark:text-green-400">Unlimited</span>
-                                @elseif(auth()->user()->subscriptionPlan->photo_limit)
-                                    / {{ auth()->user()->subscriptionPlan->photo_limit }}
-                                @else
-                                    / Unlimited
-                                @endif
-                            </p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded">
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Collections Used</p>
-                            <p class="text-2xl font-bold dark:text-white">
-                                {{ auth()->user()->collections()->count() }}
-                                @if(auth()->user()->isFeatureOverrideActive())
-                                    / <span class="text-green-600 dark:text-green-400">Unlimited</span>
-                                @elseif(auth()->user()->subscriptionPlan->collection_limit)
-                                    / {{ auth()->user()->subscriptionPlan->collection_limit }}
-                                @else
-                                    / Unlimited
-                                @endif
-                            </p>
-                        </div>
-                    </div>
                 </div>
+                @if($user->subscriptionPlan)
+                    @php
+                        $usage = [
+                            ['Photos', $user->photos()->count(), $unlimited ? null : $user->subscriptionPlan->photo_limit],
+                            ['Collections', $user->collections()->count(), $unlimited ? null : $user->subscriptionPlan->collection_limit],
+                        ];
+                    @endphp
+                    <dl class="grid gap-px border-t border-gray-200 bg-gray-200 sm:grid-cols-2 dark:border-gray-700 dark:bg-gray-700">
+                        @foreach($usage as [$label, $used, $limit])
+                            <div class="bg-white px-5 py-4 sm:px-6 dark:bg-gray-800">
+                                <dt class="text-sm text-gray-600 dark:text-gray-400">{{ $label }}</dt>
+                                <dd class="mt-1 text-lg font-semibold text-gray-900 tabular-nums dark:text-gray-100">
+                                    {{ number_format($used) }} <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ $limit ? 'of '.number_format($limit) : '· no limit' }}</span>
+                                </dd>
+                                @if($limit)
+                                    <dd><div class="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar" aria-label="{{ $label }} used" aria-valuemin="0" aria-valuemax="{{ $limit }}" aria-valuenow="{{ $used }}"><div class="h-full {{ $used >= $limit ? 'bg-red-500' : 'bg-brand-500' }}" style="width: {{ min(100, round($used / $limit * 100)) }}%"></div></div></dd>
+                                @endif
+                            </div>
+                        @endforeach
+                    </dl>
                 @endif
-            @endauth
-        </div>
+            </x-ui.card>
+        @endauth
+
+        <section aria-labelledby="plans-heading" class="space-y-6">
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h2 id="plans-heading" class="{{ $user ? 'text-xl' : 'text-3xl sm:text-4xl' }} font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                        {{ $user ? 'Compare plans' : 'Simple pricing for photographers' }}
+                    </h2>
+                    @guest<p class="mt-2 text-gray-600 dark:text-gray-400">Start free. Upgrade when you need private galleries, print sales and your own branding.</p>@endguest
+                </div>
+                <nav aria-label="Billing period" class="inline-flex rounded-control bg-gray-100 p-1 dark:bg-gray-800">
+                    @foreach(['month' => 'Monthly', 'year' => 'Yearly'] as $value => $label)
+                        <a href="{{ route('pricing', ['interval' => $value]) }}" @if($interval === $value) aria-current="page" @endif
+                           @class(['rounded-[calc(var(--radius-control)-2px)] px-4 py-1.5 text-sm font-medium focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
+                                   'bg-white text-gray-900 shadow-xs dark:bg-gray-700 dark:text-white' => $interval === $value,
+                                   'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white' => $interval !== $value])>
+                            {{ $label }}
+                            @if($value === 'year' && $maxSaving)<span class="ml-1 text-xs font-semibold text-green-800 dark:text-green-400">save up to {{ $maxSaving }}%</span>@endif
+                        </a>
+                    @endforeach
+                </nav>
+            </div>
+
+            <ul role="list" class="grid gap-6 md:grid-cols-3">
+                @foreach($plans as $plan)
+                    @php($isCurrent = $user && $user->subscription_plan_id === $plan->id)
+                    <li @class(['relative flex flex-col rounded-card bg-white p-6 shadow-xs ring-1 dark:bg-gray-800',
+                                'ring-2 ring-brand-500' => $plan->recommended,
+                                'ring-gray-200 dark:ring-gray-700' => ! $plan->recommended])>
+                        @if($plan->recommended)
+                            <x-ui.badge tone="brand" class="absolute -top-3 left-6">Most popular</x-ui.badge>
+                        @endif
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $plan->name }}</h3>
+                        <p class="mt-3 flex items-baseline gap-1">
+                            <span class="text-4xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-gray-100">{{ $currencySymbol }}{{ $plan->priceFor($interval) }}</span>
+                            @unless($plan->isFree())<span class="text-sm text-gray-600 dark:text-gray-400">/ {{ $interval }}</span>@endunless
+                        </p>
+                        @if($interval === 'year' && $plan->annual_discount_percent)
+                            <p class="mt-1 text-sm font-medium text-green-700 dark:text-green-400">{{ $plan->annual_discount_percent }}% less than monthly</p>
+                        @endif
+
+                        <ul role="list" class="mt-6 flex-1 space-y-2.5 text-sm text-gray-700 dark:text-gray-300">
+                            @foreach($plan->features ?? [] as $feature)
+                                <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />{{ $feature }}</li>
+                            @endforeach
+                        </ul>
+
+                        <div class="mt-6">
+                            @if($isCurrent)
+                                <x-ui.button variant="secondary" class="w-full" disabled>Your current plan</x-ui.button>
+                            @elseif($user)
+                                <x-ui.button class="w-full" :variant="$plan->recommended ? 'primary' : 'secondary'"
+                                             :href="route('checkout', ['plan' => $plan->id, 'interval' => $interval])">
+                                    {{ $plan->isFree() ? 'Switch to '.$plan->name : 'Choose '.$plan->name }}
+                                </x-ui.button>
+                            @else
+                                <x-ui.button class="w-full" :variant="$plan->recommended ? 'primary' : 'secondary'"
+                                             :href="route('register', ['plan' => $plan->id, 'interval' => $interval])">
+                                    {{ $plan->isFree() ? 'Start free' : 'Choose '.$plan->name }}
+                                </x-ui.button>
+                            @endif
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Prices in {{ \App\Support\Currency::code() }}. Change or cancel any time; cancelling keeps your plan until the end of the period you've paid for.</p>
+        </section>
     </div>
 </x-app-layout>

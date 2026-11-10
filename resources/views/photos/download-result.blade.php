@@ -23,14 +23,14 @@
             </div>
 
         @elseif($generatedPrint->isPending())
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-8">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8">
                 <div class="animate-spin w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p class="text-gray-700 dark:text-gray-300 font-medium">Generating your photo…</p>
                 <p class="text-sm text-gray-400 mt-1">This page will refresh automatically.</p>
             </div>
 
         @elseif($outputUrl)
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                 <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <span class="font-semibold text-gray-800 dark:text-gray-200">Your photo is ready!</span>
                     <a href="{{ $outputUrl }}" download target="_blank"
@@ -44,7 +44,7 @@
                 </div>
                 <div class="p-4 bg-gray-900 flex justify-center">
                     <img src="{{ $outputUrl }}" alt="Generated photo"
-                         class="max-w-full max-h-[60vh] object-contain rounded shadow">
+                         class="max-w-full max-h-[60vh] object-contain rounded-sm shadow-sm">
                 </div>
             </div>
 
@@ -55,5 +55,6 @@
         @endif
 
     </div>
+    @livewireScriptConfig
 </body>
 </html>

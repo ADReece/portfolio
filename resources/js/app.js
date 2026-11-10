@@ -1,4 +1,3 @@
-import './bootstrap';
 import '../css/app.css';
 import './components/modal';
 
@@ -57,30 +56,36 @@ window.showErrorToast = (message) => window.showToast(message, 'error');
 window.showWarningToast = (message) => window.showToast(message, 'warning');
 window.showInfoToast = (message) => window.showToast(message, 'info');
 
-window.fslightbox = fslightbox;
-
 // fslightbox automatically provides refreshFsLightbox() - don't override it
 
-import Alpine from 'alpinejs';
-import intersect from '@alpinejs/intersect';
+// Livewire 3 bundles Alpine (with the focus/x-trap, collapse, intersect and
+// anchor plugins). Import both from Livewire's ESM build so there's exactly
+// one Alpine, then start. Pages without Livewire
+// components work the same way, so every page gets Alpine.
+import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 
 window.Alpine = Alpine;
 
-Alpine.plugin(intersect);
+// Light / dark / system theme switch (see layouts/partials/user-menu.blade.php).
+// The choice is saved in this browser and applied before paint by theme-script.
+document.addEventListener('alpine:init', () => {
+    Alpine.data('themeSwitch', () => ({
+        theme: (() => { try { return localStorage.getItem('theme') || 'system'; } catch (e) { return 'system'; } })(),
+        set(value) {
+            this.theme = value;
+            const root = document.documentElement;
+            root.classList.remove('dark', 'light');
+            if (value !== 'system') root.classList.add(value);
+            try {
+                value === 'system' ? localStorage.removeItem('theme') : localStorage.setItem('theme', value);
+            } catch (e) {}
+        },
+    }));
+});
 
-// Wait for Livewire to be fully loaded before starting Alpine
-// This ensures Livewire is available when Alpine components try to access it
-function startAlpineWhenLivewireReady() {
-    if (typeof window.Livewire !== 'undefined') {
-        Alpine.start();
-    } else {
-        setTimeout(startAlpineWhenLivewireReady, 50);
-    }
-}
+Livewire.start();
 
-// Start the check after DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startAlpineWhenLivewireReady);
-} else {
-    startAlpineWhenLivewireReady();
+// Rich-text editors are only needed on a few settings pages.
+if (document.querySelector('[data-rich-text]')) {
+    import('./rich-text.js');
 }

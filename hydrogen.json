@@ -1,0 +1,34 @@
+{
+  "name": "portfolio",
+  "subdomain": "portfolio",
+  "port": 8080,
+  "health": "/up",
+  "memory": "1024m",
+  "max_body": "55m",
+  "volumes": {
+    "db": "/var/lib/mysql",
+    "uploads": "/var/www/html/storage/app"
+  },
+  "env": {
+    "APP_NAME": "Portfol.io",
+    "APP_ENV": "production",
+    "APP_DEBUG": "false",
+    "APP_URL": "https://portfolio.hydrodactyl.duckdns.org",
+    "LOG_CHANNEL": "stderr",
+    "LOG_LEVEL": "info",
+    "DB_CONNECTION": "mysql",
+    "DB_HOST": "127.0.0.1",
+    "DB_PORT": "3306",
+    "DB_DATABASE": "portfolio",
+    "DB_USERNAME": "portfolio",
+    "CACHE_DRIVER": "file",
+    "SESSION_DRIVER": "file",
+    "SESSION_SECURE_COOKIE": "true",
+    "QUEUE_CONNECTION": "database",
+    "FILESYSTEM_DISK": "local",
+    "MAIL_MAILER": "log",
+    "MAIL_FROM_ADDRESS": "noreply@portfolio.hydrodactyl.duckdns.org",
+    "ADMIN_EMAILS": "reece@ascend-digital.co.uk",
+    "CHATMESH_KEY": "pk_EPynMNm91cwrsQ4Fx5dBZBkk"
+  }
+}

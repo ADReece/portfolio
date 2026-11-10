@@ -61,7 +61,7 @@ class WebhookSubscriptionDeletionTest extends TestCase
         $user->forceFill(['stripe_id' => 'cus_test_123'])->save();
 
         $subscription = $user->subscriptions()->create([
-            'name' => 'default',
+            'type' => 'default',
             'stripe_id' => 'sub_test_123',
             'stripe_status' => 'active',
             'stripe_price' => 'price_monthly_123',

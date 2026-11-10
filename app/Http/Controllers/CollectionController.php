@@ -12,10 +12,38 @@ use Illuminate\Support\Facades\Storage;
 class CollectionController extends Controller
 {
 
-    public function index() : View
+    public function index(Request $request) : View
     {
-        $collections = auth()->user()->collections;
-        return view('collections.backend.index', ['collections' => $collections]);
+        $filters = [
+            'all' => 'All',
+            'published' => 'Published',
+            'draft' => 'Drafts',
+            'private' => 'Private',
+            'archived' => 'Archived',
+        ];
+        $filter = array_key_exists($request->query('show'), $filters) ? $request->query('show') : 'all';
+
+        $base = auth()->user()->collections();
+        $counts = [
+            'all' => (clone $base)->count(),
+            'published' => (clone $base)->where('status', 'Published')->count(),
+            'draft' => (clone $base)->where('status', 'Draft')->count(),
+            'private' => (clone $base)->where('private', true)->count(),
+            'archived' => (clone $base)->where('status', 'Archived')->count(),
+        ];
+
+        $collections = $base
+            ->when($filter === 'published', fn ($q) => $q->where('status', 'Published'))
+            ->when($filter === 'draft', fn ($q) => $q->where('status', 'Draft'))
+            ->when($filter === 'private', fn ($q) => $q->where('private', true))
+            ->when($filter === 'archived', fn ($q) => $q->where('status', 'Archived'))
+            ->with('coverPhoto')
+            ->withCount(['sets', 'photos'])
+            ->orderBy('sort_order')
+            ->latest()
+            ->get();
+
+        return view('collections.backend.index', compact('collections', 'filters', 'filter', 'counts'));
     }
 
     public function sets($collection) : View
@@ -62,8 +90,19 @@ class CollectionController extends Controller
 
     public function edit($collectionId) : View
     {
-        $collection = auth()->user()->collections()->findOrFail($collectionId);
-        return view('collections.backend.edit', ['collection' => $collection]);
+        $collection = auth()->user()->collections()->withCount(['sets', 'photos'])->findOrFail($collectionId);
+
+        // Photos to choose a cover from: the most recent, plus the current cover.
+        $coverChoices = $collection->photos()->latest('photos.created_at')->take(24)->get();
+        if ($collection->cover_photo_id && ! $coverChoices->contains('id', $collection->cover_photo_id) && $collection->coverPhoto) {
+            $coverChoices->prepend($collection->coverPhoto);
+        }
+
+        return view('collections.backend.edit', [
+            'collection' => $collection,
+            'coverChoices' => $coverChoices,
+            'shareUrl' => route('profile.collection', ['username' => auth()->user()->username, 'collection_id' => $collection->id]),
+        ]);
     }
 
     public function update(Request $request, $collectionId)
@@ -75,11 +114,16 @@ class CollectionController extends Controller
             'event_date' => 'nullable|date',
             'status' => 'nullable|string|in:Draft,Published,Archived',
             'private' => 'nullable|boolean',
-            'password' => 'nullable|string|min:4',
-            'cover_photo_id' => 'nullable|exists:photos,id',
+            // A private collection needs a password, unless it already has one.
+            'password' => [$collection->password ? 'nullable' : 'required_if:private,1', 'nullable', 'string', 'min:4'],
+            // Only photos from this collection can be its cover.
+            'cover_photo_id' => ['nullable', \Illuminate\Validation\Rule::in($collection->photos()->pluck('photos.id')->map(fn ($id) => (string) $id)->all())],
             'watermarked' => 'nullable|boolean',
             'hide_from_portfolio' => 'nullable|boolean',
-            'cover_photo_object_position' => 'nullable|string|max:50', // new validation
+            'cover_photo_object_position' => 'nullable|string|in:center,top,bottom,top-right,bottom-right',
+        ], [
+            'password.required_if' => 'Set a password so clients can open this private collection.',
+            'cover_photo_id.in' => 'Choose a cover photo from this collection.',
         ]);
 
         $updateData = [
@@ -90,7 +134,7 @@ class CollectionController extends Controller
             'cover_photo_id' => $validated['cover_photo_id'] ?? $collection->cover_photo_id,
             'watermarked' => (bool) $request->input('watermarked', 0),
             'hide_from_portfolio' => (bool) $request->input('hide_from_portfolio', 0),
-            'cover_photo_object_position' => $validated['cover_photo_object_position'] ?? ($collection->cover_photo_object_position ?? 'center center'),
+            'cover_photo_object_position' => $validated['cover_photo_object_position'] ?? ($collection->cover_photo_object_position ?? 'center'),
         ];
 
         if (isset($validated['password']) && $validated['password']) {
@@ -145,14 +189,12 @@ class CollectionController extends Controller
         ]);
 
         try {
-            // Get the plain text password from session or generate a shareable token
-            // Note: We cannot retrieve the hashed password, so we'll need to handle this differently
-            // For now, we'll send the link and ask them to contact you for the password
-            // In production, you might want to generate a temporary access token instead
-
-            $collectionUrl = route('profile.collection', [
+            // Passwords are stored hashed, so instead of the password we send a
+            // signed link that unlocks the gallery for the client.
+            $linkExpiresAt = now()->addDays(30);
+            $collectionUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('profile.collection', $linkExpiresAt, [
                 'username' => auth()->user()->username,
-                'collection_id' => $collection->id
+                'collection_id' => $collection->id,
             ]);
 
             \Mail::send('emails.collection-share', [
@@ -161,6 +203,7 @@ class CollectionController extends Controller
                 'clientName' => $validated['name'] ?? 'there',
                 'customMessage' => $validated['message'] ?? null,
                 'photographerName' => auth()->user()->name ?? auth()->user()->username,
+                'linkExpiresAt' => $linkExpiresAt,
             ], function ($message) use ($validated, $collection) {
                 $message->to($validated['email'])
                     ->subject('Your Private Gallery: ' . $collection->name);
@@ -189,6 +232,13 @@ class CollectionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Archive download is only available for private collections'
+            ], 403);
+        }
+
+        if (! \App\Support\GalleryAccess::collectionIsUnlocked($request, $collection)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Open the gallery with its password before requesting a download.'
             ], 403);
         }
 
@@ -256,6 +306,11 @@ class CollectionController extends Controller
 
         return view('collections.archive-download', [
             'collection' => $collection,
+            'user' => $collection->user,
+            'downloadUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute('collections.download-archive', $expiresAt, [
+                'collection' => $collection->id,
+                'filename' => $filename,
+            ]),
             'filename' => $filename,
             'expiresAt' => $expiresAt->toIso8601String(),
             'photoCount' => $photoCount,

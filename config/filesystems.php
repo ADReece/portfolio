@@ -44,7 +44,10 @@ return [
             'throw' => false,
         ],
 
-        's3' => [
+        // Without an AWS bucket (e.g. a self-hosted install) the 's3' disk the
+        // app writes to is a private local disk. Files are served through
+        // Laravel's signed /media route, so temporaryUrl() keeps working.
+        's3' => env('AWS_BUCKET') ? [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -53,6 +56,13 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/media'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/media',
+            'serve' => true,
+            'visibility' => 'private',
             'throw' => false,
         ],
 

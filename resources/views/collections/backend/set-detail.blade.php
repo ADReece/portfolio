@@ -1,98 +1,73 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ $set->name }} - {{ $set->collection->name }}
-            </h2>
-            <a href="{{ route('collections.edit', $set->collection) }}" class="text-sm text-gray-600 hover:text-gray-900">
-                ← Back to Collection
-            </a>
-        </div>
-    </x-slot>
+<x-app-layout :title="$set->name.' · '.$set->collection->name">
+    <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header :title="$set->name" :back="route('collections.edit', $set->collection)" :back-label="$set->collection->name"
+                          description="Upload photos to this set, then edit captions, choose a cover or remove photos below." />
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Upload Section -->
-            <div class="mb-8 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <h3 class="text-lg font-semibold mb-4">Upload Photos</h3>
-                    @livewire('photo-upload', ['setId' => $set->id], key('upload-'.$set->id))
-                </div>
-            </div>
+        <x-ui.card title="Upload photos">
+            @livewire('photo-upload', ['setId' => $set->id], key('upload-'.$set->id))
+            <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">JPEG, PNG or WebP, up to 100MB each. Thumbnails and watermarked copies are made automatically.</p>
+        </x-ui.card>
 
-            <!-- Template Assignment -->
-            <div class="mb-8 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg"
-                 x-data="{
-                     selected: {{ $set->templates->pluck('id')->toJson() }},
-                     saving: false,
-                     saved: false,
-                     save() {
-                         this.saving = true;
-                         fetch('{{ route('sets.templates.sync', $set) }}', {
-                             method: 'POST',
-                             headers: {
-                                 'Content-Type': 'application/json',
-                                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                             },
-                             body: JSON.stringify({ template_ids: this.selected }),
-                         })
-                         .then(r => r.json())
-                         .then(() => { this.saved = true; setTimeout(() => this.saved = false, 2500); })
-                         .finally(() => { this.saving = false; });
-                     }
-                 }">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                            Download Templates
-                        </h3>
-                        <button @click="save()" :disabled="saving"
-                                class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
-                            <span x-show="!saving && !saved">Save</span>
-                            <span x-show="saving">Saving…</span>
-                            <span x-show="saved" class="text-green-300">✓ Saved</span>
-                        </button>
+        @livewire('set-photos', ['setId' => $set->id], key('photos-'.$set->id))
+
+        <div x-data="{
+                       selected: @js($set->templates->pluck('id')->map(fn ($id) => (string) $id)->values()),
+                       saving: false,
+                       status: '',
+                       save() {
+                           this.saving = true;
+                           this.status = '';
+                           fetch(@js(route('sets.templates.sync', $set)), {
+                               method: 'POST',
+                               headers: {
+                                   'Content-Type': 'application/json',
+                                   'Accept': 'application/json',
+                                   'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                               },
+                               body: JSON.stringify({ template_ids: this.selected }),
+                           })
+                           .then(r => { if (!r.ok) throw new Error(); this.status = 'Saved'; setTimeout(() => this.status = '', 2500); })
+                           .catch(() => window.showErrorToast('We couldn’t save your template choices. Try again.'))
+                           .finally(() => this.saving = false);
+                       },
+                   }">
+        <x-ui.card title="Print templates for downloads"
+                   description="Clients can add your design (names, dates, a border) when they download a photo from this set.">
+            @if($userTemplates->isEmpty())
+                <x-ui.empty-state icon="document-duplicate" title="No print templates yet"
+                                  description="Design a template once, then offer it on any set." class="py-6">
+                    <x-ui.button variant="secondary" icon="plus" :href="route('templates.create')">Create a template</x-ui.button>
+                </x-ui.empty-state>
+            @else
+                <fieldset>
+                    <legend class="sr-only">Templates offered on this set</legend>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach($userTemplates as $tmpl)
+                            <label class="flex cursor-pointer items-start gap-3 rounded-control p-3 ring-1 transition"
+                                   :class="selected.includes(@js((string) $tmpl->id)) ? 'bg-brand-50 ring-brand-500 dark:bg-brand-950' : 'ring-gray-200 hover:ring-gray-300 dark:ring-gray-700 dark:hover:ring-gray-600'">
+                                <input type="checkbox" value="{{ $tmpl->id }}" x-model="selected"
+                                       class="mt-0.5 size-4 rounded-sm border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900">
+                                <span class="min-w-0">
+                                    <span class="block truncate text-sm font-medium text-gray-900 dark:text-gray-100">{{ $tmpl->name }}</span>
+                                    @if($tmpl->description)
+                                        <span class="block truncate text-sm text-gray-600 dark:text-gray-400">{{ $tmpl->description }}</span>
+                                    @endif
+                                </span>
+                            </label>
+                        @endforeach
                     </div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Templates checked here will be offered to clients when they download a photo from this set.
-                    </p>
-
-                    @if($userTemplates->isEmpty())
-                        <p class="text-sm text-gray-400">
-                            You have no active templates yet.
-                            <a href="{{ route('templates.create') }}" class="underline text-indigo-500">Create one</a>.
-                        </p>
-                    @else
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            @foreach($userTemplates as $tmpl)
-                                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer"
-                                       :class="selected.includes('{{ $tmpl->id }}')
-                                               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                               : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300'">
-                                    <input type="checkbox" value="{{ $tmpl->id }}"
-                                           x-model="selected"
-                                           class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    <div class="min-w-0">
-                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ $tmpl->name }}</p>
-                                        @if($tmpl->description)
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $tmpl->description }}</p>
-                                        @endif
-                                        @if($tmpl->fields)
-                                            <p class="text-xs text-gray-400 mt-0.5">{{ count($tmpl->fields) }} field(s)</p>
-                                        @endif
-                                    </div>
-                                </label>
-                            @endforeach
-                        </div>
-                    @endif
+                </fieldset>
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <x-ui.button variant="ghost" size="sm" icon="printer" :href="route('collections.batch', $set->collection)">Make prints for the whole collection</x-ui.button>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-green-700 dark:text-green-400" x-text="status" role="status" aria-live="polite"></span>
+                        <x-ui.button x-on:click="save()" x-bind:disabled="saving">
+                            <span x-text="saving ? 'Saving…' : 'Save templates'">Save templates</span>
+                        </x-ui.button>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Photos Grid (Livewire Component for Live Updates) -->
-            @livewire('set-photos', ['setId' => $set->id], key('photos-'.$set->id))
+            @endif
+        </x-ui.card>
         </div>
     </div>
-
-
 </x-app-layout>
-

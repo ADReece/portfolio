@@ -1,4 +1,120 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+@plugin '@tailwindcss/forms';
+
+/* Templates Tailwind should scan besides the auto-detected project files. */
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+/*
+ * Dark mode follows the visitor's system setting by default. Adding `dark`
+ * or `light` to <html> overrides it (used by the theme toggle and by the
+ * photographer's portfolio theme setting).
+ */
+@custom-variant dark {
+    &:where(.dark, .dark *) {
+        @slot;
+    }
+    @media (prefers-color-scheme: dark) {
+        &:where(:not(.light, .light *)) {
+            @slot;
+        }
+    }
+}
+
+/* `can-hover:` applies only with a real hover (mouse or trackpad). Use it to
+   hide controls until hover so touch users still see them. */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
+
+/*
+ * Design tokens. Use `brand-*` for the product's primary colour (buttons,
+ * links, focus rings) and `surface`/`ink` tokens rather than raw greys, so
+ * the look can change in one place. The brand scale is indigo for now.
+ */
+@theme {
+    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+
+    --color-brand-50: var(--color-indigo-50);
+    --color-brand-100: var(--color-indigo-100);
+    --color-brand-200: var(--color-indigo-200);
+    --color-brand-300: var(--color-indigo-300);
+    --color-brand-400: var(--color-indigo-400);
+    --color-brand-500: var(--color-indigo-500);
+    --color-brand-600: var(--color-indigo-600);
+    --color-brand-700: var(--color-indigo-700);
+    --color-brand-800: var(--color-indigo-800);
+    --color-brand-900: var(--color-indigo-900);
+    --color-brand-950: var(--color-indigo-950);
+
+    --radius-control: 0.5rem;   /* buttons, inputs */
+    --radius-card: 0.75rem;     /* cards, panels, modals */
+}
+
+/*
+ * Tailwind v4 changed the default border colour to currentColor. Keep the
+ * v3 look for elements that rely on the default.
+ */
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentcolor);
+    }
+
+    /* v4 buttons default to cursor: default; keep pointers on clickable things. */
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+/* Rich-text editor (Quill) themed to match the app, in light and dark. */
+.rich-text .ql-toolbar.ql-snow {
+    border-color: var(--color-gray-300);
+    border-radius: var(--radius-control) var(--radius-control) 0 0;
+    background: var(--color-gray-50);
+}
+.rich-text .ql-container.ql-snow {
+    border-color: var(--color-gray-300);
+    border-radius: 0 0 var(--radius-control) var(--radius-control);
+    background: var(--color-white);
+    color: var(--color-gray-900);
+    font-family: inherit;
+    font-size: 0.875rem;
+}
+.rich-text .ql-editor {
+    min-height: 9rem;
+}
+.rich-text .ql-container.ql-snow:focus-within {
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 1px var(--color-brand-500);
+}
+@variant dark {
+    .rich-text .ql-toolbar.ql-snow { border-color: var(--color-gray-600); background: var(--color-gray-800); }
+    .rich-text .ql-container.ql-snow { border-color: var(--color-gray-600); background: var(--color-gray-900); color: var(--color-gray-100); }
+    .rich-text .ql-snow .ql-stroke { stroke: var(--color-gray-300); }
+    .rich-text .ql-snow .ql-fill { fill: var(--color-gray-300); }
+    .rich-text .ql-snow .ql-picker { color: var(--color-gray-300); }
+    .rich-text .ql-editor.ql-blank::before { color: var(--color-gray-500); }
+}
+.rich-text .ql-editor.ql-blank::before {
+    color: var(--color-gray-500);
+    font-style: normal;
+}
+
+/* Respect "reduce motion": no animated transitions, spinners or smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}

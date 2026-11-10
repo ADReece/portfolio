@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Observers\UserObserver;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
-use App\Http\Livewire\LogoUploader;
+use App\Livewire\LogoUploader;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,9 +30,9 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
 
         // Share currency symbol with all views
+        // Resolved lazily and memoised, so views don't each hit the database.
         view()->composer('*', function ($view) {
-            $currencySymbol = \App\Models\Setting::where('key', 'currency_symbol')->value('value') ?? '£';
-            $view->with('currencySymbol', $currencySymbol);
+            $view->with('currencySymbol', \App\Support\Currency::symbol());
         });
 
         Livewire::component('logo-uploader', LogoUploader::class);

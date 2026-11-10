@@ -16,26 +16,24 @@ class PhotoFactory extends Factory
 
     public function definition(): array
     {
+        // Mirrors the photos table: url is an S3 key; thumbnails and
+        // watermarked copies are derived from it (see Photo::getAwsThumbnail).
         return [
             'user_id' => User::factory(),
             'set_id' => Set::factory(),
-            'url' => 's3://portfolio-bucket/photos/' . fake()->md5() . '.jpg',
-            'thumbnail_url' => 's3://portfolio-bucket/thumbnails/' . fake()->md5() . '.jpg',
-            'watermarked_url' => 's3://portfolio-bucket/watermarked/' . fake()->md5() . '.jpg',
+            'url' => 'photos/' . fake()->md5() . '.jpg',
             'caption' => fake()->sentence(),
-            'description' => fake()->paragraph(),
-            'is_private' => false,
-            'original_filename' => fake()->word() . '.jpg',
-            'file_size' => fake()->numberBetween(500000, 5000000),
-            'width' => 1920,
-            'height' => 1080,
+            'description' => fake()->sentence(),
+            'private' => false,
+            'size' => fake()->numberBetween(500000, 5000000),
+            'tags' => '',
         ];
     }
 
     public function private(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_private' => true,
+            'private' => true,
         ]);
     }
 }

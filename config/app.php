@@ -18,6 +18,20 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | Comma-separated emails whose accounts are made admins when they log in
+    | (admins get every plan feature). Only list emails whose accounts already
+    | exist: sign-up doesn't verify email addresses, so an unclaimed address
+    | could be registered by someone else.
+    */
+    'admin_emails' => array_values(array_filter(array_map(
+        fn ($email) => strtolower(trim($email)),
+        explode(',', (string) env('ADMIN_EMAILS', ''))
+    ))),
+
+    // Where customers, clients and legal/privacy enquiries are directed.
+    'support_email' => env('SUPPORT_EMAIL', 'support@example.com'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------

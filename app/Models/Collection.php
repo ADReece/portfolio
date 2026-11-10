@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Collection extends Model
 {
@@ -46,9 +47,21 @@ class Collection extends Model
         });
     }
 
-    public function coverPhotoPosition()
+    /**
+     * CSS object-position for the cover photo, from the stored focal point
+     * (center, top, bottom, top-right, bottom-right).
+     */
+    public function coverObjectPosition(): string
     {
-        return 'object-' . $this->cover_photo_object_position ?? 'center-center';
+        return match ($this->cover_photo_object_position) {
+            'top' => 'center top',
+            'bottom' => 'center bottom',
+            'top-right' => 'right top',
+            'bottom-right' => 'right bottom',
+            'top-left' => 'left top',
+            'bottom-left' => 'left bottom',
+            default => 'center center',
+        };
     }
 
     public function user() : BelongsTo
@@ -59,6 +72,12 @@ class Collection extends Model
     public function sets() : HasMany
     {
         return $this->hasMany(Set::class);
+    }
+
+    /** All photos in the collection, across its sets. */
+    public function photos(): HasManyThrough
+    {
+        return $this->hasManyThrough(Photo::class, Set::class);
     }
 
     public function coverPhoto() : BelongsTo

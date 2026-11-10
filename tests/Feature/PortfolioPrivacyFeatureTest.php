@@ -78,7 +78,20 @@ class PortfolioPrivacyFeatureTest extends TestCase
         $response->assertViewIs('collections.frontend.password');
     }
 
-    public function test_private_collection_rejects_incorrect_password(): void
+    public function test_public_collections_page_lists_only_visible_collections(): void
+    {
+        $user = User::factory()->create(['portfolio_display_mode' => 'grid']);
+        $visible = Collection::factory()->published()->create(['user_id' => $user->id]);
+        Collection::factory()->private()->published()->create(['user_id' => $user->id]);
+        Collection::factory()->create(['user_id' => $user->id]); // draft
+
+        $this->get(route('profile.collections', ['username' => $user->username]))
+            ->assertOk()
+            ->assertViewIs('profile.view-collections')
+            ->assertViewHas('collections', fn ($c) => $c->count() === 1 && $c->first()->id === $visible->id);
+    }
+
+    private function makePrivateCollection(): array
     {
         $user = User::factory()->create();
         $collection = Collection::factory()->create([
@@ -88,35 +101,75 @@ class PortfolioPrivacyFeatureTest extends TestCase
             'status' => 'Published',
         ]);
 
-        $response = $this->get(route('profile.collection', [
+        return [$user, $collection];
+    }
+
+    public function test_private_collection_rejects_incorrect_password(): void
+    {
+        [$user, $collection] = $this->makePrivateCollection();
+        $galleryUrl = route('profile.collection', ['username' => $user->username, 'collection_id' => $collection->id]);
+
+        $response = $this->from($galleryUrl)->post(route('profile.collection.unlock', [
             'username' => $user->username,
             'collection_id' => $collection->id,
-            'password' => 'wrong-password',
-        ]));
+        ]), ['password' => 'wrong-password']);
 
-        $response->assertOk();
-        $response->assertViewIs('collections.frontend.password');
-        $response->assertSee('Invalid Password');
+        $response->assertRedirect($galleryUrl);
+        $response->assertSessionHasErrors('password');
+        $this->get($galleryUrl)->assertViewIs('collections.frontend.password');
     }
 
     public function test_private_collection_allows_access_with_valid_password(): void
     {
-        $user = User::factory()->create();
-        $collection = Collection::factory()->create([
-            'user_id' => $user->id,
-            'private' => true,
-            'password' => bcrypt('secret1234'),
-            'status' => 'Published',
-        ]);
+        [$user, $collection] = $this->makePrivateCollection();
+        $galleryUrl = route('profile.collection', ['username' => $user->username, 'collection_id' => $collection->id]);
 
-        $response = $this->get(route('profile.collection', [
+        $response = $this->post(route('profile.collection.unlock', [
+            'username' => $user->username,
+            'collection_id' => $collection->id,
+        ]), ['password' => 'secret1234']);
+
+        $response->assertRedirect($galleryUrl);
+        $this->get($galleryUrl)->assertOk()->assertViewIs('collections.frontend.show');
+    }
+
+    public function test_password_in_query_string_is_not_accepted(): void
+    {
+        [$user, $collection] = $this->makePrivateCollection();
+
+        $this->get(route('profile.collection', [
             'username' => $user->username,
             'collection_id' => $collection->id,
             'password' => 'secret1234',
-        ]));
+        ]))->assertViewIs('collections.frontend.password');
+    }
 
-        $response->assertOk();
-        $response->assertViewIs('collections.frontend.show');
+    public function test_signed_share_link_unlocks_private_collection(): void
+    {
+        [$user, $collection] = $this->makePrivateCollection();
+
+        $signedUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('profile.collection', now()->addDay(), [
+            'username' => $user->username,
+            'collection_id' => $collection->id,
+        ]);
+
+        $this->get($signedUrl)->assertOk()->assertViewIs('collections.frontend.show');
+
+        // The unlock persists for the session, so the plain URL now works too.
+        $this->get(route('profile.collection', ['username' => $user->username, 'collection_id' => $collection->id]))
+            ->assertViewIs('collections.frontend.show');
+    }
+
+    public function test_tampered_share_link_is_rejected(): void
+    {
+        [$user, $collection] = $this->makePrivateCollection();
+
+        $signedUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('profile.collection', now()->addDay(), [
+            'username' => $user->username,
+            'collection_id' => $collection->id,
+        ]);
+
+        $this->get($signedUrl.'x')->assertViewIs('collections.frontend.password');
     }
 
     public function test_public_collection_filters_out_private_photos(): void

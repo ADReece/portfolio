@@ -39,8 +39,8 @@ class ProfileTest extends TestCase
         $user->refresh();
 
         $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        // Email changes go through support, so the profile form can't change it.
+        $this->assertNotSame('test@example.com', $user->email);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

@@ -2,29 +2,28 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:a11y": "playwright test"
     },
     "devDependencies": {
-        "@tailwindcss/forms": "^0.5.2",
-        "alpinejs": "^3.4.2",
-        "autoprefixer": "^10.4.2",
-        "axios": "^1.1.2",
-        "laravel-vite-plugin": "^0.7.2",
-        "lodash": "^4.17.19",
-        "postcss": "^8.4.6",
-        "tailwindcss": "^3.1.0",
-        "vite": "^4.0.0"
+        "@axe-core/playwright": "^4.14.0",
+        "@playwright/test": "^1.63.0",
+        "@tailwindcss/forms": "^0.5.10",
+        "@tailwindcss/vite": "^4.3.5",
+        "laravel-vite-plugin": "^3.2.1",
+        "tailwindcss": "^4.3.5",
+        "vite": "^8.3.6"
     },
     "dependencies": {
-        "@alpinejs/intersect": "^3.13.8",
         "filepond": "^4.32.12",
         "filepond-plugin-file-validate-size": "^2.2.8",
         "filepond-plugin-file-validate-type": "^1.2.9",
         "filepond-plugin-image-preview": "^4.6.12",
         "fslightbox": "^3.4.1",
         "imagesloaded": "^5.0.0",
-        "infinite-scroll": "^4.0.1",
+        "quill": "^2.0.3",
         "sortablejs": "^1.15.0",
         "toastify-js": "^1.12.0"
-    }
+    },
+    "type": "module"
 }

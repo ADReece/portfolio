@@ -66,7 +66,7 @@ class ProdigiProductSettingsController extends Controller
 
         $user->prodigiProducts()->syncWithoutDetaching($syncPayload);
 
-        return back()->with('status', 'prodigi-products-updated');
+        return back()->with('success', 'Print products saved. Clients will see the changes straight away.');
     }
 
     public function listForPortfolio(string $username): JsonResponse
@@ -102,11 +102,17 @@ class ProdigiProductSettingsController extends Controller
             return;
         }
 
-        $syncPayload = [];
-        foreach ($catalogIds as $productId) {
-            $syncPayload[$productId] = ['is_enabled' => true, 'retail_price' => 29.99];
-        }
+        // Only add products the user doesn't have a preference for yet.
+        // (syncWithoutDetaching would also overwrite existing rows, which
+        // reset every price to 29.99 and re-enabled every product each
+        // time the page was opened.)
+        $existing = $user->prodigiProducts()->pluck('prodigi_products.id')->map(fn ($id) => (int) $id)->all();
+        $missing = array_diff(array_map('intval', $catalogIds), $existing);
 
-        $user->prodigiProducts()->syncWithoutDetaching($syncPayload);
+        if ($missing) {
+            $user->prodigiProducts()->attach(
+                collect($missing)->mapWithKeys(fn ($id) => [$id => ['is_enabled' => true, 'retail_price' => 29.99]])->all()
+            );
+        }
     }
 }

@@ -160,82 +160,65 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📸 Your Private Gallery</h1>
+            <h1>Your private gallery</h1>
             <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">{{ $collection->name }}</p>
         </div>
 
         <div class="content">
             <p class="greeting">Hi {{ $clientName }},</p>
 
-            <p>{{ $photographerName }} has shared a private photo collection with you! 🎉</p>
+            <p>{{ $photographerName }} has shared a private photo collection with you.</p>
 
             @if($customMessage)
                 <div class="message-box">
-                    <strong>Personal Message:</strong>
+                    <strong>Message from {{ $photographerName }}:</strong>
                     <p style="margin: 10px 0 0 0;">{{ $customMessage }}</p>
                 </div>
             @endif
 
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ $collectionUrl }}" class="button">View my gallery</a>
+            </div>
+
             <div class="collection-info">
-                <h3>📦 Collection Details</h3>
+                <h3>Collection details</h3>
                 @if($collection->event_date)
                     <div class="info-row">
-                        <span class="info-label">Event Date:</span>
+                        <span class="info-label">Event date:</span>
                         <span class="info-value">{{ $collection->event_date->format('F j, Y') }}</span>
                     </div>
-</html>
-</body>
-    </div>
-        </div>
-            </p>
-                This email was sent because {{ $photographerName }} shared a photo collection with you.
-            <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
-            <p>If you have any questions, please contact {{ $photographerName }} directly.</p>
-            <p>This is a private photo gallery invitation.</p>
-        <div class="footer">
-
-        </div>
-            </div>
-                <p>Best regards,<br><strong>{{ $photographerName }}</strong></p>
-            <div class="signature">
-
-            </p>
-                💡 <strong>Tip:</strong> Bookmark this page for easy access to your photos anytime!
-            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-
-            </div>
-                <a href="{{ $collectionUrl }}" class="button">View My Gallery</a>
-            <div style="text-align: center; margin: 30px 0;">
-
-            </div>
-                </ol>
-                    <li>View, download, and enjoy your photos!</li>
-                    @endif
-                        <li>Enter the password provided by {{ $photographerName }}</li>
-                    @if($collection->password)
-                    <li>Click the button below to visit your private gallery</li>
-                <ol>
-                <h3>📋 How to Access Your Gallery</h3>
-            <div class="instructions">
-
-            @endif
-                </div>
-                    </p>
-                        <strong>Note:</strong> Please contact {{ $photographerName }} for the password to access this private collection.
-                    <p style="margin: 10px 0 0 0; color: #92400e; font-size: 14px;">
-                    <div class="password">••••••••</div>
-                    <h3>🔑 Access Password</h3>
-                <div class="password-box">
-            @if($collection->password)
-
-            </div>
-                </div>
-                    <span class="info-value">{{ $photographerName }}</span>
-                    <span class="info-label">Photographer:</span>
-                <div class="info-row">
-                </div>
-                    <span class="info-value">🔒 Private & Secure</span>
-                    <span class="info-label">Status:</span>
-                <div class="info-row">
                 @endif
+                <div class="info-row">
+                    <span class="info-label">Photographer:</span>
+                    <span class="info-value">{{ $photographerName }}</span>
+                </div>
+            </div>
 
+            <div class="instructions">
+                <h3>How to open your gallery</h3>
+                <ol>
+                    <li>Click <strong>View my gallery</strong> above. The link signs you in to this gallery automatically.</li>
+                    <li>View, download and order prints of your photos.</li>
+                </ol>
+                @if(!empty($linkExpiresAt))
+                    <p style="margin: 10px 0 0 0; font-size: 14px;">
+                        This link works until {{ $linkExpiresAt->format('F j, Y') }}. After that, use the gallery password from {{ $photographerName }}.
+                    </p>
+                @endif
+            </div>
+
+            <div class="signature">
+                <p>Best regards,<br><strong>{{ $photographerName }}</strong></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This email was sent because {{ $photographerName }} shared a photo collection with you.</p>
+            <p style="margin-top: 15px; font-size: 12px; color: #6b7280;">
+                If the button doesn't work, copy this address into your browser:<br>
+                <span style="word-break: break-all;">{{ $collectionUrl }}</span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

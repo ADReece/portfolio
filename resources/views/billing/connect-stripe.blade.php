@@ -1,112 +1,62 @@
-    <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Connect Stripe Account') }}
-        </h2>
-    </x-slot>
+@php
+    $user = auth()->user();
+    $connected = (bool) $user->stripe_connect_enabled;
+    $canSell = $user->hasFeature('selling');
+    $fee = rtrim(rtrim(number_format(config('services.platform_fee_percent'), 2), '0'), '.');
+@endphp
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-8">
-                @if(auth()->user()->stripe_connect_enabled)
-                    <div class="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-6 mb-6">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <h3 class="text-lg font-semibold text-green-800">Stripe Connected</h3>
-                                <p class="text-green-700">Your Stripe account is connected and ready to receive payments!</p>
-                            </div>
-                        </div>
+<x-app-layout title="Payouts">
+    <div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header title="Payouts" description="Get paid for prints your clients order. Payouts go to your own Stripe account." />
+
+        @if($connected)
+            <x-ui.card>
+                <div class="flex flex-wrap items-start gap-4">
+                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300">
+                        <x-ui.icon name="check" class="size-6" />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="font-semibold text-gray-900 dark:text-gray-100">Stripe is connected</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">When a client pays for a print, you receive the price minus our {{ $fee }}% fee.</p>
                     </div>
-
-                    <div class="mb-6">
-                        <h4 class="font-semibold text-lg mb-2 dark:text-white">What's Next?</h4>
-                        <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
-                            <li>Create products from your photos</li>
-                            <li>Set prices for digital downloads and prints</li>
-                            <li>Share your portfolio with potential buyers</li>
-                            <li>Get paid directly to your Stripe account</li>
-                        </ul>
-                    </div>
-
-                    <form action="{{ route('connect.stripe.disconnect') }}" method="POST" onsubmit="return confirm('Are you sure you want to disconnect your Stripe account? You will not be able to receive payments.');">
+                </div>
+                <div class="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-5 dark:border-gray-700">
+                    <x-ui.button variant="secondary" icon="shopping-bag" :href="route('profile.prodigi-products.edit')">Print products and prices</x-ui.button>
+                    <form action="{{ route('connect.stripe.disconnect') }}" method="POST"
+                          data-confirm="You won't receive payouts for print sales until you connect Stripe again." data-confirm-title="Disconnect Stripe?" data-confirm-button="Disconnect" data-confirm-danger>
                         @csrf
-                        <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
-                            Disconnect Stripe Account
-                        </button>
+                        <x-ui.button type="submit" variant="ghost">Disconnect Stripe</x-ui.button>
                     </form>
-                @else
-                    <div class="text-center mb-8">
-                        <svg class="w-20 h-20 mx-auto mb-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                        </svg>
-                        <h3 class="text-2xl font-bold mb-2 dark:text-white">Connect Your Stripe Account</h3>
-                        <p class="text-gray-600 dark:text-gray-300 mb-6">Start accepting payments from your clients by connecting your Stripe account</p>
-                    </div>
+                </div>
+            </x-ui.card>
+        @else
+            @unless($canSell)
+                <x-ui.alert tone="amber" title="Selling prints isn't included in your plan">
+                    Upgrade to sell prints to your clients and receive payouts.
+                    <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+                </x-ui.alert>
+            @endunless
 
-                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
-                        <h4 class="font-semibold text-lg mb-4 dark:text-white">Benefits of Connecting Stripe:</h4>
-                        <ul class="space-y-3">
-                            <li class="flex items-start">
-                                <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="dark:text-gray-300">Sell digital downloads and physical prints</span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="dark:text-gray-300">Receive payments directly to your bank account</span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="dark:text-gray-300">Secure payment processing</span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="dark:text-gray-300">Automatic payout handling</span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-5 h-5 text-green-500 dark:text-green-400 mr-2 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="dark:text-gray-300">5% platform fee (plus Stripe fees)</span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                        <p class="text-sm text-blue-800">
-                            <strong>Note:</strong> This feature is only available on Photographer and Videographer plans.
-                            @if(!auth()->user()->hasFeature('selling'))
-                                <a href="{{ route('pricing') }}" class="underline font-semibold">Upgrade your plan</a> to enable selling.
-                            @endif
-                        </p>
-                    </div>
-
-                    @if(auth()->user()->hasFeature('selling'))
-                        <a href="https://connect.stripe.com/oauth/authorize?response_type=code&client_id={{ config('services.stripe.connect_client_id') }}&scope=read_write&redirect_uri={{ route('connect.stripe.callback') }}"
-                           class="block w-full text-center bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700">
-                            Connect with Stripe
-                        </a>
-                        <p class="text-sm text-gray-600 mt-4 text-center">
-                            You'll be redirected to Stripe to complete the connection process
-                        </p>
+            <x-ui.card title="Connect Stripe">
+                <ul role="list" class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                    @foreach([
+                        'Clients pay by card when they order a print from your galleries.',
+                        'We handle printing and delivery.',
+                        "You receive the price you set, minus our {$fee}% fee, in your Stripe account.",
+                        'Stripe pays out to your bank on its normal schedule.',
+                    ] as $point)
+                        <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />{{ $point }}</li>
+                    @endforeach
+                </ul>
+                <div class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
+                    @if($canSell)
+                        <x-ui.button size="lg" icon-trailing="arrow-top-right-on-square" :href="$connectUrl">Connect with Stripe</x-ui.button>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">You'll sign in to Stripe (or create an account), then come back here.</p>
                     @else
-                        <a href="{{ route('pricing') }}" class="block w-full text-center bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed">
-                            Upgrade Plan to Connect Stripe
-                        </a>
+                        <x-ui.button :href="route('pricing')">Compare plans</x-ui.button>
                     @endif
-                @endif
-            </div>
-        </div>
+                </div>
+            </x-ui.card>
+        @endif
     </div>
 </x-app-layout>
-

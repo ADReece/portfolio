@@ -42,6 +42,7 @@ class User extends Authenticatable
         'subscription_plan_id',
         'stripe_connect_id',
         'stripe_connect_enabled',
+        'copy_protection',
         'feature_override',
         'feature_override_expires_at',
         'is_admin',
@@ -73,6 +74,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'stripe_connect_enabled' => 'boolean',
+        'copy_protection' => 'boolean',
         'feature_override' => 'boolean',
         'feature_override_expires_at' => 'datetime',
         'is_admin' => 'boolean',
@@ -281,5 +283,14 @@ class User extends Authenticatable
             return false;
         }
         return $this->subscriptionPlan->hasFeature('custom_templates') || $this->subscriptionPlan->hasFeature('upload_logo');
+    }
+
+    /**
+     * The bio as safe HTML for display. Sanitised on output too, so bios
+     * saved before sanitising was tightened are safe.
+     */
+    public function bioHtml(): string
+    {
+        return \App\Support\HtmlSanitizer::clean($this->bio);
     }
 }

@@ -21,36 +21,31 @@
                         $isNewItem = $index >= $previousPageCount;
                     @endphp
                     <div class="masonry-item" data-photo-id="{{ $m->id }}" wire:key="photo-{{ $m->id }}" data-new-item="{{ $isNewItem ? 'true' : 'false' }}">
-                        @php
-                            $ownerCanSell = $m->user
-                                && $m->user->hasFeature('selling')
-                                && $m->user->enabledProdigiProducts()->exists();
-                        @endphp
-                        <div class="relative group overflow-hidden rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300">
+                        <div class="relative group overflow-hidden rounded-lg shadow-xs hover:shadow-xl transition-shadow duration-300">
                             <!-- Image (clickable for lightbox) -->
                             <a href="{{ $m->getUri() }}"
                                data-fslightbox="gallery"
                                data-caption="{{ $m->caption ?? '' }}"
                                class="block"
-                               oncontextmenu="return false;"
-                               ondragstart="return false;">
+                               @if($copyProtection) oncontextmenu="return false;" @endif
+                               @if($copyProtection) ondragstart="return false;" @endif>
                                 <img src="{{ $m->getAwsThumbnail() }}"
                                      alt="{{ $m->caption ?? 'Photo' }}"
                                      class="w-full cursor-pointer select-none"
                                      loading="{{ $index < 10 ? 'eager' : 'lazy' }}"
-                                     oncontextmenu="return false;"
-                                     ondragstart="return false;"
+                                     @if($copyProtection) oncontextmenu="return false;" @endif
+                                     @if($copyProtection) ondragstart="return false;" @endif
                                      draggable="false"
                                      style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;"
                                 />
                             </a>
 
                             <!-- Hover Overlay with Buttons -->
-                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100">
+                            <div class="absolute inset-0 pointer-events-none bg-black/0 can-hover:group-hover:bg-black/40 transition-all duration-300 flex items-end justify-end p-3 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                 <!-- Download Request Button -->
                                 <a href="/photos/{{ $m->id }}/download-options"
-                                   class="mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform hover:scale-110"
-                                   title="Download">
+                                   class="pointer-events-auto mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform motion-safe:hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+                                   title="Download" aria-label="Download this photo">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>
@@ -59,8 +54,8 @@
                                 @if($ownerCanSell)
                                     <!-- Buy Print Button -->
                                     <a href="{{ route('print-purchase.show', ['photo' => $m->id]) }}"
-                                       class="mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform hover:scale-110"
-                                       title="Buy Print">
+                                       class="pointer-events-auto mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform motion-safe:hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+                                       title="Order a print" aria-label="Order a print of this photo">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m1.6 8L5.4 5M7 13l-1.2 6.4A1 1 0 006.8 21h10.4a1 1 0 001-.8L20 13M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/>
                                         </svg>
@@ -70,8 +65,8 @@
                                 <!-- Lightbox View Button -->
                                 <button type="button"
                                         onclick="event.stopPropagation(); this.closest('.masonry-item').querySelector('[data-fslightbox]').click();"
-                                        class="bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform hover:scale-110"
-                                        title="View Full Size">
+                                        class="pointer-events-auto bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform motion-safe:hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+                                        title="View full size" aria-label="View full size">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                                     </svg>
@@ -80,7 +75,7 @@
 
                             <!-- Caption Overlay (if exists) -->
                             @if($m->caption)
-                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div class="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 <p class="text-white text-sm font-medium truncate">{{ $m->caption }}</p>
                             </div>
                             @endif
@@ -107,14 +102,14 @@
                  x-cloak
                  style="display: none;">
                 <div class="loader small"></div>
-                <span class="ml-3 text-gray-500 dark:text-gray-400 text-sm">Loading more photos...</span>
+                <span class="ml-3 text-gray-600 dark:text-gray-400 text-sm">Loading more photos...</span>
             </div>
         @endif
 
         @if(!$hasMore && $loadedCount > 0)
             <!-- All photos loaded message -->
             <div class="w-full py-8 flex justify-center">
-                <div class="text-gray-500 dark:text-gray-400 text-sm">
+                <div class="text-gray-600 dark:text-gray-400 text-sm">
                     Showing all {{ $loadedCount }} {{ Str::plural('photo', $loadedCount) }}
                 </div>
             </div>
@@ -128,7 +123,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No photos</h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No photos found in this collection.</p>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No photos found in this collection.</p>
                 </div>
             </div>
         @endif
@@ -233,7 +228,7 @@
             border-top: 1.1em solid rgba(var(--portfolio-accent-rgb, 99, 102, 241), 0.2);
             border-right: 1.1em solid rgba(var(--portfolio-accent-rgb, 99, 102, 241), 0.2);
             border-bottom: 1.1em solid rgba(var(--portfolio-accent-rgb, 99, 102, 241), 0.2);
-            border-left: 1.1em solid var(--portfolio-accent, #6366F1);
+            border-left: 1.1em solid var(--portfolio-accent, #4F46E5);
             transform: translateZ(0);
             animation: load8 1.1s infinite linear;
         }
@@ -257,68 +252,24 @@
         }
     </style>
 
+    @if($copyProtection)
     <script>
-        // DRM Protection
+        // Copy protection (photographer setting): discourage casual saving of
+        // photos. Right-click and dragging photos, and the save-page shortcut,
+        // are blocked quietly. Printing, screenshots and developer tools are not
+        // blocked: that never stopped copying and got in the way of clients.
         document.addEventListener('DOMContentLoaded', function() {
-            // Prevent right-click on images
-            document.addEventListener('contextmenu', function(e) {
-                if (e.target.tagName === 'IMG' || e.target.closest('.masonry-item')) {
-                    e.preventDefault();
-                    return false;
-                }
+            const onPhoto = (e) => e.target.tagName === 'IMG' || e.target.closest?.('.masonry-item');
+            document.addEventListener('contextmenu', (e) => { if (onPhoto(e)) e.preventDefault(); });
+            document.addEventListener('dragstart', (e) => { if (onPhoto(e)) e.preventDefault(); });
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) e.preventDefault();
             });
-
-            // Prevent keyboard shortcuts for saving and opening
-            document.addEventListener('keydown', function(e) {
-                // Ctrl+S / Cmd+S (Save)
-                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Save is disabled');
-                    return false;
-                }
-
-                // Ctrl+Shift+S / Cmd+Shift+S (Save As)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 's') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Save is disabled');
-                    return false;
-                }
-
-                // Prevent Print Screen
-                if (e.key === 'PrintScreen') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Screenshots are discouraged');
-                    return false;
-                }
-
-                // Prevent Ctrl+P / Cmd+P (Print)
-                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                    e.preventDefault();
-                    window.showWarningToast('Image protection: Printing is disabled');
-                    return false;
-                }
-
-                // Prevent Inspect Element shortcuts
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
-                    e.preventDefault();
-                    return false;
-                }
-
-                // Prevent F12 (Dev Tools)
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-
-            // Prevent drag and drop of images
-            document.addEventListener('dragstart', function(e) {
-                if (e.target.tagName === 'IMG' || e.target.closest('.masonry-item')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-
+        });
+    </script>
+    @endif
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
             // Add watermark overlay on images (subtle but visible when inspecting)
             const style = document.createElement('style');
             style.textContent = `
@@ -343,16 +294,33 @@
                 isLoadingMore: false,
                 loadMoreLock: false,
                 columns: [],
+                // The photographer's column setting is the maximum; narrower
+                // screens get fewer columns so photos stay a usable size.
+                maxColumns: {{ $cols }},
+                minColumnWidth: 170,
                 columnCount: {{ $cols }},
 
+                responsiveColumnCount() {
+                    const grid = document.querySelector('#masonry');
+                    const width = grid?.clientWidth || window.innerWidth;
+                    return Math.max(1, Math.min(this.maxColumns, Math.floor(width / this.minColumnWidth)));
+                },
+
                 init() {
+                    this.columnCount = this.responsiveColumnCount();
                     this.$nextTick(() => {
                         this.initMasonry();
                     });
 
-                    // Handle window resize
+                    // Only rebuild the columns when the column count actually changes.
                     window.addEventListener('resize', () => {
-                        this.debounce(() => this.relayout(), 250);
+                        this.debounce(() => {
+                            const next = this.responsiveColumnCount();
+                            if (next !== this.columnCount) {
+                                this.columnCount = next;
+                                this.relayout();
+                            }
+                        }, 200);
                     });
                 },
 
@@ -562,8 +530,8 @@
 
                     // Small delay before actually calling Livewire
                     setTimeout(() => {
-                        if (window.Livewire && window.Livewire.emit) {
-                            window.Livewire.emit('load-more-photos');
+                        if (window.Livewire && window.Livewire.dispatch) {
+                            window.Livewire.dispatch('load-more-photos');
                         } else {
                             this.isLoadingMore = false;
                         }
@@ -577,14 +545,14 @@
             }));
         });
 
-        // Livewire v2 hook for message processing
-        document.addEventListener('livewire:load', () => {
-            Livewire.hook('message.processed', (message, component) => {
-                const alpineComponent = Alpine.$data(document.querySelector('[x-data="masonryData"]'));
-                if (alpineComponent) {
-                    setTimeout(() => alpineComponent.appendNewItems(), 150);
-                }
-            });
+        // After "load more" renders new items (MasonryGrid::loadMore dispatches
+        // this once the DOM has been updated), move them into the columns.
+        window.addEventListener('masonry-items-loaded', () => {
+            const el = document.querySelector('[x-data="masonryData"]');
+            const alpineComponent = el && Alpine.$data(el);
+            if (alpineComponent) {
+                setTimeout(() => alpineComponent.appendNewItems(), 50);
+            }
         });
 
         // Download request function

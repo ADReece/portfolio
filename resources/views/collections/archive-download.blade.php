@@ -1,10 +1,10 @@
 <x-guest-layout>
-    <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 py-12 px-4">
+    <div class="min-h-screen bg-linear-to-br from-indigo-900 via-purple-900 to-pink-900 py-12 px-4">
         <div class="max-w-2xl mx-auto">
             <!-- Card -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
                 <!-- Header -->
-                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center">
+                <div class="bg-linear-to-r from-indigo-600 to-purple-600 p-8 text-center">
                     <div class="inline-block p-4 bg-white rounded-full mb-4">
                         <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -40,7 +40,7 @@
                          x-data="countdownTimer('{{ $expiresAt }}')"
                          x-init="startCountdown()">
                         <div class="flex items-start gap-3">
-                            <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div class="flex-1">
@@ -74,8 +74,8 @@
                     <div x-data="{ expired: false }"
                          x-init="setTimeout(() => { if (new Date() > new Date('{{ $expiresAt }}')) { expired = true; } }, 1000)">
                         <template x-if="!expired">
-                            <a href="{{ route('collections.download-archive', ['collection' => $collection->id, 'filename' => $filename]) }}"
-                               class="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-center py-4 px-6 rounded-lg font-semibold text-lg shadow-lg transform transition hover:scale-105">
+                            <a href="{{ $downloadUrl }}"
+                               class="block w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-center py-4 px-6 rounded-lg font-semibold text-lg shadow-lg transform transition hover:scale-105">
                                 <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>

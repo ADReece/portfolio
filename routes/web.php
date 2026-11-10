@@ -8,9 +8,9 @@ use App\Http\Controllers\ProdigiProductSettingsController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SetController;
 use App\Http\Controllers\TemplateController;
-use App\Http\Livewire\ManageSets;
-use App\Http\Livewire\PhotoUpload;
-use App\Http\Livewire\TemplateBatch;
+use App\Livewire\ManageSets;
+use App\Livewire\PhotoUpload;
+use App\Livewire\TemplateBatch;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrdersController;
@@ -30,6 +30,9 @@ use Laravel\Cashier\Http\Controllers\PaymentController as CashierPaymentControll
 |
 */
 
+// Cheap health check for the container: it touches no database.
+Route::get('/up', fn () => response('ok', 200, ['Content-Type' => 'text/plain']))->name('health');
+
 // Public homepage
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -42,9 +45,7 @@ Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->nam
 // Pricing
 Route::get('/pricing', [App\Http\Controllers\BillingController::class, 'pricing'])->name('pricing');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', App\Http\Controllers\DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
 
 //Backend Routes
@@ -89,9 +90,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/sets/{set}/templates', [SetController::class, 'syncTemplates'])->name('sets.templates.sync');
 
     Route::post('/collections/{collection}/email-client', [CollectionController::class, 'emailClient'])->name('collections.email-client');
-    Route::post('/collections/{collection}/request-archive', [CollectionController::class, 'requestArchive'])->name('collections.request-archive');
-    Route::get('/collections/{collection}/archive/{filename}', [CollectionController::class, 'archiveDownloadPage'])->name('collections.archive-download-page');
-    Route::get('/collections/{collection}/download-archive/{filename}', [CollectionController::class, 'downloadArchive'])->name('collections.download-archive');
 
 
     // Photo management
@@ -120,7 +118,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/font-library/{font}', [FontController::class, 'destroy'])->name('fonts.destroy');
 
     // Template batch — Livewire full-page component
-    Route::get('/collections/{collection}/batch', TemplateBatch::class)->name('collections.batch');
+    Route::get('/collections/{collectionId}/batch', TemplateBatch::class)->name('collections.batch');
 });
 
 Route::middleware(['auth','subscription:upload_logo'])->group(function(){
@@ -135,15 +133,30 @@ Route::prefix('/@{username}')->group(function(){
 
     Route::get('/collections', [ProfileController::class, 'collections'])->name('profile.collections');
     Route::get('/collections/{collection_id}', [ProfileController::class, 'collection'])->name('profile.collection');
+    Route::post('/collections/{collection_id}/unlock', [ProfileController::class, 'unlockCollectionWithPassword'])
+        ->middleware('throttle:10,1')
+        ->name('profile.collection.unlock');
     Route::get('/print-products', [ProdigiProductSettingsController::class, 'listForPortfolio'])->name('profile.print-products');
 });
+
+// Client "download all" archives. Clients don't have accounts: requesting an
+// archive needs an unlocked gallery, and the emailed links are signed.
+Route::post('/collections/{collection}/request-archive', [CollectionController::class, 'requestArchive'])
+    ->middleware('throttle:5,1')
+    ->name('collections.request-archive');
+Route::get('/collections/{collection}/archive/{filename}', [CollectionController::class, 'archiveDownloadPage'])
+    ->middleware('signed')
+    ->name('collections.archive-download-page');
+Route::get('/collections/{collection}/download-archive/{filename}', [CollectionController::class, 'downloadArchive'])
+    ->middleware('signed')
+    ->name('collections.download-archive');
 
 // Public photo download and purchase requests
 Route::get('/photos/{photo}/download-options', [PhotoController::class, 'downloadOptions'])->name('photos.download-options');
 Route::post('/photos/{photo}/download-with-template/{template}', [PhotoController::class, 'downloadWithTemplate'])->name('photos.download-with-template');
 Route::get('/photos/{photo}/download-result/{generatedPrint}', [PhotoController::class, 'downloadResult'])->name('photos.download-result');
-Route::post('/photos/{photo}/request-download', [PhotoController::class, 'requestDownload'])->name('photos.request-download');
-Route::post('/photos/{photo}/request-purchase', [PhotoController::class, 'requestPurchase'])->name('photos.request-purchase');
+Route::post('/photos/{photo}/request-download', [PhotoController::class, 'requestDownload'])->middleware('throttle:5,1')->name('photos.request-download');
+Route::post('/photos/{photo}/request-purchase', [PhotoController::class, 'requestPurchase'])->middleware('throttle:5,1')->name('photos.request-purchase');
 Route::get('/photos/{photo}/buy-print', [PrintPurchaseController::class, 'show'])->name('print-purchase.show');
 Route::post('/photos/{photo}/buy-print', [PrintPurchaseController::class, 'store'])->name('print-purchase.store');
 Route::get('/orders/{order}/purchase-success', [PrintPurchaseController::class, 'success'])->name('print-purchase.success');
@@ -183,5 +196,10 @@ Route::middleware(['auth','admin'])->prefix('admin')->name('admin.')->group(func
 Route::post('/admin/stop-impersonating', [AdminUsersController::class, 'stopImpersonating'])
     ->middleware('auth')
     ->name('admin.users.stop-impersonating');
+
+// Component reference page for developers (local only).
+if (app()->environment('local')) {
+    Route::view('/dev/ui', 'dev.ui')->middleware('auth')->name('dev.ui');
+}
 
 require __DIR__.'/auth.php';

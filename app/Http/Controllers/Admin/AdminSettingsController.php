@@ -30,6 +30,8 @@ class AdminSettingsController extends Controller
             );
         }
 
+        \App\Support\Currency::flush();
+
         return redirect()->back()->with('success', 'Settings updated successfully!');
     }
 
@@ -69,6 +71,8 @@ class AdminSettingsController extends Controller
             'sort_order' => 'required|integer|min:0',
         ]);
 
+        $validated['features'] = $validated['features'] ?? [];
+
         SubscriptionPlan::create($validated);
 
         return redirect()->route('admin.plans.index')->with('success', 'Subscription plan created successfully!');
@@ -103,6 +107,10 @@ class AdminSettingsController extends Controller
             'recommended' => 'boolean',
             'sort_order' => 'required|integer|min:0',
         ]);
+
+        // A form with every feature removed sends no features[] at all, so an
+        // absent list means "none", not "leave unchanged".
+        $validated['features'] = $validated['features'] ?? [];
 
         $plan->update($validated);
 

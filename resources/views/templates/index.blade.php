@@ -1,107 +1,74 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Print Templates
-            </h2>
+<x-app-layout title="Print templates">
+    <div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <x-ui.page-header title="Print templates"
+                          description="Design an overlay — names, dates, a border — that's added to photos when you create prints.">
             @if(auth()->user()->hasFeature('custom_templates'))
-                <a href="{{ route('templates.create') }}"
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    New Template
-                </a>
+                <x-slot:actions>
+                    <x-ui.button variant="secondary" icon="language" :href="route('fonts.index')">Fonts</x-ui.button>
+                    <x-ui.button icon="plus" :href="route('templates.create')">New template</x-ui.button>
+                </x-slot:actions>
             @endif
-        </div>
-    </x-slot>
+        </x-ui.page-header>
 
-    <div class="py-12">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-
-            @if(session('success'))
-                <div class="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if(!auth()->user()->hasFeature('custom_templates'))
-                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-4 py-4 rounded-lg mb-6">
-                    <p class="font-medium">Template batching is a premium feature.</p>
-                    <p class="text-sm mt-1">Upgrade your plan to create and apply print templates to your photos.</p>
-                    <a href="{{ route('pricing') }}" class="mt-3 inline-block px-4 py-2 bg-amber-600 text-white rounded-md text-sm hover:bg-amber-700">
-                        View Plans
-                    </a>
-                </div>
-            @else
-                @if($templates->isEmpty())
-                    <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-12 text-center">
-                        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-                        </svg>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No templates yet</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                            Create a template by uploading a PNG overlay and defining text fields (e.g. player name, jersey number). Then apply it to any collection in one click.
-                        </p>
-                        <a href="{{ route('templates.create') }}"
-                           class="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                            Create your first template
-                        </a>
-                    </div>
-                @else
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        @foreach($templates as $template)
-                            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                                {{-- Overlay preview --}}
-                                @if($template->overlay_path)
-                                    <div class="h-36 bg-gray-900 flex items-center justify-center overflow-hidden">
-                                        <img src="{{ $template->overlayUrl() }}"
-                                             alt="{{ $template->name }}"
-                                             class="h-full w-full object-contain">
-                                    </div>
-                                @else
-                                    <div class="h-36 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                                        <span class="text-white text-2xl font-bold opacity-50">Text Only</span>
-                                    </div>
-                                @endif
-
-                                <div class="p-5">
-                                    <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">{{ $template->name }}</h3>
-                                    @if($template->description)
-                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ $template->description }}</p>
-                                    @endif
-
-                                    @if(!empty($template->fields))
-                                        <div class="flex flex-wrap gap-1 mb-4">
-                                            @foreach($template->fields as $field)
-                                                <span class="inline-block px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs rounded-full">
-                                                    {{ $field['label'] }}
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                    @endif
-
-                                    <div class="flex gap-2">
-                                        <a href="{{ route('templates.edit', $template) }}"
-                                           class="flex-1 text-center px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-                                            Edit
-                                        </a>
-                                        <form method="POST" action="{{ route('templates.destroy', $template) }}"
-                                              onsubmit="return confirm('Delete this template? Existing generated prints will not be affected.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    class="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/70">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
+        @if(!auth()->user()->hasFeature('custom_templates'))
+            <x-ui.alert tone="amber" title="Print templates aren't included in your plan">
+                Upgrade to create templates and add them to photos across a whole collection.
+                <x-slot:actions><x-ui.button size="sm" :href="route('pricing')">Compare plans</x-ui.button></x-slot:actions>
+            </x-ui.alert>
+        @elseif($templates->isEmpty())
+            <x-ui.card :padding="false">
+                <x-ui.empty-state icon="swatch" title="No templates yet"
+                                  description="Upload a PNG overlay and add text fields such as a name or date. Then apply the template to a whole collection in one go.">
+                    <x-ui.button icon="plus" :href="route('templates.create')">Create your first template</x-ui.button>
+                </x-ui.empty-state>
+            </x-ui.card>
+        @else
+            <ul role="list" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach($templates as $template)
+                    <li class="flex flex-col overflow-hidden rounded-card bg-white shadow-xs ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
+                        @if($template->overlay_path)
+                            <div class="flex h-36 items-center justify-center overflow-hidden bg-gray-900">
+                                <img src="{{ $template->overlayUrl() }}" alt="" loading="lazy" class="h-full w-full object-contain">
                             </div>
-                        @endforeach
-                    </div>
-                @endif
-            @endif
-        </div>
+                        @else
+                            <div class="flex h-36 flex-col items-center justify-center gap-1 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                                <x-ui.icon name="document-text" class="size-8" />
+                                <span class="text-sm font-medium">Text only</span>
+                            </div>
+                        @endif
+
+                        <div class="flex flex-1 flex-col p-5">
+                            <h2 class="font-semibold text-gray-900 dark:text-gray-100">{{ $template->name }}</h2>
+                            @if($template->description)
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ $template->description }}</p>
+                            @endif
+
+                            @if(!empty($template->fields))
+                                <div class="mt-3 flex flex-wrap gap-1">
+                                    <span class="sr-only">Text fields:</span>
+                                    @foreach($template->fields as $field)
+                                        <x-ui.badge tone="brand">{{ $field['label'] }}</x-ui.badge>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <div class="mt-auto flex gap-2 pt-4">
+                                <x-ui.button variant="secondary" size="sm" icon="pencil-square" class="flex-1" :href="route('templates.edit', $template)">
+                                    Edit<span class="sr-only"> {{ $template->name }}</span>
+                                </x-ui.button>
+                                <form method="POST" action="{{ route('templates.destroy', $template) }}"
+                                      data-confirm="Prints you've already generated won't be affected." data-confirm-title="Delete this template?" data-confirm-button="Delete template" data-confirm-danger>
+                                    @csrf
+                                    @method('DELETE')
+                                    <x-ui.button type="submit" variant="danger-outline" size="sm" icon="trash">
+                                        Delete<span class="sr-only"> {{ $template->name }}</span>
+                                    </x-ui.button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
     </div>
 </x-app-layout>

@@ -22,7 +22,9 @@ class CheckSubscription
             return redirect()->route('login');
         }
 
-        if ($user->isFeatureOverrideActive()) {
+        // Admins and users with a feature override can use everything,
+        // matching User::hasFeature().
+        if ($user->is_admin || $user->isFeatureOverrideActive()) {
             return $next($request);
         }
 

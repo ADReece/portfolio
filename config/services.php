@@ -31,9 +31,19 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Support chat on Portfol.io's own pages (not photographers' portfolios).
+    'chatmesh' => [
+        'key' => env('CHATMESH_KEY'),
+        'url' => env('CHATMESH_URL', 'https://chatmesh.hydrodactyl.duckdns.org'),
+    ],
+
     'stripe' => [
         'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
     ],
+
+    // Percentage the platform keeps from each client print sale. Shown to
+    // photographers on the Connect Stripe page, so copy always matches.
+    'platform_fee_percent' => (float) env('PLATFORM_FEE_PERCENT', 10),
 
     'prodigi' => [
         'api_key' => env('PRODIGI_API_KEY'),

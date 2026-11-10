@@ -40,7 +40,7 @@ class ProfileController extends Controller
                 return Redirect::route('profile.edit')->withErrors(['logo' => 'Logo uploads are available to subscribers only.']);
             }
             $request->validate([
-                'logo' => 'image|mimes:png,jpg,jpeg,webp,svg|max:2048'
+                'logo' => 'image:allow_svg|mimes:png,jpg,jpeg,webp,svg|max:2048'
             ]);
             // Delete old logo if present
             if ($user->logo_path) {
@@ -72,8 +72,13 @@ class ProfileController extends Controller
      */
     public function customize(Request $request): View
     {
+        $user = $request->user();
+
         return view('profile.customize', [
-            'user' => $request->user(),
+            'user' => $user,
+            // A few real photos and collections, so the preview looks like their portfolio.
+            'previewPhotos' => $user->photos()->latest()->take(8)->get(),
+            'previewCollections' => $user->collections()->where('status', 'Published')->with('coverPhoto')->take(3)->get(),
         ]);
     }
 
@@ -92,21 +97,23 @@ class ProfileController extends Controller
             'portfolio_display_mode' => 'nullable|in:grid,collections',
             'masonry_columns' => 'nullable|integer|min:2|max:6',
             'photos_per_page' => 'nullable|integer|min:10|max:100',
+            'copy_protection' => 'nullable|boolean',
         ]);
 
         $request->user()->update([
-            'portfolio_font' => $validated['portfolio_font'] ?? $request->user()->portfolio_font,
+            'copy_protection' => $request->boolean('copy_protection'),
+            'portfolio_font' => $validated['portfolio_font'] ?? $request->user()->portfolio_font ?? 'system',
             'portfolio_accent_color' => $validated['portfolio_accent_color'] ?? $request->user()->portfolio_accent_color,
-            'portfolio_theme' => $validated['portfolio_theme'] ?? $request->user()->portfolio_theme,
+            'portfolio_theme' => $validated['portfolio_theme'] ?? $request->user()->portfolio_theme ?? 'auto',
             'portfolio_background_color' => $validated['portfolio_background_color'] ?? null,
             'portfolio_text_color' => $validated['portfolio_text_color'] ?? null,
             'portfolio_heading_color' => $validated['portfolio_heading_color'] ?? null,
-            'portfolio_display_mode' => $validated['portfolio_display_mode'] ?? $request->user()->portfolio_display_mode,
-            'masonry_columns' => $validated['masonry_columns'] ?? $request->user()->masonry_columns,
-            'photos_per_page' => $validated['photos_per_page'] ?? $request->user()->photos_per_page,
+            'portfolio_display_mode' => $validated['portfolio_display_mode'] ?? $request->user()->portfolio_display_mode ?? 'grid',
+            'masonry_columns' => $validated['masonry_columns'] ?? $request->user()->masonry_columns ?? 4,
+            'photos_per_page' => $validated['photos_per_page'] ?? $request->user()->photos_per_page ?? 20,
         ]);
 
-        return Redirect::route('profile.customize')->with('status', 'portfolio-customized');
+        return Redirect::route('profile.customize')->with('success', 'Your portfolio design is saved.');
     }
 
     /**
@@ -148,7 +155,7 @@ class ProfileController extends Controller
             'watermark_text' => $validated['watermark_text']
         ]);
 
-        return Redirect::route('profile.edit')->with('status', 'watermark-updated');
+        return Redirect::route('profile.customize')->with('success', 'Watermark saved.');
     }
 
     /**
@@ -182,19 +189,7 @@ class ProfileController extends Controller
         if(!is_null($user)){
             // Determine which view to show based on user's preference
             if ($user->portfolio_display_mode === 'collections') {
-                // Load published, non-hidden, non-private collections with cover photos
-                $collections = $user->collections()
-                    ->where('status', 'Published')
-                    ->where('hide_from_portfolio', false)
-                    ->where('private', false) // Exclude private collections from public portfolio
-                    ->with('coverPhoto')
-                    ->orderBy('event_date', 'desc')
-                    ->get();
-
-                return view('profile.view-collections', [
-                    'user' => $user,
-                    'collections' => $collections
-                ]);
+                return $this->collectionsView($user);
             }
 
             // Default to grid view
@@ -205,11 +200,30 @@ class ProfileController extends Controller
 
     }
 
+    /**
+     * Public list of a photographer's collections, whatever their default
+     * portfolio display mode is.
+     */
     public function collections($username) : View
     {
-        $collections = User::where('username', $username)->firstOrFail()?->collections;
+        return $this->collectionsView(User::where('username', $username)->firstOrFail());
+    }
 
-        return view('collections.frontend.index', ['collections' => $collections]);
+    private function collectionsView(User $user): View
+    {
+        // Published, non-hidden, non-private collections with cover photos
+        $collections = $user->collections()
+            ->where('status', 'Published')
+            ->where('hide_from_portfolio', false)
+            ->where('private', false)
+            ->with('coverPhoto')
+            ->orderBy('event_date', 'desc')
+            ->get();
+
+        return view('profile.view-collections', [
+            'user' => $user,
+            'collections' => $collections,
+        ]);
     }
 
     public function collection(Request $request, $username, $collection_id) : View
@@ -225,14 +239,14 @@ class ProfileController extends Controller
             abort(404);
         }
 
-        // Handle password protection for private collections
-        if($collection->private){
-            $password = $request->get('password');
-            if(is_null($password)){
+        // Handle password protection for private collections. Access is granted
+        // either by a signed share link (emailed to the client) or by entering the
+        // password once, after which the collection stays unlocked for the session.
+        if ($collection->private && ! \App\Support\GalleryAccess::collectionIsUnlocked($request, $collection)) {
+            if ($request->hasValidSignature()) {
+                \App\Support\GalleryAccess::unlockCollection($request, $collection);
+            } else {
                 return view('collections.frontend.password', ['collection' => $collection, 'user' => $user]);
-            }
-            if(!password_verify($password, $collection->password)){
-                return view('collections.frontend.password', ['collection' => $collection, 'user' => $user])->withErrors(['password' => 'Invalid Password']);
             }
         }
 
@@ -248,6 +262,25 @@ class ProfileController extends Controller
         }]);
 
         return view('collections.frontend.show', ['collection' => $collection, 'user' => $user]);
+    }
+
+    /**
+     * Verify a private collection password and unlock it for this session.
+     */
+    public function unlockCollectionWithPassword(Request $request, $username, $collection_id): RedirectResponse
+    {
+        $user = User::where('username', $username)->firstOrFail();
+        $collection = $user->collections()->where('id', $collection_id)->firstOrFail();
+
+        $request->validate(['password' => 'required|string']);
+
+        if (! $collection->private || ! password_verify($request->input('password'), (string) $collection->password)) {
+            return back()->withErrors(['password' => __("That password isn't right. Check it with your photographer and try again.")]);
+        }
+
+        \App\Support\GalleryAccess::unlockCollection($request, $collection);
+
+        return redirect()->route('profile.collection', ['username' => $username, 'collection_id' => $collection->id]);
     }
 
     /**

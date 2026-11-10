@@ -2,7 +2,7 @@
     <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Reorder Collections</h2>
     <p class="text-sm text-gray-600 dark:text-gray-400">Drag and drop to reorder how collections appear publicly.</p>
 
-    <ul id="collection-sortable" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800 rounded-md shadow">
+    <ul id="collection-sortable" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800 rounded-md shadow-sm">
         @foreach($collections as $c)
             <li class="flex items-center justify-between px-4 py-3 cursor-move" data-id="{{ $c['id'] }}">
                 <div class="flex items-center gap-3">
@@ -41,7 +41,7 @@
                 saveOrder(){
                     if(!this.sortable) return;
                     const ids = Array.from(document.querySelectorAll('#collection-sortable li')).map(li=>li.dataset.id);
-                    Livewire.emit('reorderCollections', ids);
+                    this.$wire.saveOrder(ids);
                 }
             }))
         });
