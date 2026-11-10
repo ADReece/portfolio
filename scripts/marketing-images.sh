@@ -11,6 +11,9 @@
 #   4. writes resources/marketing/images.json (sizes for width/height/srcset)
 #      and CREDITS.md (source and licence for every image).
 #
+# Uses the official Unsplash API: set UNSPLASH_ACCESS_KEY (a free developer
+# app's Access Key; never commit it). As the API guidelines ask, each
+# download is reported to Unsplash via the photo's download_location.
 # Needs curl, jq, ImageMagick (convert/identify) and ffmpeg with libaom-av1.
 # Usage: scripts/marketing-images.sh            (only new or changed sources)
 #        scripts/marketing-images.sh --force    (re-encode everything)
@@ -24,6 +27,9 @@ MANIFEST=resources/marketing/images.json
 CREDITS=public/images/marketing/CREDITS.md
 FORCE=${1:-}
 
+: "${UNSPLASH_ACCESS_KEY:?Set UNSPLASH_ACCESS_KEY to an Unsplash developer Access Key}"
+api() { curl -fsS -H "Authorization: Client-ID $UNSPLASH_ACCESS_KEY" -H 'Accept-Version: v1' "https://api.unsplash.com$1"; }
+
 mkdir -p "$OUT" "$CACHE"
 manifest='{}'
 [ -f "$MANIFEST" ] && [ "$FORCE" != "--force" ] && manifest=$(cat "$MANIFEST")
@@ -36,12 +42,15 @@ for key in $(jq -r 'keys[]' "$SOURCES"); do
     fi
     echo "+ $key ($id)"
 
-    meta=$(curl -fsS "https://unsplash.com/napi/photos/$id")
+    meta=$(api "/photos/$id")
     if [ "$(jq -r '(.premium // false) or (.plus // false)' <<<"$meta")" = "true" ]; then
         echo "  $id is an Unsplash+ photo, which isn't free to use. Choose another." >&2; exit 1
     fi
     orig="$CACHE/$id.jpg"
-    [ -f "$orig" ] || curl -fsS -o "$orig" "$(jq -r '.urls.raw' <<<"$meta")&w=2400&q=90&fm=jpg"
+    if [ ! -f "$orig" ]; then
+        api "$(jq -r '.links.download_location' <<<"$meta" | sed 's#https://api.unsplash.com##')" >/dev/null
+        curl -fsS -o "$orig" "$(jq -r '.urls.raw' <<<"$meta")&w=2400&q=90&fm=jpg"
+    fi
 
     read -r W H < <(identify -format '%w %h\n' "$orig" | head -1)
     # Height scaled to 2400 wide; the manifest keeps the original aspect ratio.
