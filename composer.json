@@ -20,7 +20,7 @@
         "stripe/stripe-php": "^16.2"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.14",
+        "barryvdh/laravel-debugbar": "^4.4",
         "fakerphp/faker": "^1.9.1",
         "laravel/breeze": "^2.3",
         "laravel/pint": "^1.0",
