@@ -10,6 +10,8 @@
 <title>{{ $metaTitle }}</title>
 @if($metaDescription)<meta name="description" content="{{ $metaDescription }}">@endif
 @if(!empty($noindex))<meta name="robots" content="noindex, nofollow">@endif
+{{-- On a photographer's own domain this is that domain (see ResolveCustomDomain). --}}
+<link rel="canonical" href="{{ url()->current() }}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{ config('app.name') }}">
 <meta property="og:title" content="{{ $metaTitle }}">

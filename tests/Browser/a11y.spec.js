@@ -91,6 +91,7 @@ const appPages = [
     ['plan & billing', '/pricing'],
     ['payouts', '/connect/stripe'],
     ['print templates', '/templates'],
+    ['your domain', '/settings/domain'],
 ];
 
 for (const [name, path] of appPages) {

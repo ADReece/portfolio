@@ -16,6 +16,7 @@
             $canCustomize
                 ? ['Customize', route('profile.customize'), 'paint-brush', 'profile.customize']
                 : ['Customize', route('pricing'), 'paint-brush', null, ['badge' => 'Upgrade']],
+            ['Your domain', route('custom-domains.index'), 'link', 'custom-domains.*'],
         ])),
         'Selling' => [
             ['Print products', route('profile.prodigi-products.edit'), 'shopping-bag', 'profile.prodigi-products.*'],

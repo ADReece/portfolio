@@ -17,6 +17,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->bind(\App\CustomDomains\DnsResolver::class, \App\CustomDomains\SystemDnsResolver::class);
+        $this->app->singleton(\App\CustomDomains\DomainRegistry::class);
+
         // routes/web.php defines Cashier's payment and webhook routes itself
         // (the webhook uses App\Http\Controllers\WebhookController). Cashier's
         // own copies duplicated the route names, which broke route:cache.
