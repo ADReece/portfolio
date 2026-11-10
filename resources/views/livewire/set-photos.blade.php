@@ -60,7 +60,10 @@
                                     <div class="flex aspect-square w-full flex-col items-center justify-center gap-2 bg-red-50 p-3 text-center text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200" role="alert">
                                         <x-ui.icon name="exclamation-triangle" class="size-6" />
                                         <span>{{ $photo->processing_error ?: \App\Models\Photo::FAILED_MESSAGE }}</span>
-                                        <button type="button" wire:click="deletePhoto('{{ $photo->id }}')" class="font-semibold underline underline-offset-4">Remove</button>
+                                        <span class="flex gap-3">
+                                            <button type="button" wire:click="retryPhoto('{{ $photo->id }}')" class="font-semibold underline underline-offset-4">Retry</button>
+                                            <button type="button" wire:click="deletePhoto('{{ $photo->id }}')" class="font-semibold underline underline-offset-4">Remove</button>
+                                        </span>
                                     </div>
                                 @else
                                     <img src="{{ $photo->getAwsThumbnail() }}" alt="{{ $photo->caption ?: 'Photo '.$loop->iteration }}" loading="lazy"

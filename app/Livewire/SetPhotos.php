@@ -130,6 +130,27 @@ class SetPhotos extends Component
         $this->loadSet();
     }
 
+    /** Tries a failed photo again (its original is still stored). */
+    public function retryPhoto($photoId): void
+    {
+        $photo = Photo::findOrFail($photoId);
+        if ($photo->user_id !== auth()->id() || $photo->set_id !== $this->setId) {
+            abort(403);
+        }
+        if ($photo->status !== Photo::FAILED) {
+            return;
+        }
+        if (! Storage::disk('s3')->exists($photo->url)) {
+            session()->flash('message', 'The original file is no longer available. Remove this photo and upload it again.');
+
+            return;
+        }
+
+        $photo->update(['status' => Photo::PROCESSING, 'processing_error' => null]);
+        \App\Jobs\ProcessImageUpload::dispatch($photo->id);
+        $this->loadSet();
+    }
+
     /** Called by wire:poll while photos are being prepared. */
     public function refreshPhotos(): void
     {
