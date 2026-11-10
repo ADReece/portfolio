@@ -81,6 +81,15 @@ test('client: private gallery password page', async ({ page }) => {
     await expectNoViolations(page, 'gallery password page');
 });
 
+test('app: admin edit print product', async ({ page }) => {
+    await logIn(page);
+    await page.goto('/admin/print-catalogue');
+    const href = await page.getByRole('link', { name: 'Edit Classic framed print 16×20' }).getAttribute('href');
+    await page.goto(href);
+    await expect(page.getByRole('heading', { name: 'Classic framed print 16×20' })).toBeVisible();
+    await expectNoViolations(page, 'edit print product');
+});
+
 const appPages = [
     ['dashboard', '/dashboard'],
     ['collections', '/collections'],
@@ -91,6 +100,8 @@ const appPages = [
     ['plan & billing', '/pricing'],
     ['payouts', '/connect/stripe'],
     ['print templates', '/templates'],
+    ['admin: print catalogue', '/admin/print-catalogue'],
+    ['admin: add print product', '/admin/print-catalogue/create'],
     ['your domain', '/settings/domain'],
 ];
 

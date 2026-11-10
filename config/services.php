@@ -49,7 +49,8 @@ return [
         'api_key' => env('PRODIGI_API_KEY'),
         'merchant_id' => env('PRODIGI_MERCHANT_ID'),
         'environment' => env('PRODIGI_ENVIRONMENT', 'sandbox'),
-        'base_url' => env('PRODIGI_BASE_URL', 'https://sandbox.prodigi.com/v4.0'),
+        // Live: https://api.prodigi.com/v4.0 (every order costs real money).
+        'base_url' => env('PRODIGI_BASE_URL', 'https://api.sandbox.prodigi.com/v4.0'),
     ],
 
 ];

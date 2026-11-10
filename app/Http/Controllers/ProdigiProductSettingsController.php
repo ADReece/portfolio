@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ProdigiProduct;
 use App\Models\User;
+use App\Prints\PrintPricing;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -16,11 +18,8 @@ class ProdigiProductSettingsController extends Controller
         $user = $request->user();
         $this->ensureDefaultPreferences($user);
 
-        $products = ProdigiProduct::query()
-            ->where('is_active', true)
-            ->orderBy('category')
-            ->orderBy('name')
-            ->get();
+        $products = ProdigiProduct::query()->active()->catalogueOrder()->get();
+        $pricing = app(PrintPricing::class);
 
         $pivotRows = $user->prodigiProducts()->get()->keyBy('id');
         $enabledProductIds = $pivotRows
@@ -28,15 +27,22 @@ class ProdigiProductSettingsController extends Controller
             ->keys()
             ->all();
 
+        // The photographer's own price, or empty to use the catalogue default.
         $pricesByProductId = [];
         foreach ($pivotRows as $productId => $product) {
-            $pricesByProductId[(int) $productId] = (string) ($product->pivot->retail_price ?? '29.99');
+            $pricesByProductId[(int) $productId] = $product->pivot->retail_price !== null ? (string) $product->pivot->retail_price : '';
         }
+
+        // Products whose cost has risen above the photographer's price.
+        $belowCost = $products->filter(fn ($p) => ($pricesByProductId[$p->id] ?? '') !== ''
+            && ! $pricing->isSellableAt($p, (float) $pricesByProductId[$p->id]))->pluck('id')->all();
 
         return view('profile.prodigi-products', [
             'products' => $products,
             'enabledProductIds' => $enabledProductIds,
             'pricesByProductId' => $pricesByProductId,
+            'pricing' => $pricing,
+            'belowCost' => $belowCost,
         ]);
     }
 
@@ -52,15 +58,29 @@ class ProdigiProductSettingsController extends Controller
         $user = $request->user();
         $this->ensureDefaultPreferences($user);
 
-        $allProductIds = ProdigiProduct::query()->where('is_active', true)->pluck('id')->all();
+        $products = ProdigiProduct::query()->active()->get()->keyBy('id');
         $enabledProductIds = collect($validated['enabled_product_ids'] ?? [])->map(fn ($id) => (int) $id)->all();
+        $pricing = app(PrintPricing::class);
 
+        // Never below the minimum: the cost, card fees and platform fee.
+        $errors = [];
+        foreach ($products as $productId => $product) {
+            $retailPrice = data_get($validated, 'retail_prices.' . $productId);
+            if ($retailPrice !== null && ! $pricing->isSellableAt($product, (float) $retailPrice)) {
+                $errors['retail_prices.'.$productId] = "{$product->name} needs a price of at least £".number_format($pricing->minimumFor($product), 2).' to cover printing, delivery and fees.';
+            }
+        }
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        // Only active products are touched; settings for inactive ones are kept.
         $syncPayload = [];
-        foreach ($allProductIds as $productId) {
+        foreach ($products as $productId => $product) {
             $retailPrice = data_get($validated, 'retail_prices.' . $productId);
             $syncPayload[$productId] = [
                 'is_enabled' => in_array((int) $productId, $enabledProductIds, true),
-                'retail_price' => $retailPrice !== null ? (float) $retailPrice : 29.99,
+                'retail_price' => $retailPrice !== null ? round((float) $retailPrice, 2) : null,
             ];
         }
 
@@ -73,22 +93,24 @@ class ProdigiProductSettingsController extends Controller
     {
         $user = User::query()->where('username', $username)->firstOrFail();
 
+        $pricing = app(PrintPricing::class);
         $products = $user->enabledProdigiProducts()
-            ->select(['prodigi_products.id', 'prodigi_products.sku', 'prodigi_products.name', 'prodigi_products.category', 'prodigi_products.description'])
-            ->orderBy('prodigi_products.category')
-            ->orderBy('prodigi_products.name')
-            ->get();
-
-        $products = $products->map(function ($product) {
-            return [
+            ->select('prodigi_products.*')
+            ->catalogueOrder()
+            ->get()
+            ->map(fn (ProdigiProduct $product) => [
                 'id' => $product->id,
                 'sku' => $product->sku,
                 'name' => $product->name,
                 'category' => $product->category,
                 'description' => $product->description,
-                'retail_price' => (float) ($product->pivot->retail_price ?? 29.99),
-            ];
-        });
+                'retail_price' => $pricing->priceFor($product, $product->pivot->retail_price),
+                'sellable' => $pricing->isSellableAt($product, $pricing->priceFor($product, $product->pivot->retail_price)),
+            ])
+            // Never offer a print whose price no longer covers its cost.
+            ->filter(fn ($p) => $p['sellable'])
+            ->map(fn ($p) => \Illuminate\Support\Arr::except($p, 'sellable'))
+            ->values();
 
         return response()->json([
             'products' => $products,
@@ -97,21 +119,21 @@ class ProdigiProductSettingsController extends Controller
 
     private function ensureDefaultPreferences(User $user): void
     {
-        $catalogIds = ProdigiProduct::query()->where('is_active', true)->pluck('id')->all();
+        $catalogIds = ProdigiProduct::query()->active()->pluck('id')->all();
         if (empty($catalogIds)) {
             return;
         }
 
         // Only add products the user doesn't have a preference for yet.
         // (syncWithoutDetaching would also overwrite existing rows, which
-        // reset every price to 29.99 and re-enabled every product each
+        // reset every price and re-enabled every product each
         // time the page was opened.)
         $existing = $user->prodigiProducts()->pluck('prodigi_products.id')->map(fn ($id) => (int) $id)->all();
         $missing = array_diff(array_map('intval', $catalogIds), $existing);
 
         if ($missing) {
             $user->prodigiProducts()->attach(
-                collect($missing)->mapWithKeys(fn ($id) => [$id => ['is_enabled' => true, 'retail_price' => 29.99]])->all()
+                collect($missing)->mapWithKeys(fn ($id) => [$id => ['is_enabled' => true, 'retail_price' => null]])->all()
             );
         }
     }

@@ -30,6 +30,12 @@
             @endif
         @endunless
 
+        @if($belowCost)
+            <x-ui.alert tone="red" title="Some prices no longer cover the cost">
+                Prodigi's price has gone up for {{ count($belowCost) }} {{ \Illuminate\Support\Str::plural('product', count($belowCost)) }} below. Clients can't order {{ count($belowCost) === 1 ? 'it' : 'them' }} until you raise the price to at least the minimum shown.
+            </x-ui.alert>
+        @endif
+
         @if($products->isEmpty())
             <x-ui.card :padding="false">
                 <x-ui.empty-state icon="shopping-bag" title="No print products available yet"
@@ -44,28 +50,43 @@
                     <x-ui.card :title="$category" :padding="false">
                         <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
                             @foreach($items as $product)
-                                @php($price = old('retail_prices.'.$product->id, $pricesByProductId[$product->id] ?? '29.99'))
-                                <li class="flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6"
-                                    x-data="{ on: @js(in_array($product->id, $enabledProductIds, true)), price: @js((float) $price) }">
+                                @php
+                                    $price = old('retail_prices.'.$product->id, $pricesByProductId[$product->id] ?? '');
+                                    $default = $pricing->defaultFor($product);
+                                    $minimum = $pricing->minimumFor($product);
+                                    $isBelowCost = in_array($product->id, $belowCost, true);
+                                @endphp
+                                <li @class(['flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6', 'bg-red-50 dark:bg-red-950/30' => $isBelowCost])
+                                    x-data="{ on: @js(in_array($product->id, $enabledProductIds, true)), price: @js($price === '' ? null : (float) $price) }">
+                                    @if($url = $product->imageUrl())
+                                        <img src="{{ $url }}" alt="" class="size-12 shrink-0 rounded-md object-cover" loading="lazy">
+                                    @endif
                                     <div class="min-w-0 flex-1">
                                         <x-ui.checkbox :id="'product-'.$product->id" name="enabled_product_ids[]" :value="$product->id" :unchecked-value="null"
                                                        :checked="in_array($product->id, $enabledProductIds, true)" x-model="on"
-                                                       :label="$product->name" :description="$product->description ? \Illuminate\Support\Str::limit($product->description, 110) : null" />
+                                                       :label="$product->name.($product->size_label ? ' ('.$product->size_label.')' : '')" :description="$product->description ? \Illuminate\Support\Str::limit($product->description, 110) : null" />
+                                        @if($isBelowCost)
+                                            <p class="mt-1 ml-7 text-sm font-medium text-red-700 dark:text-red-400">Your price is below the new cost. Raise it to at least {{ $currencySymbol }}{{ number_format($minimum, 2) }}.</p>
+                                        @endif
                                     </div>
                                     <div class="flex items-center gap-4" :class="on ? '' : 'opacity-50'">
                                         <div>
                                             <label for="price-{{ $product->id }}" class="sr-only">Price for {{ $product->name }}</label>
                                             <div class="flex rounded-control shadow-xs">
                                                 <span class="inline-flex items-center rounded-l-control border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">{{ $currencySymbol }}</span>
-                                                <input id="price-{{ $product->id }}" type="number" step="0.01" min="0.50" max="9999.99" inputmode="decimal"
-                                                       name="retail_prices[{{ $product->id }}]" value="{{ $price }}" x-model.number="price"
+                                                <input id="price-{{ $product->id }}" type="number" step="0.01" min="{{ number_format($minimum ?? 0.5, 2, '.', '') }}" max="9999.99" inputmode="decimal"
+                                                       name="retail_prices[{{ $product->id }}]" value="{{ $price }}" x-model.number="price" placeholder="{{ number_format($default, 2, '.', '') }}"
+                                                       aria-describedby="price-help-{{ $product->id }}"
                                                        class="w-24 rounded-r-control border-gray-300 text-sm tabular-nums focus:border-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                             </div>
+                                            <p id="price-help-{{ $product->id }}" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                Empty uses {{ $currencySymbol }}{{ number_format($default, 2) }}@if($minimum !== null) · min {{ $currencySymbol }}{{ number_format($minimum, 2) }}@endif
+                                            </p>
                                             @error('retail_prices.'.$product->id)<p class="mt-1 text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
                                         </div>
                                         <p class="w-32 text-sm text-gray-600 dark:text-gray-400">
                                             You receive<br>
-                                            <span class="font-semibold text-gray-900 tabular-nums dark:text-gray-100" x-text="@js($currencySymbol) + Math.max(0, (price || 0) * {{ 1 - $feeRate }}).toFixed(2)"></span>
+                                            <span class="font-semibold text-gray-900 tabular-nums dark:text-gray-100" x-text="@js($currencySymbol) + Math.max(0, (price || {{ $default }}) * {{ 1 - $feeRate }}).toFixed(2)"></span>
                                         </p>
                                     </div>
                                 </li>

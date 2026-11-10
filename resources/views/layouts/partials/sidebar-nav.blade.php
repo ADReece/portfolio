@@ -37,6 +37,7 @@
             ['Plans', route('admin.plans.index'), 'squares-2x2', 'admin.plans.*'],
             ['Subscriptions', route('admin.subscriptions.index'), 'arrow-path', 'admin.subscriptions.*'],
             ['Orders', route('admin.orders.index'), 'receipt-percent', 'admin.orders.*'],
+            ['Print catalogue', route('admin.print-catalogue.index'), 'swatch', 'admin.print-catalogue.*'],
             ['Settings', route('admin.settings.index'), 'adjustments-horizontal', 'admin.settings.*'],
         ];
     }

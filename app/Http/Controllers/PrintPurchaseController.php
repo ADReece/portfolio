@@ -20,11 +20,8 @@ class PrintPurchaseController extends Controller
 
         abort_if(!$this->isPhotoPurchasable($request, $photo), 404);
 
-        $enabledProducts = $photographer->enabledProdigiProducts()
-            ->select('prodigi_products.*')
-            ->orderBy('prodigi_products.category')
-            ->orderBy('prodigi_products.name')
-            ->get();
+        $enabledProducts = $this->sellableProducts($photographer);
+        abort_if($enabledProducts->isEmpty(), 404);
 
         // Remember where the client came from so we can send them back there.
         $previous = url()->previous();
@@ -62,23 +59,29 @@ class PrintPurchaseController extends Controller
             'shipping_country_code' => ['required', 'string', 'size:2', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::LIST))],
         ]);
 
-        $prodigiProduct = ProdigiProduct::query()->findOrFail((int) $validated['prodigi_product_id']);
-        $pivot = $photographer->prodigiProducts()
-            ->where('prodigi_products.id', $prodigiProduct->id)
-            ->first();
-
-        if (!$pivot || !$pivot->pivot->is_enabled) {
+        $prodigiProduct = $this->sellableProducts($photographer)->firstWhere('id', (int) $validated['prodigi_product_id']);
+        if (! $prodigiProduct) {
             return back()->withErrors(['prodigi_product_id' => 'This print product is not available for this photographer.'])->withInput();
         }
 
-        $unitPrice = (float) ($pivot->pivot->retail_price ?? 29.99);
+        // The options the client chose (frame colour, paper...), from those offered.
+        $attributes = [];
+        foreach ($prodigiProduct->offeredAttributes() as $name => $values) {
+            $chosen = count($values) === 1 ? $values[0] : (string) $request->input("options.$name", '');
+            if (! in_array($chosen, $values, true)) {
+                return back()->withErrors(["options.$name" => 'Choose a '.strtolower(ProdigiProduct::labelAttribute($name)).'.'])->withInput();
+            }
+            $attributes[$name] = $chosen;
+        }
+
+        $unitPrice = (float) $prodigiProduct->unit_price;
         $quantity = (int) $validated['quantity'];
         $total = $unitPrice * $quantity;
         $platformFeeRate = config('services.platform_fee_percent') / 100;
         $platformFee = round($total * $platformFeeRate, 2);
         $photographerAmount = round($total - $platformFee, 2);
 
-        $order = DB::transaction(function () use ($photographer, $photo, $prodigiProduct, $validated, $quantity, $unitPrice, $total, $platformFee, $photographerAmount) {
+        $order = DB::transaction(function () use ($photographer, $photo, $prodigiProduct, $validated, $quantity, $unitPrice, $total, $platformFee, $photographerAmount, $attributes) {
             $product = Product::query()->firstOrCreate(
                 [
                     'user_id' => $photographer->id,
@@ -120,6 +123,7 @@ class PrintPurchaseController extends Controller
                 'product_id' => $product->id,
                 'quantity' => $quantity,
                 'price' => $unitPrice,
+                'prodigi_attributes' => $attributes ?: null,
             ]);
 
             return $order;
@@ -194,6 +198,23 @@ class PrintPurchaseController extends Controller
      * can see it: either it's on the public portfolio, or it's in a private
      * gallery the client has unlocked (password or share link).
      */
+    /**
+     * The photographer's enabled, active products that are sellable at their
+     * price (never below the latest cost), each with its unit_price.
+     */
+    private function sellableProducts(\App\Models\User $photographer): \Illuminate\Support\Collection
+    {
+        $pricing = app(\App\Prints\PrintPricing::class);
+
+        return $photographer->enabledProdigiProducts()
+            ->select('prodigi_products.*')
+            ->catalogueOrder()
+            ->get()
+            ->each(fn (ProdigiProduct $p) => $p->unit_price = $pricing->priceFor($p, $p->pivot->retail_price))
+            ->filter(fn (ProdigiProduct $p) => $pricing->isSellableAt($p, $p->unit_price))
+            ->values();
+    }
+
     private function isPhotoPurchasable(Request $request, Photo $photo): bool
     {
         $photographer = $photo->user;
