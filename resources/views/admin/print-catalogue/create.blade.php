@@ -47,6 +47,7 @@
                             For example a price sheet from your Prodigi dashboard (Product information → pricing and shipping), or any spreadsheet saved as CSV.
                             It needs a column headed “SKU”; optional “Name” and “Category” columns are used too. Prices in the sheet are ignored: costs are quoted from Prodigi.
                         </p>
+                        <label for="file" class="block text-sm font-medium text-gray-800 dark:text-gray-200">CSV file</label>
                         <input id="file" name="file" type="file" accept=".csv,text/csv,text/plain" required aria-describedby="file-help" class="block text-sm">
                         @error('file')<p class="text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
                         <x-ui.button type="submit" icon="arrow-up-tray" variant="secondary" :disabled="! $prodigiReady">Import CSV</x-ui.button>
