@@ -36,7 +36,18 @@ class CrmReporter
 
     public function created(User $user): void
     {
-        $this->send($user, 'account.created', self::createdEventId($user));
+        $this->send($user, 'account.created', self::createdEventId($user), self::attributionFor($user));
+    }
+
+    /** The optional "attribution" object for account.created (first-touch UTMs and click ids). */
+    public static function attributionFor(User $user): ?array
+    {
+        $a = $user->attribution;
+
+        return $a ? ['attribution' => array_intersect_key($a, array_flip([
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+            'gclid', 'gbraid', 'wbraid', 'fbclid', 'landing_page', 'referrer_host', 'captured_at',
+        ]))] : null;
     }
 
     public function planChanged(User $user): void
@@ -68,7 +79,7 @@ class CrmReporter
             ->delay(now()->addSeconds(config('crm.debounce_seconds')));
     }
 
-    private function send(User $user, string $type, ?string $eventId = null): void
+    private function send(User $user, string $type, ?string $eventId = null, ?array $extra = null): void
     {
         if (! self::enabled()) {
             return;
@@ -80,6 +91,8 @@ class CrmReporter
             (string) $user->id,
             now()->toIso8601ZuluString(),
             AccountSnapshot::for($user),
+            null,
+            $extra,
         );
     }
 }

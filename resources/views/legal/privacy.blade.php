@@ -12,7 +12,7 @@
     <div class="max-w-4xl mx-auto pt-28 pb-12 px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-lg shadow-lg p-8">
             <h1 class="text-4xl font-bold mb-6">Privacy Policy</h1>
-            <p class="text-gray-600 mb-8">Last updated: 18 November 2025</p>
+            <p class="text-gray-600 mb-8">Last updated: 10 November 2026</p>
 
             <div class="prose max-w-none">
                 <h2 class="text-2xl font-bold mt-8 mb-4">1. Information We Collect</h2>
@@ -99,15 +99,27 @@
                 <h3 class="text-xl font-semibold mt-6 mb-3">Marketing Communications</h3>
                 <p class="mb-4">You can opt out of marketing emails by clicking the unsubscribe link in any marketing email.</p>
 
-                <h2 class="text-2xl font-bold mt-8 mb-4">6. Cookies and Tracking</h2>
-                <p class="mb-4">We use cookies and similar tracking technologies to:</p>
+                <h2 id="cookies" class="text-2xl font-bold mt-8 mb-4 scroll-mt-24">6. Cookies and Tracking</h2>
+                <p class="mb-4"><strong>Strictly necessary cookies</strong> are always on, because the site can't work without them:</p>
                 <ul class="list-disc pl-6 mb-4 space-y-2">
-                    <li>Maintain your session</li>
-                    <li>Remember your preferences</li>
-                    <li>Analyze site usage</li>
-                    <li>Improve our services</li>
+                    <li>Your session and sign-in, and security (CSRF) protection.</li>
+                    <li><code>pf_consent</code>: remembers your cookie choice for 6 months.</li>
                 </ul>
-                <p class="mb-4">You can control cookie preferences through your browser settings.</p>
+                <p class="mb-4"><strong>Analytics and advertising cookies</strong> are off unless you choose “Accept” in the cookie banner. If you accept, we use:</p>
+                <ul class="list-disc pl-6 mb-4 space-y-2">
+                    <li><strong>Google Analytics 4</strong> (Google Ireland Ltd): how visitors use our site, so we can improve it.</li>
+                    <li><strong>Google Ads conversion tracking</strong> (Google Ireland Ltd): whether our Google ads lead to sign-ups and subscriptions.</li>
+                    <li><strong>Meta Pixel</strong> (Meta Platforms Ireland Ltd): whether our Facebook and Instagram ads lead to sign-ups and subscriptions.</li>
+                </ul>
+                <p class="mb-4">
+                    These only run on our own pages (our homepage, sign-up, billing and the photographers' dashboard), never on photographers' portfolios or client galleries.
+                    If you arrive from an ad or a link with campaign tags (UTM parameters, or Google and Meta click ids), we keep them with your account when you sign up, so we can tell which campaigns work.
+                </p>
+                <p class="mb-4">
+                    You can change your mind at any time:
+                    <a href="#cookies" data-cookie-settings class="font-medium text-blue-700 underline underline-offset-4">Cookie settings</a>.
+                    You can also block cookies in your browser.
+                </p>
 
                 <h2 class="text-2xl font-bold mt-8 mb-4">7. Data Retention</h2>
                 <p class="mb-4">We retain your information for as long as your account is active or as needed to provide services. After account deletion, we may retain certain information as required by law or for legitimate business purposes.</p>
@@ -156,5 +168,6 @@
     </footer>
     @livewireScriptConfig
     @include('partials.chatmesh')
+    @include('partials.tracking')
 </body>
 </html>

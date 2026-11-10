@@ -42,5 +42,6 @@
     {{-- Site support chat on sign-in pages only; client gallery pages also use this layout. --}}
     @includeWhen(request()->routeIs(['login', 'register', 'password.request', 'password.reset', 'verification.notice', 'password.confirm', 'pricing']), 'partials.chatmesh')
     @livewireScriptConfig
+    @include('partials.tracking')
 </body>
 </html>
