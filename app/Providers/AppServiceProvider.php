@@ -25,7 +25,16 @@ class AppServiceProvider extends ServiceProvider
         // own copies duplicated the route names, which broke route:cache.
         \Laravel\Cashier\Cashier::ignoreRoutes();
 
-        $this->app->bind(\Stripe\StripeClient::class, fn () => \Laravel\Cashier\Cashier::stripe());
+        // A Stripe client with Cashier's key and API version. Cashier::stripe()
+        // itself resolves StripeClient from the container with a "config"
+        // parameter, so this binding must build the client directly and never
+        // call Cashier::stripe() (that recursed until memory ran out).
+        $this->app->bind(\Stripe\StripeClient::class, fn ($app, array $params = []) => new \Stripe\StripeClient(
+            $params['config'] ?? [
+                'api_key' => config('cashier.secret'),
+                'stripe_version' => \Laravel\Cashier\Cashier::STRIPE_VERSION,
+            ]
+        ));
         $this->app->bind(\App\Billing\StripeCatalog::class, fn () => new \App\Billing\StripeApiCatalog(\Laravel\Cashier\Cashier::stripe()));
     }
 
