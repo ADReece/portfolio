@@ -30,6 +30,17 @@ class UxDemoSeeder extends Seeder
             'bio' => '<p>Wedding and landscape photographer based in Leeds.</p>',
         ]);
 
+        // A print catalogue product, so the catalogue and print settings pages have content.
+        $print = \App\Models\ProdigiProduct::updateOrCreate(['sku' => 'GLOBAL-CFPM-16X20'], [
+            'name' => 'Classic framed print 16×20',
+            'category' => 'Framed',
+            'description' => 'Museum-quality print in a classic wooden frame.',
+            'size_label' => '16 × 20 in',
+            'is_active' => true,
+            'raw_payload' => ['sku' => 'GLOBAL-CFPM-16X20', 'attributes' => ['color' => ['black', 'white', 'natural']], 'printAreas' => ['default' => ['required' => true]]],
+        ]);
+        $print->forceFill(['cost_item' => 24.00, 'cost_shipping' => 6.95, 'cost_currency' => 'GBP', 'cost_quoted_at' => now(), 'refreshed_at' => now()])->save();
+
         $make = function (array $attrs, array $sets) use ($user) {
             $collection = Collection::updateOrCreate(
                 ['user_id' => $user->id, 'name' => $attrs['name']],

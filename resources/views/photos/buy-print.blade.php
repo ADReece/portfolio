@@ -1,5 +1,5 @@
 @php
-    $prices = $enabledProducts->mapWithKeys(fn ($p) => [$p->id => (float) ($p->pivot->retail_price ?? 29.99)]);
+    $prices = $enabledProducts->mapWithKeys(fn ($p) => [$p->id => (float) $p->unit_price]);
     $inputClass = 'mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500';
     $labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-200';
 @endphp
@@ -42,12 +42,29 @@
                             <option value="">Choose a print</option>
                             @foreach($enabledProducts as $product)
                                 <option value="{{ $product->id }}">
-                                    {{ $product->name }} · {{ $currencySymbol }}{{ number_format($prices[$product->id], 2) }}
+                                    {{ $product->name }}@if($product->size_label) ({{ $product->size_label }})@endif · {{ $currencySymbol }}{{ number_format($prices[$product->id], 2) }}
                                 </option>
                             @endforeach
                         </select>
                         @error('prodigi_product_id')<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
                     </div>
+
+                    {{-- Options for the chosen print (frame colour, paper...), where there's a choice. --}}
+                    @foreach($enabledProducts as $product)
+                        @foreach($product->offeredAttributes() as $name => $values)
+                            @continue(count($values) < 2)
+                            <div x-show="product == {{ $product->id }}" x-cloak>
+                                <label for="option-{{ $product->id }}-{{ $name }}" class="{{ $labelClass }}">{{ \App\Models\ProdigiProduct::labelAttribute($name) }}</label>
+                                <select id="option-{{ $product->id }}-{{ $name }}" name="options[{{ $name }}]" class="{{ $inputClass }}"
+                                        :disabled="product != {{ $product->id }}" :required="product == {{ $product->id }}">
+                                    @foreach($values as $value)
+                                        <option value="{{ $value }}" @selected(old("options.$name") === $value)>{{ ucfirst($value) }}</option>
+                                    @endforeach
+                                </select>
+                                @error("options.$name")<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
+                            </div>
+                        @endforeach
+                    @endforeach
 
                     <div>
                         <label for="quantity" class="{{ $labelClass }}">Quantity</label>

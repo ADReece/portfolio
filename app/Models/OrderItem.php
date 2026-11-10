@@ -15,11 +15,13 @@ class OrderItem extends Model
         'product_id',
         'quantity',
         'price',
+        'prodigi_attributes',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'decimal:2',
+        'prodigi_attributes' => 'array',
     ];
 
     public function order(): BelongsTo

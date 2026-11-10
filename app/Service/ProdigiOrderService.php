@@ -39,16 +39,18 @@ class ProdigiOrderService
         // Submit to Prodigi
         $response = $this->prodigiService->createOrder($orderPayload);
 
-        // Store the Prodigi order ID and status in our database
+        // v4 returns {"outcome": "Created", "order": {"id", "status": {"stage"}, "charges"}}.
+        $prodigiOrder = $response['order'] ?? $response;
         $order->update([
-            'prodigi_order_id' => $response['id'] ?? null,
-            'prodigi_status' => $response['status'] ?? 'pending',
-            'prodigi_charge' => $response['charge'] ?? null,
+            'prodigi_order_id' => $prodigiOrder['id'] ?? null,
+            'prodigi_status' => self::statusFrom($prodigiOrder) ?? 'pending',
+            // What Prodigi charged us, summed over its charges (may be empty until it's billed).
+            'prodigi_charge' => collect($prodigiOrder['charges'] ?? [])->sum(fn ($c) => (float) data_get($c, 'totalCost.amount', 0)) ?: null,
         ]);
 
         Log::info('Order submitted to Prodigi', [
             'order_id' => $order->id,
-            'prodigi_order_id' => $response['id'] ?? null,
+            'prodigi_order_id' => $prodigiOrder['id'] ?? null,
         ]);
 
         return $response;
@@ -62,20 +64,20 @@ class ProdigiOrderService
         // Get customer address - you may need to adjust based on where you store this
         $recipientAddress = $this->getRecipientAddress($order);
 
+        // Prodigi v4 order. The idempotency key is the order id alone, so a
+        // retried submission can never create (and charge for) a second order.
         return [
-            'idempotencyKey' => 'order_' . $order->id . '_' . time(),
-            'shipments' => [
-                [
-                    'recipient' => [
-                        'name' => $order->customer_name ?? 'Customer',
-                        'email' => $order->customer_email,
-                        'phoneNumber' => $this->getCustomerPhone($order),
-                        'address' => $recipientAddress,
-                    ],
-                    'lineItems' => $this->buildLineItems($printItems),
-                    'shippingMethod' => 'Standard', // Can make this configurable
-                ],
+            'merchantReference' => (string) $order->id,
+            'shippingMethod' => config('prints.shipping_method', 'Standard'),
+            'idempotencyKey' => 'portfolio-order-'.$order->id,
+            'recipient' => [
+                'name' => $order->customer_name ?: 'Customer',
+                'email' => $order->customer_email,
+                'phoneNumber' => $this->getCustomerPhone($order),
+                'address' => $recipientAddress,
             ],
+            'items' => $this->buildLineItems($printItems),
+            'metadata' => ['app' => 'portfolio', 'order_id' => (string) $order->id],
         ];
     }
 
@@ -87,17 +89,20 @@ class ProdigiOrderService
         return $printItems->map(function (OrderItem $item) {
             $product = $item->product;
 
-            return [
+            $line = [
+                'merchantReference' => 'item-'.$item->id,
                 'sku' => $this->mapProductToProdigiSku($product),
-                'quantity' => $item->quantity,
+                'copies' => (int) $item->quantity,
+                'sizing' => 'fillPrintArea',
                 'assets' => [
-                    [
-                        'printArea' => 'default',
-                        'assetType' => 'image',
-                        'imageUrl' => $this->getProductImageUrl($product),
-                    ],
+                    ['printArea' => 'default', 'url' => $this->getProductImageUrl($product)],
                 ],
             ];
+            if (! empty($item->prodigi_attributes)) {
+                $line['attributes'] = $item->prodigi_attributes;
+            }
+
+            return $line;
         })->toArray();
     }
 
@@ -126,12 +131,14 @@ class ProdigiOrderService
      */
     private function getProductImageUrl($product): string
     {
-        if ($product->photo && $product->photo->path) {
-            return url('storage/' . $product->photo->path);
+        // The full-resolution original. Prodigi downloads it after the order
+        // is placed, so the link lasts a week (the longest S3 allows).
+        $key = $product->photo?->url;
+        if (! $key) {
+            throw new \Exception('Order item has no photo to print');
         }
 
-        // Fallback or placeholder
-        return url('/placeholder.jpg');
+        return \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($key, now()->addDays(7));
     }
 
     private function getRecipientAddress(Order $order): array
@@ -150,14 +157,14 @@ class ProdigiOrderService
             }
         }
 
-        return [
+        return array_filter([
             'line1' => $order->shipping_address_line1,
             'line2' => $order->shipping_address_line2,
-            'city' => $order->shipping_city,
-            'county' => $order->shipping_county,
-            'postcode' => $order->shipping_postcode,
+            'postalOrZipCode' => $order->shipping_postcode,
             'countryCode' => strtoupper($order->shipping_country_code),
-        ];
+            'townOrCity' => $order->shipping_city,
+            'stateOrCounty' => $order->shipping_county,
+        ], fn ($v) => $v !== null && $v !== '');
     }
 
     private function getCustomerPhone(Order $order): string
@@ -180,13 +187,32 @@ class ProdigiOrderService
 
         $response = $this->prodigiService->getOrderStatus($order->prodigi_order_id);
 
-        $order->update([
-            'prodigi_status' => $response['status'] ?? 'unknown',
-        ]);
+        $stage = self::statusFrom($response['order'] ?? $response);
+        if ($stage === null) {
+            return;
+        }
+        $order->update(['prodigi_status' => $stage]);
 
         Log::info('Synced Prodigi order status', [
             'order_id' => $order->id,
-            'prodigi_status' => $response['status'] ?? 'unknown',
+            'prodigi_status' => $stage,
         ]);
+    }
+
+    /**
+     * Our status for a Prodigi v4 order: its stage (InProgress, Complete,
+     * Cancelled) mapped to the orders.prodigi_status values (an enum).
+     */
+    public static function statusFrom(array $prodigiOrder): ?string
+    {
+        $stage = data_get($prodigiOrder, 'status.stage') ?? (is_string($prodigiOrder['status'] ?? null) ? $prodigiOrder['status'] : null);
+
+        return match (strtolower((string) $stage)) {
+            '' => null,
+            'complete', 'completed', 'shipped' => 'shipped',
+            'cancelled', 'canceled' => 'cancelled',
+            'pending', 'received', 'validated', 'failed' => strtolower((string) $stage),
+            default => 'processing', // InProgress and anything new
+        };
     }
 }
