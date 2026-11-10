@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         User::observe(UserObserver::class);
+        \Laravel\Cashier\Subscription::observe(\App\Observers\SubscriptionObserver::class);
 
         // Share currency symbol with all views
         // Resolved lazily and memoised, so views don't each hit the database.

@@ -70,6 +70,9 @@ x-environment: &environment
   LAUNCH_OFFER_ENDS_AT: ${LAUNCH_OFFER_ENDS_AT:-2027-02-10T23:59:59+00:00}
   # [SECRET] token for the custom-domains sync job; empty = endpoint disabled
   CUSTOM_DOMAINS_SYNC_TOKEN: ${CUSTOM_DOMAINS_SYNC_TOKEN:-}
+  # Platform CRM reporting; [SECRET] token, empty = off
+  PLATFORM_CRM_URL: ${PLATFORM_CRM_URL:-https://crm.ascend-digital.co.uk}
+  PLATFORM_CRM_TOKEN: ${PLATFORM_CRM_TOKEN:-}
   CUSTOM_DOMAINS_TARGET_IP: ${CUSTOM_DOMAINS_TARGET_IP:-2.28.38.210}
   CUSTOM_DOMAINS_TARGET_IPV6: ${CUSTOM_DOMAINS_TARGET_IPV6:-}
   CUSTOM_DOMAINS_CNAME_TARGETS: ${CUSTOM_DOMAINS_CNAME_TARGETS:-portfolio.ascend-digital.co.uk,custom.portfolio.ascend-digital.co.uk}
