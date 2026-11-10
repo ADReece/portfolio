@@ -17,7 +17,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // routes/web.php defines Cashier's payment and webhook routes itself
+        // (the webhook uses App\Http\Controllers\WebhookController). Cashier's
+        // own copies duplicated the route names, which broke route:cache.
+        \Laravel\Cashier\Cashier::ignoreRoutes();
     }
 
     /**
