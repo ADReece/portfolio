@@ -175,6 +175,26 @@ class User extends Authenticatable
         return $this->subscriptionPlan->hasFeature($feature);
     }
 
+    public function customDomains(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CustomDomain::class);
+    }
+
+    /**
+     * How many custom domains this account may have (a domain's www counts
+     * with it). Set per plan in config/custom_domains.php; admins and feature
+     * overrides get the largest plan allowance.
+     */
+    public function customDomainLimit(): int
+    {
+        $plans = config('custom_domains.plans', []);
+        if ($this->is_admin || $this->isFeatureOverrideActive()) {
+            return max(1, ...array_values($plans ?: [1]));
+        }
+
+        return (int) ($plans[$this->subscriptionPlan?->slug] ?? 0);
+    }
+
     public function isFeatureOverrideActive(): bool
     {
         if (!$this->feature_override) return false;

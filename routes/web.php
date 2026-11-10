@@ -33,6 +33,10 @@ use Laravel\Cashier\Http\Controllers\PaymentController as CashierPaymentControll
 // Cheap health check for the container: it touches no database.
 Route::get('/up', fn () => response('ok', 200, ['Content-Type' => 'text/plain']))->name('health');
 
+// Per-host robots.txt and sitemap (main site or a photographer's own domain)
+Route::get('/robots.txt', [App\Http\Controllers\SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [App\Http\Controllers\SeoController::class, 'sitemap'])->name('sitemap');
+
 // Public homepage
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -122,6 +126,15 @@ Route::middleware('auth')->group(function () {
 
     // Template batch — Livewire full-page component
     Route::get('/collections/{collectionId}/batch', TemplateBatch::class)->name('collections.batch');
+});
+
+// Custom domains (e.g. stephshoots.com); plan limits in config/custom_domains.php
+Route::middleware('auth')->prefix('/settings/domain')->group(function () {
+    Route::get('/', [App\Http\Controllers\CustomDomainController::class, 'index'])->name('custom-domains.index');
+    Route::post('/', [App\Http\Controllers\CustomDomainController::class, 'store'])->middleware('throttle:10,1')->name('custom-domains.store');
+    Route::patch('/{domain}', [App\Http\Controllers\CustomDomainController::class, 'update'])->name('custom-domains.update');
+    Route::post('/{domain}/verify', [App\Http\Controllers\CustomDomainController::class, 'verify'])->name('custom-domains.verify');
+    Route::delete('/{domain}', [App\Http\Controllers\CustomDomainController::class, 'destroy'])->name('custom-domains.destroy');
 });
 
 Route::middleware(['auth','subscription:upload_logo'])->group(function(){

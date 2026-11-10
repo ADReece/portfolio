@@ -22,6 +22,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('prodigi:sync-orders')
             ->everyThirtyMinutes()
             ->withoutOverlapping();
+
+        // Custom domains: pending ones often, live ones daily, plus hourly for
+        // live domains already failing so they recover (or go offline) promptly.
+        $schedule->command('custom-domains:verify --pending')->everyTenMinutes()->withoutOverlapping();
+        $schedule->command('custom-domains:verify --verified')->daily()->withoutOverlapping();
+        $schedule->command('custom-domains:verify --failing')->hourly()->withoutOverlapping();
     }
 
     /**
