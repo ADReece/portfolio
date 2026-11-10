@@ -8,21 +8,78 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Prodigi Print API v4 client. Authenticates with the X-API-Key header.
+ * PRODIGI_ENVIRONMENT=live means every order costs real money: tests must use
+ * Http::fake. Quotes and product lookups are free. Never log the API key.
+ */
 class ProdigiService
 {
     private string $apiKey;
-    private string $merchantId;
     private string $baseUrl;
 
     public function __construct()
     {
-        $this->apiKey = config('services.prodigi.api_key');
-        $this->merchantId = config('services.prodigi.merchant_id');
-        $this->baseUrl = config('services.prodigi.base_url');
+        $this->apiKey = (string) config('services.prodigi.api_key');
+        $this->baseUrl = rtrim((string) config('services.prodigi.base_url'), '/');
 
-        if (!$this->apiKey || !$this->merchantId) {
-            throw new \Exception('Prodigi API credentials not configured');
+        if ($this->apiKey === '') {
+            throw new \Exception('Prodigi API key not configured (PRODIGI_API_KEY)');
         }
+    }
+
+    public static function configured(): bool
+    {
+        return filled(config('services.prodigi.api_key'));
+    }
+
+    /**
+     * GET /products/{sku}: one product's description, dimensions, attributes,
+     * print areas and variants. Returns the "product" object, or null if Prodigi
+     * doesn't know the SKU.
+     */
+    public function getProduct(string $sku): ?array
+    {
+        $response = $this->client()->get($this->baseUrl.'/products/'.rawurlencode($sku));
+
+        if ($response->status() === 404 || $response->json('outcome') === 'NotFound') {
+            return null;
+        }
+        if (! $response->successful() || ! is_array($response->json('product'))) {
+            Log::warning('Prodigi product lookup failed', ['sku' => $sku, 'status' => $response->status()]);
+
+            throw new \Exception('Prodigi product lookup failed (HTTP '.$response->status().')');
+        }
+
+        return $response->json('product');
+    }
+
+    /**
+     * POST /quotes: the cost of one copy of $sku shipped to $countryCode. Free;
+     * places no order. Returns the matching quote ("costSummary" etc.).
+     */
+    public function quote(string $sku, array $attributes = [], string $countryCode = 'GB', string $currency = 'GBP', string $shippingMethod = 'Standard'): array
+    {
+        $item = ['sku' => $sku, 'copies' => 1, 'assets' => [['printArea' => 'default']]];
+        if ($attributes) {
+            $item['attributes'] = $attributes;
+        }
+
+        $response = $this->client()->post($this->baseUrl.'/quotes', [
+            'shippingMethod' => $shippingMethod,
+            'destinationCountryCode' => $countryCode,
+            'currencyCode' => $currency,
+            'items' => [$item],
+        ]);
+
+        $quotes = $response->json('quotes');
+        if (! $response->successful() || ! is_array($quotes) || $quotes === []) {
+            Log::warning('Prodigi quote failed', ['sku' => $sku, 'status' => $response->status(), 'outcome' => $response->json('outcome')]);
+
+            throw new \Exception('Prodigi quote failed (HTTP '.$response->status().')');
+        }
+
+        return collect($quotes)->first(fn ($q) => strcasecmp((string) ($q['shipmentMethod'] ?? ''), $shippingMethod) === 0) ?? $quotes[0];
     }
 
     /**
@@ -37,11 +94,10 @@ class ProdigiService
             Log::error('Prodigi order creation failed', [
                 'status' => $response->status(),
                 'response' => $response->json(),
-                'payload' => $orderData,
             ]);
 
             throw new \Exception(
-                'Failed to create Prodigi order: ' . $response->json('message') ?? $response->body()
+                'Failed to create Prodigi order: ' . ($response->json('message') ?? $response->json('outcome') ?? 'HTTP '.$response->status())
             );
         }
 
@@ -112,36 +168,18 @@ class ProdigiService
     }
 
     /**
-     * Get products catalog from Prodigi
-     */
-    public function getProducts(): array
-    {
-        $response = $this->client()
-            ->get($this->baseUrl . '/products');
-
-        if (!$response->successful()) {
-            Log::error('Failed to fetch Prodigi products', [
-                'status' => $response->status(),
-            ]);
-
-            throw new \Exception('Failed to fetch products from Prodigi');
-        }
-
-        return $response->json();
-    }
-
-    /**
      * Build the HTTP client with authentication
      */
     private function client(): PendingRequest
     {
         return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiKey,
-            'X-Merchant-Id' => $this->merchantId,
-            'Content-Type' => 'application/json',
+            'X-API-Key' => $this->apiKey,
             'Accept' => 'application/json',
         ])
+            ->asJson()
             ->timeout(30)
-            ->retry(3, 100);
+            // Retry connection problems only, never a request Prodigi answered:
+            // a retried order could otherwise be placed twice.
+            ->retry(3, 200, fn ($e) => $e instanceof \Illuminate\Http\Client\ConnectionException, throw: false);
     }
 }
