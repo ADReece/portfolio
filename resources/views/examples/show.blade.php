@@ -14,7 +14,7 @@
     @if($keys->isNotEmpty())
         <link rel="preload" as="image" type="image/avif" fetchpriority="high" imagesrcset="{{ $images->srcset($keys->first(), 'avif') }}" imagesizes="100vw">
     @endif
-    @vite(['resources/css/app.css', 'resources/css/marketing.css', 'resources/js/marketing.js', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/marketing.css', 'resources/js/marketing.js'])
 </head>
 <body class="bg-white font-body text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100">
     <p class="bg-stone-950 px-4 py-2.5 text-center text-sm text-stone-200">

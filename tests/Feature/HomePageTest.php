@@ -166,6 +166,6 @@ class HomePageTest extends TestCase
             $this->get(route('examples.show', $slug))->assertOk()->assertSee('This is a sample portfolio');
         }
         $this->get('/examples/not-a-sample')->assertNotFound();
-        $this->get(route('photo-credits'))->assertOk()->assertSee('Unsplash License');
+        $this->get(route('photo-credits'))->assertOk()->assertSee('Pexels License');
     }
 }

@@ -43,7 +43,7 @@
         <script type="application/ld+json">{!! json_encode($block, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
     @endforeach
 
-    @vite(['resources/css/app.css', 'resources/css/marketing.css', 'resources/js/marketing.js', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/marketing.css', 'resources/js/marketing.js'])
 </head>
 <body class="bg-stone-50 font-body text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100">
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-stone-900 focus:shadow-lg">
@@ -296,8 +296,10 @@
                         <x-marketing.photo key="landscapes-4" ratio="3 / 2" sizes="(min-width: 1024px) 45vw, 100vw" />
                         <div class="absolute inset-0" :style="'clip-path: inset(0 0 0 ' + split + '%)'" style="clip-path: inset(0 0 0 50%)" aria-hidden="true">
                             <x-marketing.photo key="landscapes-4" ratio="3 / 2" sizes="(min-width: 1024px) 45vw, 100vw" alt="" />
-                            <div class="absolute inset-0 grid place-items-center overflow-hidden">
-                                <p class="-rotate-12 font-display text-5xl font-semibold whitespace-nowrap text-white/45 sm:text-7xl" style="text-shadow: 0 1px 2px rgb(0 0 0 / .25)">© Your Studio</p>
+                            <div class="absolute inset-0 grid grid-cols-2 grid-rows-3 place-items-center overflow-hidden">
+                                @for($i = 0; $i < 6; $i++)
+                                    <p class="-rotate-12 font-display text-xl font-semibold whitespace-nowrap text-white/60 sm:text-3xl" style="text-shadow: 0 1px 2px rgb(0 0 0 / .35)">© Your Studio</p>
+                                @endfor
                             </div>
                         </div>
                         <div class="pointer-events-none absolute inset-y-0 w-0.5 bg-white shadow" :style="'left: ' + split + '%'" style="left: 50%" aria-hidden="true"></div>

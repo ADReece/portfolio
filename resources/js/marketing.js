@@ -1,8 +1,12 @@
-// Small interactive demos for the homepage and sample portfolios. Everything
-// they show is also in the server-rendered HTML; these only add behaviour.
-document.addEventListener('alpine:init', () => {
-    const Alpine = window.Alpine;
+// The only script on the public marketing pages (home, sample portfolios):
+// Alpine from Livewire's ESM build (one Alpine, with x-trap) plus the small
+// demos below, without the app's upload, editor and drag-and-drop code.
+// Everything the demos show is also in the server-rendered HTML.
+import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 
+window.Alpine = Alpine;
+
+document.addEventListener('alpine:init', () => {
     // Photo lightbox: open(i), next(), prev(), close(), with arrow keys.
     Alpine.data('lightbox', (count) => ({
         open: false,
@@ -33,3 +37,5 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 });
+
+Livewire.start();
