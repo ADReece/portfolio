@@ -101,6 +101,43 @@ class SyncStripePlansTest extends TestCase
         $this->assertTrue($this->stripe->prices[$oldAnnual]['active']);
         $this->assertSame(0, $this->stripe->priceEdits, 'only archiving touches existing prices');
     }
+
+    public function test_apply_creates_the_launch_coupon_once(): void
+    {
+        \Illuminate\Support\Carbon::setTestNow('2026-11-10 12:00:00');
+
+        $this->artisan('stripe:sync-plans --apply')->expectsOutputToContain('Creating launch offer coupon LAUNCH50')->assertSuccessful();
+        $this->artisan('stripe:sync-plans --apply')->expectsOutputToContain('Launch offer coupon LAUNCH50 exists')->assertSuccessful();
+
+        $this->assertSame(['LAUNCH50'], array_keys($this->stripe->coupons));
+        $coupon = $this->stripe->coupons['LAUNCH50'];
+        $this->assertSame(50, $coupon['percent_off']);
+        $this->assertSame('repeating', $coupon['duration']);
+        $this->assertSame(3, $coupon['duration_in_months']);
+        $this->assertSame(strtotime('2027-02-11T00:00:00Z'), $coupon['redeem_by']);
+        $this->assertSame('Launch offer: 50% off 3 months', $coupon['name']);
+    }
+
+    public function test_dry_run_does_not_create_the_coupon(): void
+    {
+        \Illuminate\Support\Carbon::setTestNow('2026-11-10 12:00:00');
+
+        $this->artisan('stripe:sync-plans')->expectsOutputToContain('Would create launch offer coupon LAUNCH50')->assertSuccessful();
+
+        $this->assertSame([], $this->stripe->coupons);
+    }
+
+    public function test_no_coupon_after_the_offer_ends_or_when_unset(): void
+    {
+        \Illuminate\Support\Carbon::setTestNow('2027-02-11 00:00:01');
+        $this->artisan('stripe:sync-plans --apply')->expectsOutputToContain('Launch offer ended')->assertSuccessful();
+
+        \Illuminate\Support\Carbon::setTestNow('2026-11-10 12:00:00');
+        config(['billing.launch_offer.coupon_id' => '']);
+        $this->artisan('stripe:sync-plans --apply')->assertSuccessful();
+
+        $this->assertSame([], $this->stripe->coupons);
+    }
 }
 
 class FakeStripeCatalog implements StripeCatalog
@@ -143,5 +180,17 @@ class FakeStripeCatalog implements StripeCatalog
     public function archivePrice(string $id): void
     {
         $this->prices[$id]['active'] = false;
+    }
+
+    public array $coupons = [];
+
+    public function findCoupon(string $id): ?array
+    {
+        return $this->coupons[$id] ?? null;
+    }
+
+    public function createCoupon(array $params): array
+    {
+        return $this->coupons[$params['id']] = $params;
     }
 }

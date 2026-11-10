@@ -2,6 +2,7 @@
     $user = auth()->user();
     $interval = ($interval ?? request('interval', 'month')) === 'year' ? 'year' : 'month';
     $maxSaving = (int) $plans->max('annual_discount_percent');
+    $offer = app(\App\Billing\LaunchOffer::class);
     $subscription = $user?->subscription('default');
     $isSubscribed = $subscription && $subscription->valid();
     $onGrace = $subscription && $subscription->onGracePeriod();
@@ -99,7 +100,7 @@
                     <h2 id="plans-heading" class="{{ $user ? 'text-xl' : 'text-3xl sm:text-4xl' }} font-bold tracking-tight text-gray-900 dark:text-gray-100">
                         {{ $user ? 'Compare plans' : 'Simple pricing for photographers' }}
                     </h2>
-                    @guest<p class="mt-2 text-gray-600 dark:text-gray-400">Start free. Upgrade when you need private galleries, print sales and your own branding.</p>@endguest
+                    @guest<p class="mt-2 text-gray-600 dark:text-gray-400">Start free. Upgrade when you need private galleries, print sales and your own branding, for less than half the price of the big gallery platforms.</p>@endguest
                 </div>
                 <nav aria-label="Billing period" class="inline-flex rounded-control bg-gray-100 p-1 dark:bg-gray-800">
                     @foreach(['month' => 'Monthly', 'year' => 'Yearly'] as $value => $label)
@@ -114,6 +115,13 @@
                 </nav>
             </div>
 
+            @if($offer->isActive())
+                <p class="rounded-card bg-green-50 px-4 py-3 text-sm text-green-900 ring-1 ring-green-200 dark:bg-green-950 dark:text-green-200 dark:ring-green-900">
+                    <strong>Launch offer:</strong> {{ $offer->percentOff() }}% off your first {{ $offer->months() }} months on monthly plans. Ends {{ $offer->endsLabel() }}.
+                    @if($interval === 'year')<a href="{{ route('pricing', ['interval' => 'month']) }}" class="font-medium underline underline-offset-4">See monthly prices</a>@endif
+                </p>
+            @endif
+
             <ul role="list" class="grid gap-6 md:grid-cols-3">
                 @foreach($plans as $plan)
                     @php($isCurrent = $user && $user->subscription_plan_id === $plan->id)
@@ -124,10 +132,14 @@
                             <x-ui.badge tone="brand" class="absolute -top-3 left-6">Most popular</x-ui.badge>
                         @endif
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $plan->name }}</h3>
+                        @if($offer->appliesTo($plan, $interval))
+                            @include('partials.launch-offer-price', ['plan' => $plan, 'offer' => $offer])
+                        @else
                         <p class="mt-3 flex items-baseline gap-1">
                             <span class="text-4xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-gray-100">{{ $currencySymbol }}{{ $plan->priceFor($interval) }}</span>
                             @unless($plan->isFree())<span class="text-sm text-gray-600 dark:text-gray-400">/ {{ $interval }}</span>@endunless
                         </p>
+                        @endif
                         @if($interval === 'year' && $plan->annual_discount_percent)
                             <p class="mt-1 text-sm font-medium text-green-700 dark:text-green-400">{{ $plan->annual_discount_percent }}% less than monthly</p>
                         @endif
