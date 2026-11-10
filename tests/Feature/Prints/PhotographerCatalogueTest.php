@@ -59,11 +59,11 @@ class PhotographerCatalogueTest extends PrintCatalogueTestCase
         $photographer = User::factory()->create(['is_admin' => true, 'username' => 'ava']); // admins have every feature
         $photographer->prodigiProducts()->attach($product->id, ['is_enabled' => true, 'retail_price' => 20]);
 
-        $product->forceFill(['cost_item' => 15.00])->save(); // minimum is now (19.50 + 0.20) / 0.875 = 22.52
+        $product->forceFill(['cost_item' => 15.00])->save(); // minimum is now 19.50 / 0.9 = 21.67
 
         $this->actingAs($photographer)->get(route('profile.prodigi-products.edit'))
             ->assertSee('Some prices no longer cover the cost')
-            ->assertSee('Raise it to at least £22.52');
+            ->assertSee('Raise it to at least £21.67');
         $this->getJson(route('profile.print-products', 'ava'))->assertJsonPath('products', []);
     }
 

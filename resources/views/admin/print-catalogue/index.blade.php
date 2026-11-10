@@ -16,6 +16,10 @@
         @unless($prodigiReady)
             <x-ui.alert tone="amber" title="Prodigi isn't configured">Set PRODIGI_API_KEY to look up products and refresh costs.</x-ui.alert>
         @endunless
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+            Prodigi's API can't list the products saved in your Prodigi account, so add them here by SKU (you can paste several at once).
+            “Refresh” updates the details and costs of products already in this catalogue.
+        </p>
         @unless(\App\Billing\Payouts::available())
             <x-ui.alert title="Selling prints is still “coming soon” for photographers">
                 The catalogue works fully now, so it's ready when Stripe Connect is switched on.
@@ -23,7 +27,7 @@
         @endunless
         <p class="text-sm text-gray-600 dark:text-gray-400">
             Prodigi: <strong>{{ $environment === 'live' ? 'live (orders cost real money; lookups and quotes are free)' : $environment }}</strong>.
-            Costs are quotes for one copy to the UK with standard delivery. Minimum price = cost + {{ config('prints.stripe_fee_percent') }}% + {{ $currencySymbol }}{{ number_format(config('prints.stripe_fee_fixed'), 2) }} card fees + {{ rtrim(rtrim(number_format(config('services.platform_fee_percent'), 2), '0'), '.') }}% platform fee.
+            Costs are quotes for one copy to the UK with standard delivery. Clients pay the price (delivery included); the photographer receives price − cost − {{ rtrim(rtrim(number_format(config('services.platform_fee_percent'), 2), '0'), '.') }}% platform fee, and card fees come out of the platform fee. The minimum price keeps both at or above zero. At checkout the cost is quoted again for the client's address.
         </p>
 
         <form method="GET" class="flex flex-wrap items-end gap-3" role="search">
@@ -72,8 +76,7 @@
                                 @php
                                     $cost = $product->totalCost();
                                     $default = $pricing->defaultFor($product);
-                                    $keep = 1 - (config('services.platform_fee_percent') + config('prints.stripe_fee_percent')) / 100;
-                                    $margin = $cost === null ? null : round($default * $keep - config('prints.stripe_fee_fixed') - $cost, 2);
+                                    $margin = $pricing->payoutFor($product, $default);
                                 @endphp
                                 <tr>
                                     <td class="px-4 py-3 sm:pl-6">

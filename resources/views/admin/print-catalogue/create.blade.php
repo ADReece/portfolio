@@ -16,6 +16,16 @@
             </form>
         </x-ui.card>
 
+        @unless($lookup)
+            <x-ui.card title="Or add several at once" description="Paste SKUs from your Prodigi dashboard or Prodigi's catalogue, one per line (up to 25). Each is looked up, added as inactive with Prodigi's description as its name, and its cost quoted.">
+                <form method="POST" action="{{ route('admin.print-catalogue.store-many') }}" class="space-y-3">
+                    @csrf
+                    <x-ui.textarea name="skus" label="Prodigi SKUs" rows="6" placeholder="GLOBAL-FAP-10X8&#10;GLOBAL-CAN-16X20&#10;GLOBAL-CFPM-16X20">{{ old('skus') }}</x-ui.textarea>
+                    <x-ui.button type="submit" icon="plus" variant="secondary" :disabled="! $prodigiReady">Add all</x-ui.button>
+                </form>
+            </x-ui.card>
+        @endunless
+
         @if($lookup)
             <x-ui.card title="2. Check and add">
                 <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">

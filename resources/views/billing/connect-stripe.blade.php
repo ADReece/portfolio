@@ -17,7 +17,7 @@
                     </span>
                     <div class="min-w-0 flex-1">
                         <h2 class="font-semibold text-gray-900 dark:text-gray-100">Stripe is connected</h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">When a client pays for a print, you receive the price minus our {{ $fee }}% fee.</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">When a client pays for a print, you receive the price minus the print and delivery cost and our {{ $fee }}% fee.</p>
                     </div>
                 </div>
                 <div class="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-5 dark:border-gray-700">
@@ -32,7 +32,7 @@
         @elseif($comingSoon ?? false)
             <x-ui.card title="Selling prints is coming soon">
                 <p class="text-sm text-gray-700 dark:text-gray-300">
-                    Soon your clients will be able to order prints straight from your galleries, and you'll be paid the price you set, minus our fee, into your own Stripe account.
+                    Soon your clients will be able to order prints straight from your galleries, and you'll be paid the price you set, minus the print and delivery cost and our fee, into your own Stripe account.
                     We're finishing the payouts side now. Your print products and prices are saved, and you'll be able to connect Stripe here as soon as it's ready.
                 </p>
             </x-ui.card>
@@ -49,7 +49,7 @@
                     @foreach([
                         'Clients pay by card when they order a print from your galleries.',
                         'We handle printing and delivery.',
-                        "You receive the price you set, minus our {$fee}% fee, in your Stripe account.",
+                        "You receive the price you set, minus the print and delivery cost and our {$fee}% fee, in your Stripe account.",
                         'Stripe pays out to your bank on its normal schedule.',
                     ] as $point)
                         <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />{{ $point }}</li>

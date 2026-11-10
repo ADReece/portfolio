@@ -48,7 +48,8 @@ class PrintPurchaseController extends Controller
         $validated = $request->validate([
             'prodigi_product_id' => ['required', 'integer', 'exists:prodigi_products,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:10'],
-            'customer_email' => ['required', 'email:rfc,dns', 'max:255'],
+            // The DNS check needs the network, so tests check the format only.
+            'customer_email' => ['required', app()->runningUnitTests() ? 'email:rfc' : 'email:rfc,dns', 'max:255'],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'shipping_address_line1' => ['required', 'string', 'max:255'],
@@ -76,12 +77,33 @@ class PrintPurchaseController extends Controller
 
         $unitPrice = (float) $prodigiProduct->unit_price;
         $quantity = (int) $validated['quantity'];
-        $total = $unitPrice * $quantity;
-        $platformFeeRate = config('services.platform_fee_percent') / 100;
-        $platformFee = round($total * $platformFeeRate, 2);
-        $photographerAmount = round($total - $platformFee, 2);
+        $total = round($unitPrice * $quantity, 2);
+        $country = strtoupper($validated['shipping_country_code']);
 
-        $order = DB::transaction(function () use ($photographer, $photo, $prodigiProduct, $validated, $quantity, $unitPrice, $total, $platformFee, $photographerAmount, $attributes) {
+        // The client pays the price (print and delivery included). Prodigi's
+        // cost for these prints delivered to this address comes off it, then
+        // the platform fee; the photographer receives the rest.
+        $pricing = app(\App\Prints\PrintPricing::class);
+        try {
+            $quote = app(\App\Service\ProdigiService::class)->quote(
+                $prodigiProduct->sku, $attributes, $country, \App\Support\Currency::code(), config('prints.shipping_method'), $quantity
+            );
+            $printCost = round((float) data_get($quote, 'costSummary.items.amount') + (float) data_get($quote, 'costSummary.shipping.amount', 0), 2);
+            if (! is_numeric(data_get($quote, 'costSummary.items.amount'))) {
+                throw new \RuntimeException('Quote had no item cost');
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Print checkout quote failed', ['sku' => $prodigiProduct->sku, 'country' => $country, 'error' => $e->getMessage()]);
+
+            return back()->withErrors(['shipping_country_code' => 'We couldn\'t work out delivery for this order just now. Please try again in a moment.'])->withInput();
+        }
+        $platformFee = $pricing->platformFee($total);
+        $photographerAmount = $pricing->payout($total, $printCost);
+        if ($photographerAmount < 0) {
+            return back()->withErrors(['shipping_country_code' => 'Sorry, this print can\'t be delivered to '.(\App\Support\Countries::LIST[$country] ?? $country).' at this price.'])->withInput();
+        }
+
+        $order = DB::transaction(function () use ($photographer, $photo, $prodigiProduct, $validated, $quantity, $unitPrice, $total, $platformFee, $photographerAmount, $attributes, $printCost) {
             $product = Product::query()->firstOrCreate(
                 [
                     'user_id' => $photographer->id,
@@ -114,6 +136,7 @@ class PrintPurchaseController extends Controller
                 'shipping_country_code' => strtoupper($validated['shipping_country_code']),
                 'total' => $total,
                 'platform_fee' => $platformFee,
+                'print_cost' => $printCost,
                 'photographer_amount' => $photographerAmount,
                 'status' => 'pending',
             ]);
@@ -129,7 +152,7 @@ class PrintPurchaseController extends Controller
             return $order;
         });
 
-        $stripe = new \Stripe\StripeClient(config('cashier.secret'));
+        $stripe = app(\Stripe\StripeClient::class);
 
         $session = $stripe->checkout->sessions->create([
             'mode' => 'payment',

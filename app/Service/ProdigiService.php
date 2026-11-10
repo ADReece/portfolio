@@ -55,12 +55,12 @@ class ProdigiService
     }
 
     /**
-     * POST /quotes: the cost of one copy of $sku shipped to $countryCode. Free;
+     * POST /quotes: the cost of $copies copies of $sku shipped to $countryCode. Free;
      * places no order. Returns the matching quote ("costSummary" etc.).
      */
-    public function quote(string $sku, array $attributes = [], string $countryCode = 'GB', string $currency = 'GBP', string $shippingMethod = 'Standard'): array
+    public function quote(string $sku, array $attributes = [], string $countryCode = 'GB', string $currency = 'GBP', string $shippingMethod = 'Standard', int $copies = 1): array
     {
-        $item = ['sku' => $sku, 'copies' => 1, 'assets' => [['printArea' => 'default']]];
+        $item = ['sku' => $sku, 'copies' => max(1, $copies), 'assets' => [['printArea' => 'default']]];
         if ($attributes) {
             $item['attributes'] = $attributes;
         }

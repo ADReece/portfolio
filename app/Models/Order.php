@@ -25,6 +25,7 @@ class Order extends Model
         'shipping_country_code',
         'total',
         'platform_fee',
+        'print_cost',
         'photographer_amount',
         'stripe_payment_intent_id',
         'stripe_transfer_id',

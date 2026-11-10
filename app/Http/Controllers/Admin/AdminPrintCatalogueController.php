@@ -115,6 +115,73 @@ class AdminPrintCatalogueController extends Controller
         );
     }
 
+    /**
+     * Adds several SKUs at once (pasted from Prodigi's dashboard or catalogue).
+     * Prodigi's API can't list an account's products, so they're added by SKU.
+     * Each is looked up, added inactive with Prodigi's description as its name
+     * and a guessed category, and its cost quoted. Existing SKUs are skipped.
+     */
+    public function storeMany(Request $request, CatalogueRefresher $refresher): RedirectResponse
+    {
+        $request->validate(['skus' => ['required', 'string', 'max:5000']]);
+        $this->requireProdigi();
+
+        $skus = collect(preg_split('/[\s,;]+/', strtoupper($request->input('skus'))))
+            ->map(fn ($s) => trim($s))
+            ->filter(fn ($s) => preg_match('/^[A-Z0-9][A-Z0-9._\-]*$/', $s))
+            ->unique()->values();
+        if ($skus->isEmpty()) {
+            throw ValidationException::withMessages(['skus' => 'Paste one or more Prodigi SKUs, one per line.']);
+        }
+        if ($skus->count() > 25) {
+            throw ValidationException::withMessages(['skus' => 'Add up to 25 SKUs at a time.']);
+        }
+
+        $added = $skipped = $notFound = $failed = [];
+        $sort = (int) ProdigiProduct::max('sort_order');
+        foreach ($skus as $sku) {
+            if (ProdigiProduct::where('sku', $sku)->exists()) {
+                $skipped[] = $sku;
+
+                continue;
+            }
+            try {
+                $lookup = $refresher->lookup($sku);
+            } catch (\Throwable $e) {
+                $failed[] = $sku;
+
+                continue;
+            }
+            if (! $lookup) {
+                $notFound[] = $sku;
+
+                continue;
+            }
+            $product = ProdigiProduct::create([
+                'sku' => $lookup['sku'],
+                'name' => \Illuminate\Support\Str::limit($lookup['description'] ?: $lookup['sku'], 250, ''),
+                'category' => ProdigiProduct::guessCategory($lookup['sku'], $lookup['description']),
+                'description' => $lookup['description'],
+                'size_label' => $lookup['size_label'],
+                'raw_payload' => $lookup['raw'],
+                'sort_order' => $sort += 10,
+                'is_active' => false,
+            ]);
+            $refresher->refresh($product);
+            $added[] = $sku;
+        }
+
+        $parts = array_filter([
+            $added ? 'Added '.count($added).' (inactive): '.implode(', ', $added).'.' : null,
+            $skipped ? 'Already in the catalogue: '.implode(', ', $skipped).'.' : null,
+            $notFound ? 'Not found on Prodigi: '.implode(', ', $notFound).'.' : null,
+            $failed ? 'Couldn\'t reach Prodigi for: '.implode(', ', $failed).'. Try again.' : null,
+        ]);
+
+        return redirect()->route('admin.print-catalogue.index', ['status' => $added ? 'inactive' : null])
+            ->with(($notFound || $failed) ? 'error' : 'success', implode(' ', $parts));
+    }
+
     public function edit(ProdigiProduct $product, PrintPricing $pricing): View
     {
         return view('admin.print-catalogue.edit', [

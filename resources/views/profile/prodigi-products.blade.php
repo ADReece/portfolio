@@ -85,8 +85,8 @@
                                             @error('retail_prices.'.$product->id)<p class="mt-1 text-sm text-red-700 dark:text-red-400">{{ $message }}</p>@enderror
                                         </div>
                                         <p class="w-32 text-sm text-gray-600 dark:text-gray-400">
-                                            You receive<br>
-                                            <span class="font-semibold text-gray-900 tabular-nums dark:text-gray-100" x-text="@js($currencySymbol) + Math.max(0, (price || {{ $default }}) * {{ 1 - $feeRate }}).toFixed(2)"></span>
+                                            You receive{{ $product->totalCost() !== null ? '' : ' (before print cost)' }}<br>
+                                            <span class="font-semibold text-gray-900 tabular-nums dark:text-gray-100" x-text="(() => { const p = price || {{ $default }}; const v = p - {{ $product->totalCost() ?? 0 }} - Math.round(p * {{ $feeRate }} * 100) / 100; return @js($currencySymbol) + Math.max(0, v).toFixed(2); })()"></span>
                                         </p>
                                     </div>
                                 </li>
@@ -96,7 +96,7 @@
                 @endforeach
 
                 <div class="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-card sm:border sm:px-5 dark:border-gray-800 dark:bg-gray-950/95">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Clients pay the price shown, with no delivery charge added. You receive the price minus our {{ $feeLabel }}% fee.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Clients pay the price shown, delivery included. You receive the price minus the print and delivery cost (shown for UK delivery; it varies by country) and our {{ $feeLabel }}% fee.</p>
                     <x-ui.button type="submit">Save print products</x-ui.button>
                 </div>
             </form>

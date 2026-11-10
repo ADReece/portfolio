@@ -106,7 +106,7 @@ class WebhookController extends CashierController
 
         // Pay the photographer their share via Stripe Connect. The charge is on
         // the platform account; this is a separate transfer to theirs.
-        if ($order->user->stripe_connect_enabled && $order->user->stripe_connect_id) {
+        if ($order->user->stripe_connect_enabled && $order->user->stripe_connect_id && (float) $order->photographer_amount > 0) {
             try {
                 $params = [
                     // Whole pence: 12.35 * 100 is 1234.999… in floating point.
