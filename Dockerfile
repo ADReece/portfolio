@@ -17,7 +17,9 @@ WORKDIR /var/www/html
 
 # --- Composer packages (Composer stays in this stage only) ----------------------
 FROM app AS vendor
-RUN apk add --no-cache composer
+# Alpine's composer package runs on its own PHP 8.5 without the app's
+# extensions, so use the official Composer phar on this image's PHP 8.3.
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 
