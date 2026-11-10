@@ -44,7 +44,22 @@ const publicPages = [
     ['sign up', '/register'],
     ['portfolio', '/@ava'],
     ['public collections', '/@ava/collections'],
+    ['sample portfolio', '/examples/weddings'],
+    ['photo credits', '/photo-credits'],
 ];
+
+test('public: home photo viewer and private gallery demo', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Open photo 1 of 9' }).click();
+    await expect(page.getByRole('dialog', { name: 'Photo viewer' })).toBeVisible();
+    await expectNoViolations(page, 'home photo viewer');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Photo viewer' })).toBeHidden();
+
+    await page.getByRole('button', { name: 'Open gallery' }).click();
+    await expect(page.getByRole('button', { name: 'Favourite photo 1' })).toBeVisible();
+    await expectNoViolations(page, 'home private gallery demo');
+});
 
 for (const [name, path] of publicPages) {
     test(`public: ${name}`, async ({ page }) => {

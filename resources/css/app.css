@@ -32,6 +32,9 @@
  */
 @theme {
     --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    /* Marketing pages only (resources/css/marketing.css loads the faces). */
+    --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+    --font-body: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
     --color-brand-50: var(--color-indigo-50);
     --color-brand-100: var(--color-indigo-100);

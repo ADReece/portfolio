@@ -1,0 +1,7 @@
+/*
+ * Fonts for the public marketing pages (home, sample portfolios), self-hosted
+ * from @fontsource so there's no third-party font request. Only these pages
+ * load this file; the app keeps its own font.
+ */
+@import '@fontsource-variable/fraunces/opsz.css';
+@import '@fontsource-variable/inter/index.css';
