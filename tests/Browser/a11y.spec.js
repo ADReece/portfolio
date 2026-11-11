@@ -84,6 +84,9 @@ test('client: private gallery password page', async ({ page }) => {
 test('app: admin edit print product', async ({ page }) => {
     await logIn(page);
     await page.goto('/admin/print-catalogue');
+    // Sizes are grouped by product and collapsed: open the group first.
+    await page.getByRole('button', { name: /^Classic frames with mount GLOBAL-CFPM/ }).click();
+    await expectNoViolations(page, 'print catalogue with a group open');
     const href = await page.getByRole('link', { name: 'Edit Classic framed print 16×20' }).getAttribute('href');
     await page.goto(href);
     await expect(page.getByRole('heading', { name: 'Classic framed print 16×20' })).toBeVisible();
