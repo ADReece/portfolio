@@ -12,7 +12,15 @@ class Order extends Model
 {
     use HasFactory, UsesUuid;
 
+    public const PRINT = 'print';
+    public const DIGITAL = 'digital';
+
     protected $fillable = [
+        'kind',
+        'collection_id',
+        'stripe_checkout_session_id',
+        'pricing_breakdown',
+        'delivered_at',
         'user_id',
         'customer_email',
         'customer_name',
@@ -45,6 +53,8 @@ class Order extends Model
         'platform_fee' => 'decimal:2',
         'photographer_amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'pricing_breakdown' => 'array',
         'customer_phone' => 'encrypted',
         'shipping_address_line1' => 'encrypted',
         'shipping_address_line2' => 'encrypted',
@@ -59,6 +69,28 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function collection(): BelongsTo
+    {
+        return $this->belongsTo(Collection::class);
+    }
+
+    public function isDigital(): bool
+    {
+        return $this->kind === self::DIGITAL;
+    }
+
+    /** When the buyer's download link stops working. */
+    public function downloadsExpireAt(): ?\Illuminate\Support\Carbon
+    {
+        return $this->paid_at?->copy()->addDays((int) config('downloads.link_days'));
+    }
+
+    /** The signed link to a paid digital order's download page. */
+    public function downloadUrl(): string
+    {
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute('downloads.show', $this->downloadsExpireAt() ?? now()->addDays((int) config('downloads.link_days')), ['order' => $this->id]);
     }
 
     public function items(): HasMany

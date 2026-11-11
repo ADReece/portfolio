@@ -38,7 +38,13 @@
                    style="background-color: var(--portfolio-accent, #4f46e5);">
                     <x-ui.icon name="photo" class="size-5" /> View photos
                 </a>
-                @if($collection->private)
+                @if(\App\Downloads\DigitalSales::onSale($collection))
+                    <a href="{{ route('download-purchase.show', $collection) }}"
+                       class="inline-flex items-center gap-2 rounded-control bg-white px-5 py-3 font-semibold text-gray-900 shadow-lg hover:bg-gray-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+                        <x-ui.icon name="shopping-bag" class="size-5" /> Buy photos
+                    </a>
+                @endif
+                @if($collection->private && \App\Downloads\DigitalSales::freeDownloadsAllowed(request(), $collection))
                     <button type="button" onclick="requestArchive()"
                             class="inline-flex items-center gap-2 rounded-control bg-white/15 px-5 py-3 font-semibold text-white ring-1 ring-white/40 backdrop-blur hover:bg-white/25 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white">
                         <x-ui.icon name="arrow-down-tray" class="size-5" /> Download all

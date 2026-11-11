@@ -20,6 +20,7 @@
         ])),
         'Selling' => [
             ['Print products', route('profile.prodigi-products.edit'), 'shopping-bag', 'profile.prodigi-products.*'],
+            ['Photo downloads', route('profile.digital-sales.edit'), 'arrow-down-tray', 'profile.digital-sales.*'],
             ['Print templates', route('templates.index'), 'document-duplicate', 'templates.*'],
             ['Fonts', route('fonts.index'), 'language', 'fonts.*'],
         ],

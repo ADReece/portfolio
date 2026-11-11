@@ -10,6 +10,9 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\CustomDomainController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DigitalDownloadController;
+use App\Http\Controllers\DigitalSalesSettingsController;
+use App\Http\Controllers\DownloadPurchaseController;
 use App\Http\Controllers\FontController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PhotoController;
@@ -112,6 +115,9 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile/logo', [ProfileController::class, 'removeLogo'])->name('profile.logo.remove');
 
+    Route::get('/profile/downloads', [DigitalSalesSettingsController::class, 'edit'])->name('profile.digital-sales.edit');
+    Route::patch('/profile/downloads', [DigitalSalesSettingsController::class, 'update'])->name('profile.digital-sales.update');
+    Route::patch('/collections/{collection}/downloads', [DigitalSalesSettingsController::class, 'updateCollection'])->name('collections.digital-sales.update');
     Route::get('/profile/print-products', [ProdigiProductSettingsController::class, 'edit'])->name('profile.prodigi-products.edit');
     Route::patch('/profile/print-products', [ProdigiProductSettingsController::class, 'update'])->name('profile.prodigi-products.update');
     // Template CRUD
@@ -168,6 +174,18 @@ Route::get('/collections/{collection}/archive/{filename}', [CollectionController
 Route::get('/collections/{collection}/download-archive/{filename}', [CollectionController::class, 'downloadArchive'])
     ->middleware('signed')
     ->name('collections.download-archive');
+
+// Buying full-resolution downloads from a collection, and the buyer's
+// download links (signed, from the delivery email).
+Route::get('/collections/{collection}/buy', [DownloadPurchaseController::class, 'show'])->name('download-purchase.show');
+Route::post('/collections/{collection}/buy', [DownloadPurchaseController::class, 'store'])->middleware('throttle:10,1')->name('download-purchase.store');
+Route::get('/orders/{order}/downloads-paid', [DownloadPurchaseController::class, 'success'])->name('download-purchase.success');
+Route::get('/orders/{order}/downloads-cancelled', [DownloadPurchaseController::class, 'cancel'])->name('download-purchase.cancel');
+Route::middleware('signed')->group(function () {
+    Route::get('/downloads/{order}', [DigitalDownloadController::class, 'show'])->name('downloads.show');
+    Route::get('/downloads/{order}/photos/{photo}', [DigitalDownloadController::class, 'photo'])->name('downloads.photo');
+    Route::get('/downloads/{order}/all.zip', [DigitalDownloadController::class, 'zip'])->name('downloads.zip');
+});
 
 // Public photo download and purchase requests
 Route::get('/photos/{photo}/download-options', [PhotoController::class, 'downloadOptions'])->name('photos.download-options');

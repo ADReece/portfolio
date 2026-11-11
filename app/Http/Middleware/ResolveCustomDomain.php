@@ -28,7 +28,7 @@ class ResolveCustomDomain
     private const PORTFOLIO_PATH = '#^/(collections(/[^/]+(/unlock)?)?|print-products)?/?$#';
 
     /** The gallery's own endpoints, which work on any host. */
-    private const PASSTHROUGH_PATH = '#^/(photos/|orders/|livewire/|media/|build/|images/|collections/[^/]+/(request-archive|archive/|download-archive/)|robots\.txt$|sitemap\.xml$|favicon\.ico$|up$)#';
+    private const PASSTHROUGH_PATH = '#^/(photos/|orders/|livewire/|media/|build/|images/|downloads/|collections/[^/]+/(request-archive|archive/|download-archive/|buy$)|robots\.txt$|sitemap\.xml$|favicon\.ico$|up$)#';
 
     public function __construct(private DomainRegistry $registry) {}
 

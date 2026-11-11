@@ -42,10 +42,10 @@
 
                             <!-- Hover Overlay with Buttons -->
                             <div class="absolute inset-0 pointer-events-none bg-black/0 can-hover:group-hover:bg-black/40 transition-all duration-300 flex items-end justify-end p-3 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
-                                <!-- Download Request Button -->
-                                <a href="/photos/{{ $m->id }}/download-options"
+                                <!-- Download Request Button (or Buy, when the collection sells downloads) -->
+                                <a href="{{ $buyCollection ? route('download-purchase.show', ['collection' => $buyCollection, 'photo' => $m->id]) : '/photos/'.$m->id.'/download-options' }}"
                                    class="pointer-events-auto mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform motion-safe:hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
-                                   title="Download" aria-label="Download this photo">
+                                   title="{{ $buyCollection ? 'Buy this photo' : 'Download' }}" aria-label="{{ $buyCollection ? 'Buy this photo' : 'Download this photo' }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>

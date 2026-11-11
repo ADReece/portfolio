@@ -43,6 +43,8 @@ class User extends Authenticatable
         'stripe_connect_id',
         'stripe_connect_enabled',
         'copy_protection',
+        'digital_photo_price',
+        'digital_bundles',
         'feature_override',
         'feature_override_expires_at',
         'is_admin',
@@ -74,6 +76,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'stripe_connect_enabled' => 'boolean',
+        'digital_photo_price' => 'decimal:2',
+        'digital_bundles' => 'array',
         'copy_protection' => 'boolean',
         'feature_override' => 'boolean',
         'attribution' => 'array',

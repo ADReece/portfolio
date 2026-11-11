@@ -158,6 +158,14 @@ class PhotoController extends Controller
     {
         abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
 
+        if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $photo->set?->collection)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This photo is for sale. Choose “Buy photos” to download it.',
+                'buy_url' => route('download-purchase.show', ['collection' => $photo->set->collection, 'photo' => $photo->id]),
+            ], 403);
+        }
+
         $validated = $request->validate([
             'email' => 'required|email|max:255',
         ]);
@@ -242,6 +250,12 @@ class PhotoController extends Controller
     {
         abort_unless($photo->isReady() && GalleryAccess::canViewPhoto($request, $photo), 404);
 
+        // Photos in a collection that sells downloads are bought, not downloaded free.
+        $collection = $photo->set?->collection;
+        if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $collection)) {
+            return redirect()->route('download-purchase.show', ['collection' => $collection, 'photo' => $photo->id]);
+        }
+
         $set       = $photo->set?->load('templates.generatedPrints');
         $templates = $set?->templates ?? collect();
 
@@ -251,6 +265,9 @@ class PhotoController extends Controller
     public function downloadWithTemplate(Request $request, Photo $photo, Template $template)
     {
         abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+        if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $photo->set?->collection)) {
+            return redirect()->route('download-purchase.show', ['collection' => $photo->set->collection, 'photo' => $photo->id]);
+        }
 
         // Ensure template belongs to this photo's set
         $set = $photo->set;

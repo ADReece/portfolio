@@ -242,6 +242,15 @@ class CollectionController extends Controller
             ], 403);
         }
 
+        // While the photographer sells downloads, the photos are bought instead.
+        if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $collection)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'These photos are for sale. Choose “Buy photos” to download them.',
+                'buy_url' => route('download-purchase.show', $collection),
+            ], 403);
+        }
+
         $validated = $request->validate([
             'email' => 'required|email',
         ]);

@@ -111,6 +111,47 @@
                         </div>
                     </x-ui.card>
                 </form>
+
+                @php
+                    $owner = auth()->user();
+                    $downloadMinimum = app(\App\Downloads\DigitalPricing::class)->minimumPrice();
+                    $sym = \App\Support\Currency::symbol();
+                @endphp
+                <form method="POST" action="{{ route('collections.digital-sales.update', $collection->id) }}" id="downloads"
+                      x-data="{ selling: @js((bool) old('digital_sales', $collection->digital_sales)) }">
+                    @csrf
+                    @method('PATCH')
+                    <x-ui.card title="Sell downloads" description="Clients buy full-resolution, unwatermarked copies and get a download link by email.">
+                        <div class="space-y-5">
+                            <x-ui.checkbox name="digital_sales" label="Sell downloads from this collection" :checked="old('digital_sales', $collection->digital_sales)" x-model="selling"
+                                           description="While this is on, the free “Download” and “Download all” options are replaced by “Buy photos”." />
+                            <div x-show="selling" x-cloak class="ml-7 space-y-4">
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <x-ui.input name="digital_photo_price" type="number" step="0.01" min="{{ $downloadMinimum }}" inputmode="decimal" optional
+                                                label="Price per photo ({{ $sym }})" :value="old('digital_photo_price', $collection->digital_photo_price)"
+                                                :help="$owner->digital_photo_price !== null ? 'Leave empty to use your usual '.\App\Support\Currency::format($owner->digital_photo_price).'.' : 'Leave empty to sell only in bundles or the whole collection.'" />
+                                    <x-ui.input name="digital_collection_price" type="number" step="0.01" min="{{ $downloadMinimum }}" inputmode="decimal" optional
+                                                label="Whole collection ({{ $sym }})" :value="old('digital_collection_price', $collection->digital_collection_price)"
+                                                help="Every photo in the collection, for one price." />
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    @if($owner->digital_bundles)
+                                        Your bundles apply too: {{ collect(\App\Downloads\DigitalPricing::normaliseBundles($owner->digital_bundles))->map(fn ($b) => $b['count'].' for '.\App\Support\Currency::format($b['price']))->implode(', ') }}.
+                                    @else
+                                        Add bundles, like any 5 photos for {{ $sym }}20, in
+                                    @endif
+                                    <a href="{{ route('profile.digital-sales.edit') }}" class="font-medium text-brand-700 underline underline-offset-4 dark:text-brand-300">{{ $owner->digital_bundles ? 'Change your bundles' : 'Photo downloads' }}</a>.
+                                </p>
+                                @if(! \App\Billing\Payouts::available() || ! $owner->stripe_connect_enabled)
+                                    <p class="text-sm text-amber-800 dark:text-amber-300">Clients can buy once {{ \App\Billing\Payouts::available() ? 'you connect Stripe in Payouts' : 'payouts are ready' }}.</p>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                            <x-ui.button type="submit" icon="check">Save</x-ui.button>
+                        </div>
+                    </x-ui.card>
+                </form>
             </div>
 
             <div class="space-y-6">
