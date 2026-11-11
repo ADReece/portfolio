@@ -97,6 +97,7 @@ const appPages = [
     ['settings', '/profile'],
     ['customize', '/profile/customize'],
     ['print products', '/profile/print-products'],
+    ['photo downloads', '/profile/downloads'],
     ['plan & billing', '/pricing'],
     ['payouts', '/connect/stripe'],
     ['print templates', '/templates'],

@@ -120,8 +120,13 @@ class MasonryGrid extends Component
             ? User::find($this->userId)
             : Collection::find($this->collectionId)?->user;
 
+        // In a collection that sells downloads, "Download" becomes "Buy".
+        $collection = $this->collectionId ? Collection::find($this->collectionId) : null;
+        $buyCollection = $collection && ! \App\Downloads\DigitalSales::freeDownloadsAllowed(request(), $collection) ? $collection : null;
+
         return view('livewire.masonry-grid', [
             'media' => $media,
+            'buyCollection' => $buyCollection,
             'ownerCanSell' => \App\Billing\Payouts::available() && $owner && $owner->hasFeature('selling') && $owner->enabledProdigiProducts()->exists(),
             'copyProtection' => (bool) ($owner?->copy_protection ?? true),
             'totalCount' => $this->totalCount,

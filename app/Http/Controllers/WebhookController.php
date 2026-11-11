@@ -22,7 +22,7 @@ class WebhookController extends CashierController
         return parent::handleWebhook($request);
     }
 
-    /** Print-sale payments are tagged app=portfolio; anything else belongs to another app. */
+    /** Print and download sales are tagged app=portfolio; anything else belongs to another app. */
     private function isPortfolioPayment(array $paymentIntent): bool
     {
         return ($paymentIntent['metadata']['app'] ?? null) === 'portfolio';
@@ -65,9 +65,9 @@ class WebhookController extends CashierController
     }
 
     /**
-     * A print sale was paid (payment_intent.succeeded). Stripe retries webhooks,
-     * so this runs its side effects (Prodigi order, photographer transfer) only
-     * the first time an order is marked paid.
+     * A print or download sale was paid (payment_intent.succeeded). Stripe
+     * retries webhooks, so this runs its side effects (Prodigi order or download
+     * email, photographer transfer) only the first time an order is marked paid.
      */
     public function handlePaymentIntentSucceeded($payload)
     {
@@ -100,7 +100,9 @@ class WebhookController extends CashierController
             return $this->successMethod();
         }
 
-        if ($order->hasPrintItems()) {
+        if ($order->isDigital()) {
+            \App\Jobs\DeliverDigitalOrder::dispatch($order->id);
+        } elseif ($order->hasPrintItems()) {
             \App\Jobs\SubmitOrderToProdigi::dispatch($order);
         }
 
@@ -155,6 +157,24 @@ class WebhookController extends CashierController
         if ($order && ! $order->paid_at) {
             $order->update(['status' => 'failed']);
         }
+
+        return $this->successMethod();
+    }
+
+    /**
+     * A sale refunded in full in Stripe (charge.refunded): the order is marked
+     * refunded, which also stops a download order's links working.
+     */
+    public function handleChargeRefunded($payload)
+    {
+        $charge = $payload['data']['object'];
+        if (empty($charge['payment_intent']) || ! ($charge['refunded'] ?? false)) {
+            return $this->successMethod(); // partial refunds keep the order
+        }
+
+        \App\Models\Order::where('stripe_payment_intent_id', $charge['payment_intent'])
+            ->where('status', 'completed')
+            ->update(['status' => 'refunded']);
 
         return $this->successMethod();
     }

@@ -24,6 +24,9 @@ class Collection extends Model
         'watermarked',
         'hide_from_portfolio',
         'cover_photo_object_position',
+        'digital_sales',
+        'digital_photo_price',
+        'digital_collection_price',
     ];
 
     protected $casts = [
@@ -31,6 +34,9 @@ class Collection extends Model
         'private' => 'boolean',
         'watermarked' => 'boolean',
         'hide_from_portfolio' => 'boolean',
+        'digital_sales' => 'boolean',
+        'digital_photo_price' => 'decimal:2',
+        'digital_collection_price' => 'decimal:2',
     ];
 
     protected static function boot()
