@@ -129,6 +129,7 @@ class AdminPrintCatalogueController extends Controller
             'is_active' => false,
         ]);
         $refresher->refresh($product);
+        \App\Jobs\GenerateProductMockup::dispatch($product->id);
 
         return redirect()->route('admin.print-catalogue.edit', $product)->with(
             $product->refresh_error ? 'error' : 'success',
@@ -282,6 +283,20 @@ class AdminPrintCatalogueController extends Controller
         }
 
         return back()->with('success', 'Refreshing '.$ids->count().' products from Prodigi in the background. Products whose refresh fails show the reason.');
+    }
+
+    /** Queues mockups for products without one, or redraws all of them. */
+    public function mockups(Request $request): RedirectResponse
+    {
+        $all = $request->boolean('all');
+        $ids = ProdigiProduct::query()->when(! $all, fn ($q) => $q->whereNull('mockup_path'))->orderBy('id')->pluck('id');
+        foreach ($ids as $id) {
+            \App\Jobs\GenerateProductMockup::dispatch((int) $id, $all);
+        }
+
+        return back()->with('success', $ids->isEmpty()
+            ? 'Every product already has a mockup.'
+            : ($all ? 'Redrawing mockups for ' : 'Drawing mockups for ').$ids->count().' '.Str::plural('product', $ids->count()).' in the background.');
     }
 
     /** Activates or deactivates the chosen products (rows, a group, or the page). */

@@ -72,6 +72,7 @@ class PhotographerCatalogueTest extends PrintCatalogueTestCase
         config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3'), [
             'driver' => 's3', 'key' => 'test', 'secret' => 'test', 'region' => 'eu-west-2', 'bucket' => 'test-bucket',
         ])]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('s3'); // use this S3 config, not the test fake
         $owner = User::factory()->create();
         $set = Set::create(['collection_id' => Collection::factory()->create(['user_id' => $owner->id])->id, 'name' => 'Main']);
         $photo = Photo::create(['user_id' => $owner->id, 'set_id' => $set->id, 'url' => 'photos/original.jpg', 'caption' => 'A', 'private' => false, 'size' => 10]);

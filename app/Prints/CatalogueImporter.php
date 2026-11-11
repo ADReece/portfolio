@@ -164,7 +164,10 @@ class CatalogueImporter
             'is_active' => false,
         ]);
 
-        return app(CatalogueRefresher::class)->refresh($product);
+        app(CatalogueRefresher::class)->refresh($product);
+        \App\Jobs\GenerateProductMockup::dispatch($product->id);
+
+        return $product;
     }
 
     private static function looksLikeSku(string $cell): bool

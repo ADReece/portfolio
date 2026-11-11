@@ -109,15 +109,21 @@ class ProdigiProduct extends Model
         return app(PrintPricing::class)->defaultFor($this);
     }
 
+    /** The uploaded image, else our generated mockup, else null (a category drawing is shown). */
     public function imageUrl(): ?string
     {
-        if (! $this->image_path) {
+        $path = $this->image_path ?: $this->mockup_path;
+        if (! $path) {
             return null;
         }
 
-        return app()->isLocal()
-            ? Storage::disk('s3')->url($this->image_path)
-            : Storage::disk('s3')->temporaryUrl($this->image_path, now()->addHour());
+        // Signed: the bucket (or the local /media route) is private.
+        return Storage::disk('s3')->temporaryUrl($path, now()->addHour());
+    }
+
+    public function hasUploadedImage(): bool
+    {
+        return (bool) $this->image_path;
     }
 
     /** A starting category from the SKU (then the description); admins can change it. */
