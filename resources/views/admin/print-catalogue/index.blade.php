@@ -89,85 +89,187 @@
             <x-ui.button type="submit" variant="secondary">Filter</x-ui.button>
         </form>
 
-        <x-ui.card :padding="false">
-            @if($products->isEmpty())
+        @if($products->isEmpty())
+            <x-ui.card :padding="false">
                 <x-ui.empty-state icon="swatch" title="No products" description="Add Prodigi products by SKU to offer them to photographers.">
                     <x-ui.button icon="plus" :href="route('admin.print-catalogue.create')">Add product</x-ui.button>
                 </x-ui.empty-state>
-            @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
-                        <thead class="bg-gray-50 text-left dark:bg-gray-900/40">
-                            <tr class="text-gray-900 dark:text-gray-100">
-                                <th scope="col" class="px-4 py-3 font-semibold sm:pl-6">Product</th>
-                                <th scope="col" class="px-4 py-3 font-semibold">Category</th>
-                                <th scope="col" class="px-4 py-3 text-right font-semibold">Cost</th>
-                                <th scope="col" class="px-4 py-3 text-right font-semibold">Minimum</th>
-                                <th scope="col" class="px-4 py-3 text-right font-semibold">Default price</th>
-                                <th scope="col" class="px-4 py-3 text-right font-semibold">Margin</th>
-                                <th scope="col" class="px-4 py-3 text-right font-semibold">Photographers</th>
-                                <th scope="col" class="px-4 py-3 font-semibold">Status</th>
-                                <th scope="col" class="px-4 py-3 sm:pr-6"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @foreach($products as $product)
-                                @php
-                                    $cost = $product->totalCost();
-                                    $default = $pricing->defaultFor($product);
-                                    $margin = $pricing->payoutFor($product, $default);
-                                @endphp
-                                <tr>
-                                    <td class="px-4 py-3 sm:pl-6">
-                                        <div class="flex items-center gap-3">
-                                            @if($url = $product->imageUrl())
-                                                <img src="{{ $url }}" alt="" class="size-10 shrink-0 rounded-md object-cover" loading="lazy">
-                                            @else
-                                                <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-400 dark:bg-gray-800"><x-ui.icon name="photo" class="size-5" /></span>
-                                            @endif
-                                            <div class="min-w-0">
-                                                <a href="{{ route('admin.print-catalogue.edit', $product) }}" class="font-medium text-gray-900 hover:underline dark:text-gray-100">{{ $product->name }}</a>
-                                                <div class="font-mono text-xs text-gray-500 dark:text-gray-400">{{ $product->sku }}@if($product->size_label) · {{ $product->size_label }}@endif</div>
-                                                @if($product->refresh_error)<div class="text-xs text-red-700 dark:text-red-400">Last refresh failed</div>@endif
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $product->category }}<div class="text-xs text-gray-500">#{{ $product->sort_order }}</div></td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">
-                                        {{ $money($cost) }}
-                                        @if($cost !== null)<div class="text-xs text-gray-500 dark:text-gray-400">{{ $money($product->cost_item) }} + {{ $money($product->cost_shipping) }} delivery</div>@endif
-                                    </td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">{{ $money($pricing->minimumFor($product)) }}</td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">{{ $money($default) }}</td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">{{ $money($margin) }}<div class="text-xs text-gray-500 dark:text-gray-400">to photographer</div></td>
-                                    <td class="px-4 py-3 text-right tabular-nums">
-                                        {{ number_format($product->enabled_count) }}
-                                        @if($belowCost[$product->id] ?? 0)
-                                            <div><x-ui.badge tone="red">{{ $belowCost[$product->id] }} below cost</x-ui.badge></div>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <form method="POST" action="{{ route('admin.print-catalogue.toggle', $product) }}">
-                                            @csrf
-                                            <button type="submit" class="rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500">
-                                                @if($product->is_active)<x-ui.badge tone="green">Active</x-ui.badge>@else<x-ui.badge>Inactive</x-ui.badge>@endif
-                                                <span class="sr-only">: {{ $product->is_active ? 'deactivate' : 'activate' }} {{ $product->name }}</span>
-                                            </button>
-                                        </form>
-                                    </td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap sm:pr-6">
-                                        <form method="POST" action="{{ route('admin.print-catalogue.refresh', $product) }}" class="inline">
-                                            @csrf
-                                            <x-ui.button type="submit" size="sm" variant="ghost" icon="arrow-path" :disabled="! $prodigiReady">Refresh<span class="sr-only"> {{ $product->name }}</span></x-ui.button>
-                                        </form>
-                                        <x-ui.button size="sm" variant="secondary" :href="route('admin.print-catalogue.edit', $product)">Edit<span class="sr-only"> {{ $product->name }}</span></x-ui.button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            </x-ui.card>
+        @else
+            @php
+                $allIds = $products->pluck('id')->map(fn ($id) => (string) $id)->values();
+                $expandAll = filled($filters['q'] ?? null);
+            @endphp
+            <form id="bulk-form" method="POST" action="{{ route('admin.print-catalogue.bulk-status') }}">@csrf</form>
+
+            <div class="space-y-6"
+                 x-data="{
+                    selected: [],
+                    all: @js($allIds),
+                    has(ids) { return ids.length && ids.every(id => this.selected.includes(id)) },
+                    some(ids) { return ids.some(id => this.selected.includes(id)) },
+                    toggle(ids, on) { this.selected = on ? [...new Set([...this.selected, ...ids])] : this.selected.filter(id => !ids.includes(id)) },
+                 }">
+                {{-- Bulk actions for the ticked sizes. --}}
+                <div class="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-card border border-gray-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/95">
+                    <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                        <input type="checkbox" class="size-4 rounded-sm border-gray-300 text-brand-600 dark:border-gray-600 dark:bg-gray-900"
+                               :checked="has(all)" x-effect="$el.indeterminate = some(all) && !has(all)" x-on:change="toggle(all, $event.target.checked)">
+                        Select all {{ $products->count() }} on this page
+                    </label>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-sm text-gray-600 dark:text-gray-400" aria-live="polite"><span x-text="selected.length">0</span> selected</p>
+                        <x-ui.button type="submit" form="bulk-form" name="status" value="active" size="sm" variant="secondary" x-bind:disabled="!selected.length">Activate</x-ui.button>
+                        <x-ui.button type="submit" form="bulk-form" name="status" value="inactive" size="sm" variant="secondary" x-bind:disabled="!selected.length">Deactivate</x-ui.button>
+                    </div>
                 </div>
-            @endif
-        </x-ui.card>
+
+                @foreach($grouped as $category => $groups)
+                    @php
+                        $categoryProducts = $groups->flatMap(fn ($g) => $g['products']);
+                        $categoryIds = $categoryProducts->pluck('id')->map(fn ($id) => (string) $id)->values();
+                        $categorySlug = \Illuminate\Support\Str::slug($category);
+                    @endphp
+                    <section x-data="{ open: true }" aria-labelledby="cat-{{ $categorySlug }}">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input type="checkbox" aria-label="Select every {{ $category }} product" class="size-4 rounded-sm border-gray-300 text-brand-600 dark:border-gray-600 dark:bg-gray-900"
+                                   :checked="has(@js($categoryIds))" x-effect="$el.indeterminate = some(@js($categoryIds)) && !has(@js($categoryIds))" x-on:change="toggle(@js($categoryIds), $event.target.checked)">
+                            <h2 id="cat-{{ $categorySlug }}" class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                <button type="button" class="inline-flex items-center gap-1 rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500"
+                                        x-on:click="open = !open" :aria-expanded="open.toString()" aria-controls="cat-panel-{{ $categorySlug }}">
+                                    <x-ui.icon name="chevron-down" class="size-5 transition-transform" x-bind:class="open ? '' : '-rotate-90'" />
+                                    {{ $category }}
+                                </button>
+                            </h2>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">{{ $groups->count() }} {{ \Illuminate\Support\Str::plural('product', $groups->count()) }} · {{ $categoryProducts->count() }} {{ \Illuminate\Support\Str::plural('size', $categoryProducts->count()) }} · {{ $categoryProducts->where('is_active', true)->count() }} active</span>
+                        </div>
+
+                        <div id="cat-panel-{{ $categorySlug }}" x-show="open" class="mt-3 space-y-3">
+                            @foreach($groups as $group)
+                                @php
+                                    $sizes = $group['products'];
+                                    $ids = $sizes->pluck('id')->map(fn ($id) => (string) $id)->values();
+                                    $activeCount = $sizes->where('is_active', true)->count();
+                                    $costs = $sizes->map(fn ($p) => $p->totalCost())->filter(fn ($c) => $c !== null);
+                                    $panelId = 'group-'.\Illuminate\Support\Str::slug($group['key']).'-'.$categorySlug;
+                                    $preview = $sizes->first(fn ($p) => $p->image_path) ?? $sizes->first();
+                                @endphp
+                                <x-ui.card :padding="false" x-data="{ open: {{ $expandAll ? 'true' : 'false' }} }">
+                                    <div class="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
+                                        <input type="checkbox" aria-label="Select every size of {{ $group['label'] }}" class="size-4 rounded-sm border-gray-300 text-brand-600 dark:border-gray-600 dark:bg-gray-900"
+                                               :checked="has(@js($ids))" x-effect="$el.indeterminate = some(@js($ids)) && !has(@js($ids))" x-on:change="toggle(@js($ids), $event.target.checked)">
+                                        <button type="button" class="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500"
+                                                x-on:click="open = !open" :aria-expanded="open.toString()" aria-controls="{{ $panelId }}">
+                                            <x-prints.preview :product="$preview" class="size-12" />
+                                            <span class="min-w-0">
+                                                <span class="block font-semibold text-gray-900 dark:text-gray-100">{{ $group['label'] }}</span>
+                                                <span class="block text-sm text-gray-600 dark:text-gray-400">
+                                                    <span class="font-mono text-xs">{{ $group['key'] }}</span> ·
+                                                    {{ $sizes->count() }} {{ \Illuminate\Support\Str::plural('size', $sizes->count()) }} · {{ $activeCount }} active
+                                                    @if($costs->isNotEmpty()) · cost {{ $money($costs->min()) }}@if($costs->min() != $costs->max())–{{ $money($costs->max()) }}@endif @endif
+                                                </span>
+                                            </span>
+                                            <x-ui.icon name="chevron-down" class="ml-auto size-5 shrink-0 text-gray-500 transition-transform" x-bind:class="open ? 'rotate-180' : ''" />
+                                        </button>
+                                        <form method="POST" action="{{ route('admin.print-catalogue.bulk-status') }}">
+                                            @csrf
+                                            @foreach($ids as $id)<input type="hidden" name="ids[]" value="{{ $id }}">@endforeach
+                                            @if($activeCount === $sizes->count())
+                                                <input type="hidden" name="status" value="inactive">
+                                                <x-ui.button type="submit" size="sm" variant="secondary">Deactivate all<span class="sr-only"> {{ $group['label'] }} sizes</span></x-ui.button>
+                                            @else
+                                                <input type="hidden" name="status" value="active">
+                                                <x-ui.button type="submit" size="sm" variant="secondary">Activate all<span class="sr-only"> {{ $group['label'] }} sizes</span></x-ui.button>
+                                            @endif
+                                        </form>
+                                    </div>
+
+                                    <div id="{{ $panelId }}" x-show="open" @unless($expandAll) x-cloak @endunless class="border-t border-gray-200 dark:border-gray-700">
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+                                                <caption class="sr-only">Sizes of {{ $group['label'] }}</caption>
+                                                <thead class="bg-gray-50 text-left dark:bg-gray-900/40">
+                                                    <tr class="text-gray-900 dark:text-gray-100">
+                                                        <th scope="col" class="w-10 py-2 pl-4 sm:pl-5"><span class="sr-only">Select</span></th>
+                                                        <th scope="col" class="px-3 py-2 font-semibold">Size</th>
+                                                        <th scope="col" class="px-3 py-2 text-right font-semibold">Cost</th>
+                                                        <th scope="col" class="px-3 py-2 text-right font-semibold">Minimum</th>
+                                                        <th scope="col" class="px-3 py-2 text-right font-semibold">Default price</th>
+                                                        <th scope="col" class="px-3 py-2 text-right font-semibold">Margin</th>
+                                                        <th scope="col" class="px-3 py-2 text-right font-semibold">Photographers</th>
+                                                        <th scope="col" class="px-3 py-2 font-semibold">Status</th>
+                                                        <th scope="col" class="px-3 py-2 sm:pr-5"><span class="sr-only">Actions</span></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                                    @foreach($sizes as $product)
+                                                        @php
+                                                            $cost = $product->totalCost();
+                                                            $default = $pricing->defaultFor($product);
+                                                            $margin = $pricing->payoutFor($product, $default);
+                                                        @endphp
+                                                        <tr>
+                                                            <td class="py-2 pl-4 sm:pl-5">
+                                                                <input type="checkbox" form="bulk-form" name="ids[]" value="{{ $product->id }}" x-model="selected"
+                                                                       aria-label="Select {{ $product->name }} ({{ $product->sku }})"
+                                                                       class="size-4 rounded-sm border-gray-300 text-brand-600 dark:border-gray-600 dark:bg-gray-900">
+                                                            </td>
+                                                            <td class="min-w-48 px-3 py-2">
+                                                                <a href="{{ route('admin.print-catalogue.edit', $product) }}" class="font-medium whitespace-nowrap text-gray-900 hover:underline dark:text-gray-100">{{ $product->size_label ?: $product->name }}</a>
+                                                                <div class="font-mono text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">{{ $product->sku }}</div>
+                                                                @if($product->size_label && $product->name !== $product->sku)<div class="text-xs text-gray-500 dark:text-gray-400">{{ $product->name }}</div>@endif
+                                                                @if($product->refresh_error)<div class="text-xs text-red-700 dark:text-red-400">Last refresh failed</div>@endif
+                                                            </td>
+                                                            <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">
+                                                                {{ $money($cost) }}
+                                                                @if($cost !== null)<div class="text-xs text-gray-500 dark:text-gray-400">{{ $money($product->cost_item) }} + {{ $money($product->cost_shipping) }} delivery</div>@endif
+                                                            </td>
+                                                            <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">{{ $money($pricing->minimumFor($product)) }}</td>
+                                                            <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">{{ $money($default) }}</td>
+                                                            <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">{{ $money($margin) }}<div class="text-xs text-gray-500 dark:text-gray-400">to photographer</div></td>
+                                                            <td class="px-3 py-2 text-right tabular-nums">
+                                                                {{ number_format($product->enabled_count) }}
+                                                                @if($belowCost[$product->id] ?? 0)
+                                                                    <div><x-ui.badge tone="red">{{ $belowCost[$product->id] }} below cost</x-ui.badge></div>
+                                                                @endif
+                                                            </td>
+                                                            <td class="px-3 py-2">
+                                                                <form method="POST" action="{{ route('admin.print-catalogue.toggle', $product) }}">
+                                                                    @csrf
+                                                                    <button type="submit" class="rounded-full focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500">
+                                                                        @if($product->is_active)<x-ui.badge tone="green">Active</x-ui.badge>@else<x-ui.badge>Inactive</x-ui.badge>@endif
+                                                                        <span class="sr-only">: {{ $product->is_active ? 'deactivate' : 'activate' }} {{ $product->name }}</span>
+                                                                    </button>
+                                                                </form>
+                                                            </td>
+                                                            <td class="px-3 py-2 text-right whitespace-nowrap sm:pr-5">
+                                                                <form method="POST" action="{{ route('admin.print-catalogue.refresh', $product) }}" class="inline">
+                                                                    @csrf
+                                                                    <x-ui.button type="submit" size="sm" variant="ghost" icon="arrow-path" :disabled="! $prodigiReady">Refresh<span class="sr-only"> {{ $product->name }}</span></x-ui.button>
+                                                                </form>
+                                                                <x-ui.button size="sm" variant="secondary" :href="route('admin.print-catalogue.edit', $product)">Edit<span class="sr-only"> {{ $product->name }}</span></x-ui.button>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <form method="POST" action="{{ route('admin.print-catalogue.group-image') }}" enctype="multipart/form-data"
+                                              class="flex flex-wrap items-center gap-3 border-t border-gray-200 px-4 py-3 text-sm sm:px-5 dark:border-gray-700">
+                                            @csrf
+                                            <input type="hidden" name="group" value="{{ $group['key'] }}">
+                                            <label for="{{ $panelId }}-image" class="font-medium text-gray-800 dark:text-gray-200">Image for every size</label>
+                                            <input id="{{ $panelId }}-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" required class="text-sm">
+                                            <x-ui.checkbox :id="$panelId.'-replace'" name="replace" label="Replace sizes' own images" :unchecked-value="null" />
+                                            <x-ui.button type="submit" size="sm" variant="secondary" icon="arrow-up-tray">Upload</x-ui.button>
+                                        </form>
+                                    </div>
+                                </x-ui.card>
+                            @endforeach
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+        @endif
     </div>
 </x-app-layout>

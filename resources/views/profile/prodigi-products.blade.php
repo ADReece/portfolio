@@ -58,9 +58,7 @@
                                 @endphp
                                 <li @class(['flex flex-wrap items-center gap-4 px-5 py-4 sm:px-6', 'bg-red-50 dark:bg-red-950/30' => $isBelowCost])
                                     x-data="{ on: @js(in_array($product->id, $enabledProductIds, true)), price: @js($price === '' ? null : (float) $price) }">
-                                    @if($url = $product->imageUrl())
-                                        <img src="{{ $url }}" alt="" class="size-12 shrink-0 rounded-md object-cover" loading="lazy">
-                                    @endif
+                                    <x-prints.preview :product="$product" class="size-12" />
                                     <div class="min-w-0 flex-1">
                                         <x-ui.checkbox :id="'product-'.$product->id" name="enabled_product_ids[]" :value="$product->id" :unchecked-value="null"
                                                        :checked="in_array($product->id, $enabledProductIds, true)" x-model="on"

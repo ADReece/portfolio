@@ -78,7 +78,10 @@ jobs:
           cache: npm
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The runner image already has Chromium's system libraries; --with-deps
+      # only adds fonts. If Ubuntu's package mirrors are down, install the
+      # browser alone rather than fail the job before any test runs.
+      - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: npm run build
       - run: cp .env.example .env && php artisan key:generate
       - run: php artisan migrate --force && php artisan db:seed --class=UxDemoSeeder --force

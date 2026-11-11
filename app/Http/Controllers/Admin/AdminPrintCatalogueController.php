@@ -54,7 +54,22 @@ class AdminPrintCatalogueController extends Controller
                 ->count()];
         });
 
+        // Category → product (SKUs without their size) → sizes, smallest first.
+        $grouped = $products
+            ->groupBy(fn (ProdigiProduct $p) => $p->category ?: 'Other')
+            ->sortKeys()
+            ->map(fn ($inCategory) => $inCategory
+                ->groupBy(fn (ProdigiProduct $p) => $p->groupKey())
+                ->map(fn ($sizes, $key) => [
+                    'key' => $key,
+                    'label' => ProdigiProduct::groupLabel($key, $sizes),
+                    'products' => $sizes->sortBy([fn ($a, $b) => $a->sizeArea() <=> $b->sizeArea(), fn ($a, $b) => strcmp($a->sku, $b->sku)])->values(),
+                ])
+                ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+                ->values());
+
         return view('admin.print-catalogue.index', [
+            'grouped' => $grouped,
             'products' => $products,
             'belowCost' => $belowCost,
             'pricing' => $pricing,
@@ -225,12 +240,11 @@ class AdminPrintCatalogueController extends Controller
         if ($request->hasFile('image')) {
             $old = $product->image_path;
             $product->image_path = $request->file('image')->store('catalogue', 's3');
-            if ($old) {
-                Storage::disk('s3')->delete($old);
-            }
+            ProdigiProduct::deleteImageIfUnused($old, $product->id);
         } elseif ($request->boolean('remove_image') && $product->image_path) {
-            Storage::disk('s3')->delete($product->image_path);
+            $old = $product->image_path;
             $product->image_path = null;
+            ProdigiProduct::deleteImageIfUnused($old, $product->id);
         }
 
         $product->fill([
@@ -268,6 +282,54 @@ class AdminPrintCatalogueController extends Controller
         }
 
         return back()->with('success', 'Refreshing '.$ids->count().' products from Prodigi in the background. Products whose refresh fails show the reason.');
+    }
+
+    /** Activates or deactivates the chosen products (rows, a group, or the page). */
+    public function bulkStatus(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:5000'],
+            'ids.*' => ['integer'],
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+        ], ['ids.required' => 'Choose at least one product.']);
+
+        $count = ProdigiProduct::query()->whereKey($data['ids'])->update(['is_active' => $data['status'] === 'active']);
+
+        return back()->with('success', $data['status'] === 'active'
+            ? "{$count} ".Str::plural('product', $count).' now offered to photographers.'
+            : "{$count} ".Str::plural('product', $count).' hidden from photographers and clients. Past orders are unaffected.');
+    }
+
+    /**
+     * One preview image for every size of a product (a group). Sizes keep any
+     * image of their own unless "replace" is ticked.
+     */
+    public function groupImage(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'group' => ['required', 'string', 'max:100'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'replace' => ['boolean'],
+        ]);
+
+        $sizes = ProdigiProduct::query()->where('sku', 'like', str_replace(['%', '_'], ['\\%', '\\_'], $data['group']).'%')->get()
+            ->filter(fn (ProdigiProduct $p) => $p->groupKey() === strtoupper($data['group']));
+        if ($sizes->isEmpty()) {
+            throw ValidationException::withMessages(['image' => 'No products in that group.']);
+        }
+        $targets = $request->boolean('replace') ? $sizes : $sizes->whereNull('image_path');
+        if ($targets->isEmpty()) {
+            return back()->with('info', 'Every size already has its own image. Tick “Replace” to use this one for all of them.');
+        }
+
+        $path = $request->file('image')->store('catalogue', 's3');
+        foreach ($targets as $product) {
+            $old = $product->image_path;
+            $product->update(['image_path' => $path]);
+            ProdigiProduct::deleteImageIfUnused($old);
+        }
+
+        return back()->with('success', 'Image set for '.$targets->count().' '.Str::plural('size', $targets->count()).'.');
     }
 
     public function toggle(ProdigiProduct $product): RedirectResponse
