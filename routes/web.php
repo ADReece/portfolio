@@ -229,6 +229,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/print-catalogue/discover', [AdminPrintCatalogueController::class, 'discover'])->middleware('throttle:5,1')->name('print-catalogue.discover');
     Route::post('/print-catalogue/bulk-status', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'bulkStatus'])->name('print-catalogue.bulk-status');
     Route::post('/print-catalogue/group-image', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'groupImage'])->name('print-catalogue.group-image');
+    Route::post('/print-catalogue/mockups', [App\Http\Controllers\Admin\AdminPrintCatalogueController::class, 'mockups'])->middleware('throttle:5,1')->name('print-catalogue.mockups');
     Route::post('/print-catalogue/refresh-all', [AdminPrintCatalogueController::class, 'refreshAll'])->middleware('throttle:5,1')->name('print-catalogue.refresh-all');
     Route::get('/print-catalogue/{product}/edit', [AdminPrintCatalogueController::class, 'edit'])->name('print-catalogue.edit');
     Route::put('/print-catalogue/{product}', [AdminPrintCatalogueController::class, 'update'])->name('print-catalogue.update');

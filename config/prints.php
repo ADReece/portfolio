@@ -50,4 +50,12 @@ return [
         ],
         'paper_sizes' => ['A5', 'A4', 'A3', 'A2', 'A1', 'A0'],
     ],
+
+    // Sample photos for catalogue mockups (App\Prints\MockupGenerator), from
+    // our Pexels-licensed marketing set, by the product's shape.
+    'mockup_photos' => [
+        'landscape' => 'images/marketing/hero-800.jpg',
+        'portrait' => 'images/marketing/landscapes-3-800.jpg',
+        'square' => 'images/marketing/landscapes-1-800.jpg',
+    ],
 ];

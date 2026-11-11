@@ -47,7 +47,11 @@
                         <div class="mt-2 flex flex-wrap items-center gap-4">
                             @if($url = $product->imageUrl())
                                 <img src="{{ $url }}" alt="Current preview of {{ $product->name }}" class="size-24 rounded-md object-cover">
-                                <x-ui.checkbox name="remove_image" label="Remove image" :unchecked-value="null" />
+                                @if($product->hasUploadedImage())
+                                    <x-ui.checkbox name="remove_image" label="Remove image" :unchecked-value="null" description="The generated mockup is used instead." />
+                                @else
+                                    <p class="max-w-xs text-sm text-gray-600 dark:text-gray-400">A mockup we generated. Upload a photo of the real product to use that instead.</p>
+                                @endif
                             @endif
                             <div>
                                 <label for="image" class="sr-only">Upload a preview image</label>

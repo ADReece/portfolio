@@ -29,6 +29,7 @@ abstract class PrintCatalogueTestCase extends TestCase
             'prints.fallback_retail_price' => 29.99,
         ]);
         Http::preventStrayRequests();
+        \Illuminate\Support\Facades\Storage::fake('s3'); // generated mockups
     }
 
     protected function productPayload(string $sku = 'GLOBAL-CFPM-16X20', array $attributes = ['color' => ['black', 'white', 'natural']]): array

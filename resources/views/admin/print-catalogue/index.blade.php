@@ -5,6 +5,10 @@
     <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <x-ui.page-header title="Print catalogue" description="The Prodigi products photographers can offer, with costs, default prices and minimums.">
             <x-slot:actions>
+                <form method="POST" action="{{ route('admin.print-catalogue.mockups') }}">
+                    @csrf
+                    <x-ui.button type="submit" variant="secondary" icon="photo">Generate mockups</x-ui.button>
+                </form>
                 <form method="POST" action="{{ route('admin.print-catalogue.refresh-all') }}">
                     @csrf
                     <x-ui.button type="submit" variant="secondary" icon="arrow-path" :disabled="! $prodigiReady">Refresh all from Prodigi</x-ui.button>
