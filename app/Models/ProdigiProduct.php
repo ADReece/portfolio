@@ -143,6 +143,58 @@ class ProdigiProduct extends Model
         return 'Prints';
     }
 
+    /** A trailing size segment: 16X20, 10X8, 11.7X16.5, A4, 11OZ, 30CM… */
+    private const SIZE_SUFFIX = '/-(\d+(\.\d+)?X\d+(\.\d+)?|A\d|\d+(\.\d+)?(OZ|CM|MM|IN|ML))$/i';
+
+    /**
+     * The product a SKU is a size of: the SKU without its size, e.g.
+     * GLOBAL-CAN-16X20 → GLOBAL-CAN. SKUs without a size are their own group.
+     */
+    public function groupKey(): string
+    {
+        return strtoupper(preg_replace(self::SIZE_SUFFIX, '', $this->sku));
+    }
+
+    /**
+     * A name for a group of sizes: the discovery family's label (e.g. "Canvas"),
+     * else the first product's name without its size.
+     *
+     * @param  \Illuminate\Support\Collection<int, self>  $products
+     */
+    public static function groupLabel(string $key, \Illuminate\Support\Collection $products): string
+    {
+        $family = preg_replace('/^GLOBAL-/', '', $key);
+        if ($label = config('prints.discovery.families.'.$family)) {
+            return $label;
+        }
+        $name = (string) $products->first()?->name;
+        $clean = trim(preg_replace(['/\b\d+(\.\d+)?\s*[x×]\s*\d+(\.\d+)?\s*("|in|cm|mm)?/i', '/\bA\d\b/', '/\s*,\s*,/', '/\s{2,}/'], ['', '', ',', ' '], $name), " ,-–");
+
+        return $clean !== '' ? $clean : $key;
+    }
+
+    /** Print area in square units, for listing sizes smallest first. */
+    public function sizeArea(): float
+    {
+        $dims = $this->raw_payload['productDimensions'] ?? [];
+        if (isset($dims['width'], $dims['height']) && is_numeric($dims['width']) && is_numeric($dims['height'])) {
+            return (float) $dims['width'] * (float) $dims['height'];
+        }
+        if (preg_match('/-(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)$/i', $this->sku, $m)) {
+            return (float) $m[1] * (float) $m[2];
+        }
+
+        return PHP_FLOAT_MAX;
+    }
+
+    /** Images can be shared by a group's sizes: only delete a file nothing else uses. */
+    public static function deleteImageIfUnused(?string $path, ?int $exceptId = null): void
+    {
+        if ($path && ! self::query()->where('image_path', $path)->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->exists()) {
+            Storage::disk('s3')->delete($path);
+        }
+    }
+
     public static function labelAttribute(string $name): string
     {
         return ucfirst(trim(preg_replace('/(?<!^)[A-Z]/', ' $0', $name)));
