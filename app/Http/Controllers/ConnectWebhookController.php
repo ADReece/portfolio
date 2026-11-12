@@ -25,17 +25,27 @@ class ConnectWebhookController extends Controller
             return response('Payouts are not set up', 404);
         }
 
-        try {
-            $event = Webhook::constructEvent(
-                $request->getContent(),
-                (string) $request->header('Stripe-Signature'),
-                (string) config('services.portfolio_connect.webhook_secret'),
-                (int) config('cashier.webhook.tolerance', 300),
-            )->toArray();
-        } catch (SignatureVerificationException $e) {
+        // Stripe signs "Your account" and "Connected accounts" endpoints with
+        // different secrets; both can be set, separated by a comma.
+        $secrets = array_filter(array_map('trim', explode(',', (string) config('services.portfolio_connect.webhook_secret'))));
+        $event = null;
+        foreach ($secrets as $secret) {
+            try {
+                $event = Webhook::constructEvent(
+                    $request->getContent(),
+                    (string) $request->header('Stripe-Signature'),
+                    $secret,
+                    (int) config('cashier.webhook.tolerance', 300),
+                )->toArray();
+                break;
+            } catch (SignatureVerificationException $e) {
+                continue;
+            } catch (\UnexpectedValueException $e) {
+                return response('Invalid payload', 400);
+            }
+        }
+        if ($event === null) {
             return response('Invalid signature', 403);
-        } catch (\UnexpectedValueException $e) {
-            return response('Invalid payload', 400);
         }
 
         $object = $event['data']['object'] ?? [];
