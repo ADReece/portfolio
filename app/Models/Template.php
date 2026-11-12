@@ -50,10 +50,6 @@ class Template extends Model
             return null;
         }
 
-        if (app()->isLocal()) {
-            return Storage::disk('s3')->url($this->overlay_path);
-        }
-
         return Storage::disk('s3')->temporaryUrl($this->overlay_path, now()->addMinutes(10));
     }
 

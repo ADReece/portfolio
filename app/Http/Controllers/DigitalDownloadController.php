@@ -62,7 +62,11 @@ class DigitalDownloadController extends Controller
             );
             $disk = Storage::disk('s3');
             foreach ($photos as $index => $photo) {
-                $stream = $disk->readStream($photo->url);
+                try {
+                    $stream = $disk->readStream($photo->url);
+                } catch (\Throwable) {
+                    $stream = null; // storage errors throw on S3
+                }
                 if (! $stream) {
                     \Log::warning('Paid download missing from storage', ['order_id' => $order->id, 'photo_id' => $photo->id]);
 

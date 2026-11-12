@@ -67,8 +67,9 @@ contains no secrets.
 - **Redis:** not needed. The queue and sessions use the database, and the
   cache uses files.
 - **Uploads:** the `storage` named volume at `storage/app`, shared by web
-  (which receives uploads) and queue (which processes them). Setting the
-  `AWS_*` variables with a bucket switches to S3, as the old server used.
+  (which receives uploads) and queue (which processes them). Setting
+  `AWS_BUCKET` (with the other `AWS_*` variables) switches to S3-compatible
+  object storage; see "Moving media to object storage" below.
 - **Proxy:** the app trusts `X-Forwarded-*` from any proxy, so URLs and
   secure cookies are https behind Traefik. Don't publish port 8080 on the host.
 
@@ -93,6 +94,28 @@ php artisan db:seed --class=SubscriptionPlanSeeder --force   # default plans, fi
 php artisan key:generate --show      # print a new APP_KEY
 php artisan queue:failed             # inspect failed jobs
 ```
+
+## Moving media to object storage (Hetzner, fsn1)
+
+Media lives under `storage/app/media` (`photos/`, `thumbnails/`,
+`watermarked/`, `logos/`, `catalogue/`, `templates/`, `fonts/`,
+`archives/`). Object keys are the same paths, so:
+
+1. Create a **private** bucket in fsn1 and an access key for it.
+2. Copy the files: `rclone copy <volume>/media hetzner:<bucket>` (keys at the
+   bucket root, no `media/` prefix).
+3. In Coolify set `AWS_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+   `AWS_DEFAULT_REGION=fsn1`, `AWS_ENDPOINT=https://fsn1.your-objectstorage.com`
+   and `AWS_USE_PATH_STYLE_ENDPOINT=true`, leave `AWS_URL` empty, then
+   redeploy.
+4. Check a gallery (thumbnails and lightbox), an upload (it reaches "ready"),
+   a single download and a "Download all".
+
+Every link the app gives out is signed and expires, and the Content
+Security Policy allows the endpoint's host automatically. Storage errors
+(wrong key or endpoint) throw and are logged rather than silently losing
+uploads. To roll back, unset `AWS_BUCKET` and redeploy; the old `media/`
+folder is used again.
 
 ## Moving from dev2.ascend-digital.co.uk
 

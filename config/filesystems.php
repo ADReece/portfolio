@@ -56,7 +56,10 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            // Everything is private; the app hands out signed, expiring links.
+            'visibility' => 'private',
+            // Fail loudly: a wrong key or endpoint must not silently lose uploads.
+            'throw' => true,
         ] : [
             'driver' => 'local',
             'root' => storage_path('app/media'),
