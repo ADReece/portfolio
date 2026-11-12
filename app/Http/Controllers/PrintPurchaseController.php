@@ -156,18 +156,20 @@ class PrintPurchaseController extends Controller
             return $order;
         });
 
-        $stripe = app(\Stripe\StripeClient::class);
-
-        $session = $stripe->checkout->sessions->create([
+        // A destination charge on Portfolio's Connect platform: the client pays
+        // Portfolio, Stripe moves the photographer's share to their Express
+        // account, and the application fee (print cost + our fee) stays with us.
+        $session = \App\Billing\Payouts::stripe()->checkout->sessions->create([
             'mode' => 'payment',
             'success_url' => route('print-purchase.success', ['order' => $order->id]) . '?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('print-purchase.cancel', ['order' => $order->id]),
             'payment_method_types' => ['card'],
             'customer_email' => $validated['customer_email'],
-            // The Stripe account is shared with other Ascend Digital apps; tag
-            // everything so webhooks and reports can tell Portfolio's apart.
             'metadata' => ['app' => 'portfolio', 'order_id' => (string) $order->id],
             'payment_intent_data' => [
+                'application_fee_amount' => \App\Billing\Payouts::applicationFee($total, $photographerAmount),
+                'transfer_data' => ['destination' => $photographer->stripe_connect_id],
+                'description' => 'Print order '.$order->id,
                 'metadata' => [
                     'app' => 'portfolio',
                     'order_id' => (string) $order->id,
@@ -247,7 +249,7 @@ class PrintPurchaseController extends Controller
         $photographer = $photo->user;
         $collection = $photo->set?->collection;
 
-        if (! (\App\Billing\Payouts::available() || $photographer?->is_demo)
+        if (! \App\Billing\Payouts::canPay($photographer)
             || ! $photo->isReady()
             || ! $photographer || ! $collection
             || ! $photographer->hasFeature('selling')

@@ -56,10 +56,10 @@ class DashboardController extends Controller
             ] : null,
             $sellsPrints ? [
                 'title' => 'Start selling prints',
-                'description' => 'Choose print products and connect Stripe to get paid.',
+                'description' => 'Choose print products and set up payouts to get paid.',
                 'done' => $hasPrintProducts && $user->stripe_connect_enabled,
                 'href' => $hasPrintProducts ? route('connect.stripe') : route('profile.prodigi-products.edit'),
-                'action' => $hasPrintProducts ? 'Connect Stripe' : 'Choose print products',
+                'action' => $hasPrintProducts ? 'Set up payouts' : 'Choose print products',
             ] : null,
         ])->filter()->values();
 

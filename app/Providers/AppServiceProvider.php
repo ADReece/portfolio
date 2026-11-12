@@ -18,6 +18,11 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(\App\CustomDomains\DnsResolver::class, \App\CustomDomains\SystemDnsResolver::class);
+        // Portfolio's Connect account (App\Billing\Payouts), not the shared subscriptions account.
+        $this->app->bind('stripe.connect', fn () => new \Stripe\StripeClient([
+            'api_key' => config('services.portfolio_connect.secret') ?: null,
+            'stripe_version' => \Laravel\Cashier\Cashier::STRIPE_VERSION,
+        ]));
         $this->app->singleton(\App\CustomDomains\DomainRegistry::class);
         $this->app->bind(\App\Videos\MultipartUploads::class, \App\Videos\S3MultipartUploads::class);
         $this->app->bind(\App\Videos\VideoProbe::class, \App\Videos\FfmpegProbe::class);

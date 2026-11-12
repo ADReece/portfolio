@@ -38,12 +38,14 @@ class DemoAccountTest extends TestCase
             ],
         ]);
         // Stripe must never be called for the demo.
-        $this->app->instance(StripeClient::class, new class {
+        $never = new class {
             public function __get($name)
             {
                 throw new \LogicException('Stripe was called for the demo');
             }
-        });
+        };
+        $this->app->instance(StripeClient::class, $never);
+        $this->app->instance('stripe.connect', $never);
     }
 
     private function fakeUnsplash(): void

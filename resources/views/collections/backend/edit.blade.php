@@ -146,7 +146,7 @@
                                     <a href="{{ route('profile.digital-sales.edit') }}" class="font-medium text-brand-700 underline underline-offset-4 dark:text-brand-300">{{ $owner->digital_bundles ? 'Change your bundles' : 'Photo downloads' }}</a>.
                                 </p>
                                 @if(! \App\Billing\Payouts::available() || ! $owner->stripe_connect_enabled)
-                                    <p class="text-sm text-amber-800 dark:text-amber-300">Clients can buy once {{ \App\Billing\Payouts::available() ? 'you connect Stripe in Payouts' : 'payouts are ready' }}.</p>
+                                    <p class="text-sm text-amber-800 dark:text-amber-300">Clients can buy once {{ \App\Billing\Payouts::available() ? 'you set up payouts' : 'payouts are ready' }}.</p>
                                 @endif
                             </div>
                         </div>

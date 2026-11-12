@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Billing\Payouts;
 use App\Downloads\DigitalPricing;
 use App\Downloads\DigitalSales;
 use App\Models\Collection;
@@ -16,7 +17,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Stripe\StripeClient;
 
 /**
  * Clients buying full-resolution downloads from a collection: pick photos,
@@ -115,15 +115,18 @@ class DownloadPurchaseController extends Controller
         });
 
         $count = $photos->count();
-        $session = app(StripeClient::class)->checkout->sessions->create([
+        // A destination charge: the photographer's share goes to their Express account.
+        $session = Payouts::stripe()->checkout->sessions->create([
             'mode' => 'payment',
             'success_url' => route('download-purchase.success', ['order' => $order->id]).'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('download-purchase.cancel', ['order' => $order->id]),
             'payment_method_types' => ['card'],
             'customer_email' => $validated['customer_email'],
-            // The Stripe account is shared with other Ascend Digital apps.
             'metadata' => ['app' => 'portfolio', 'order_id' => (string) $order->id],
             'payment_intent_data' => [
+                'application_fee_amount' => Payouts::applicationFee($total, (float) $order->photographer_amount),
+                'transfer_data' => ['destination' => $photographer->stripe_connect_id],
+                'description' => 'Download order '.$order->id,
                 'metadata' => [
                     'app' => 'portfolio',
                     'order_id' => (string) $order->id,

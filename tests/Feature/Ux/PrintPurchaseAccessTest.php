@@ -17,7 +17,7 @@ class PrintPurchaseAccessTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.stripe.connect_client_id' => 'ca_test']);
+        \Tests\Support\FakeConnectStripe::install($this->app);
         // Photo thumbnails are presigned S3 URLs; signing is local, so fake credentials are enough.
         config(['filesystems.disks.s3' => array_merge(config('filesystems.disks.s3'), [
             'key' => 'test', 'secret' => 'test', 'region' => 'eu-west-2', 'bucket' => 'test-bucket',
@@ -27,7 +27,7 @@ class PrintPurchaseAccessTest extends TestCase
     private function sellingPhotoIn(Collection $collection): Photo
     {
         $owner = $collection->user;
-        $owner->forceFill(['is_admin' => true])->save(); // admins have every feature
+        $owner->forceFill(['is_admin' => true, 'stripe_connect_id' => 'acct_1', 'stripe_connect_enabled' => true])->save(); // admins have every feature
 
         $product = ProdigiProduct::query()->create([
             'sku' => 'GLOBAL-FAP-10x8', 'name' => '10x8 Fine Art Print', 'category' => 'Prints',
@@ -71,7 +71,7 @@ class PrintPurchaseAccessTest extends TestCase
 
     public function test_prints_cannot_be_bought_while_payouts_are_unavailable(): void
     {
-        config(['services.stripe.connect_client_id' => null]);
+        config(['services.portfolio_connect.secret' => null]);
         $owner = User::factory()->create();
         $collection = Collection::factory()->published()->create(['user_id' => $owner->id]);
         $photo = $this->sellingPhotoIn($collection);

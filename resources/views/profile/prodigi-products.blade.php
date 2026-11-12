@@ -19,8 +19,8 @@
 
         @unless($user->stripe_connect_enabled)
             @if(\App\Billing\Payouts::available())
-            <x-ui.alert title="Connect Stripe to get paid">
-                Print earnings are paid to your Stripe account. Connect it before clients start ordering.
+            <x-ui.alert title="Set up payouts to get paid">
+                Print earnings are paid into your bank through Stripe. Set up payouts before clients start ordering.
                 <x-slot:actions><x-ui.button size="sm" variant="secondary" :href="route('connect.stripe')">Set up payouts</x-ui.button></x-slot:actions>
             </x-ui.alert>
             @else
