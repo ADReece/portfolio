@@ -9,6 +9,9 @@
     <div class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <x-ui.page-header :title="$collection->name" :back="route('collections.index')" back-label="Collections">
             <x-slot:actions>
+                <x-ui.button variant="secondary" icon="heart" :href="route('collections.client-favourites.index', $collection->id)">
+                    Client favourites @if($favouriteCount = $collection->favouriteLists()->whereNotNull('submitted_at')->count())<x-ui.badge tone="brand">{{ $favouriteCount }}</x-ui.badge>@endif
+                </x-ui.button>
                 @if($isPublished)
                     <x-ui.button variant="secondary" icon="eye" :href="$shareUrl" target="_blank" rel="noopener">View as client</x-ui.button>
                 @endif

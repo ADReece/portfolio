@@ -81,6 +81,22 @@ test('client: private gallery password page', async ({ page }) => {
     await expectNoViolations(page, 'gallery password page');
 });
 
+test('client: favourites in a private gallery', async ({ page }) => {
+    await logIn(page);
+    await page.goto('/collections?show=private');
+    await page.locator("main ul[role=list] a").first().click();
+    const link = await page.locator('#collection-link').inputValue();
+    await page.context().clearCookies();
+    await page.goto(link);
+    await page.fill('input[name=password]', 'wedding');
+    await page.keyboard.press('Enter');
+    await page.locator('#masonry [data-favourite]').first().dispatchEvent('click');
+    await expect(page.locator('#favourites-bar')).toBeVisible();
+    await page.getByRole('button', { name: /Send to/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Send your favourites' })).toBeVisible();
+    await expectNoViolations(page, 'favourites dialog');
+});
+
 test('app: admin edit print product', async ({ page }) => {
     await logIn(page);
     await page.goto('/admin/print-catalogue');
