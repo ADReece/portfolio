@@ -25,6 +25,7 @@ class Collection extends Model
         'hide_from_portfolio',
         'cover_photo_object_position',
         'digital_sales',
+        'favourites_enabled',
         'digital_photo_price',
         'digital_collection_price',
     ];
@@ -35,6 +36,7 @@ class Collection extends Model
         'watermarked' => 'boolean',
         'hide_from_portfolio' => 'boolean',
         'digital_sales' => 'boolean',
+        'favourites_enabled' => 'boolean',
         'digital_photo_price' => 'decimal:2',
         'digital_collection_price' => 'decimal:2',
     ];
@@ -68,6 +70,11 @@ class Collection extends Model
             'bottom-left' => 'left bottom',
             default => 'center center',
         };
+    }
+
+    public function favouriteLists(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FavouriteList::class);
     }
 
     public function user() : BelongsTo

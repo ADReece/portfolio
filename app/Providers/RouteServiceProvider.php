@@ -47,6 +47,10 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting()
     {
+        // Client favourites: hearts and sends counted separately, per visitor.
+        RateLimiter::for('favourites', fn (Request $request) => Limit::perMinute(120)->by('fav:'.$request->ip()));
+        RateLimiter::for('favourites-submit', fn (Request $request) => Limit::perMinute(6)->by('fav-submit:'.$request->ip()));
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });

@@ -9,7 +9,7 @@
             <li><a href="{{ $links['weddings'] }}" class="font-medium underline underline-offset-4">Buy photos</a> from the weddings: per photo, in bundles, or the whole collection.</li>
         @endif
         @if($links['client'])
-            <li><a href="{{ $links['client'] }}" class="font-medium underline underline-offset-4">Open a private client gallery</a> with the password <strong class="font-mono">{{ config('demo.client_gallery_password') }}</strong>.</li>
+            <li><a href="{{ $links['client'] }}" class="font-medium underline underline-offset-4">Open a private client gallery</a> with the password <strong class="font-mono">{{ config('demo.client_gallery_password') }}</strong>, heart your favourites and send them.</li>
         @endif
         <li><strong class="font-medium">Order a print:</strong> hover a photo (or tap it on a phone) and choose the cart.</li>
         @if($links['portraits'])

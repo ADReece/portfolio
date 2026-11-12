@@ -45,6 +45,7 @@ class User extends Authenticatable
         'copy_protection',
         'digital_photo_price',
         'digital_bundles',
+        'notify_favourites',
         'feature_override',
         'feature_override_expires_at',
         'is_admin',
@@ -84,6 +85,7 @@ class User extends Authenticatable
         'feature_override_expires_at' => 'datetime',
         'is_admin' => 'boolean',
         'is_demo' => 'boolean',
+        'notify_favourites' => 'boolean',
     ];
 
     protected $with = ['subscriptionPlan'];

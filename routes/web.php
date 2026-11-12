@@ -117,6 +117,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile/downloads', [DigitalSalesSettingsController::class, 'edit'])->name('profile.digital-sales.edit');
     Route::patch('/profile/downloads', [DigitalSalesSettingsController::class, 'update'])->name('profile.digital-sales.update');
+    Route::get('/collections/{collection}/client-favourites', [App\Http\Controllers\ClientFavouritesController::class, 'index'])->name('collections.client-favourites.index');
+    Route::patch('/collections/{collection}/client-favourites', [App\Http\Controllers\ClientFavouritesController::class, 'settings'])->name('collections.client-favourites.settings');
+    Route::get('/collections/{collection}/client-favourites/{list}', [App\Http\Controllers\ClientFavouritesController::class, 'show'])->name('collections.client-favourites.show');
+    Route::get('/collections/{collection}/client-favourites/{list}/filenames.txt', [App\Http\Controllers\ClientFavouritesController::class, 'export'])->name('collections.client-favourites.export');
+    Route::delete('/collections/{collection}/client-favourites/{list}', [App\Http\Controllers\ClientFavouritesController::class, 'destroy'])->name('collections.client-favourites.destroy');
     Route::patch('/collections/{collection}/downloads', [DigitalSalesSettingsController::class, 'updateCollection'])->name('collections.digital-sales.update');
     Route::get('/profile/print-products', [ProdigiProductSettingsController::class, 'edit'])->name('profile.prodigi-products.edit');
     Route::patch('/profile/print-products', [ProdigiProductSettingsController::class, 'update'])->name('profile.prodigi-products.update');
@@ -186,6 +191,11 @@ Route::get('/collections/{collection}/download-archive/{filename}', [CollectionC
 // Custom domains: answers our HTTPS check (App\CustomDomains\CertificateCheck) on any host.
 Route::get('/.well-known/portfolio-domain', fn (\Illuminate\Http\Request $request) => response(\App\CustomDomains\CertificateCheck::token($request->getHost()), 200, ['Content-Type' => 'text/plain', 'Cache-Control' => 'no-store']))
     ->name('custom-domains.check');
+
+// Client favourites (proofing): public, rate-limited, per-browser picks.
+Route::get('/collections/{collection}/favourites', [App\Http\Controllers\FavouriteController::class, 'show'])->middleware('throttle:favourites')->name('favourites.show');
+Route::post('/collections/{collection}/favourites/submit', [App\Http\Controllers\FavouriteController::class, 'submit'])->middleware('throttle:favourites-submit')->name('favourites.submit');
+Route::post('/collections/{collection}/favourites/{photo}', [App\Http\Controllers\FavouriteController::class, 'toggle'])->middleware('throttle:favourites')->name('favourites.toggle');
 
 // Buying full-resolution downloads from a collection, and the buyer's
 // download links (signed, from the delivery email).

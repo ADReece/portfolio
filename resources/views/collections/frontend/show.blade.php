@@ -133,4 +133,103 @@
             });
         }
     </script>
+    @if($collection->favourites_enabled)
+        {{-- Client favourites (proofing): hearts on the photos, a bar with the count, and a form to send them. --}}
+        <div id="favourites-bar" hidden class="portfolio-neutral fixed inset-x-0 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-full bg-white px-4 py-2 text-sm text-gray-900 shadow-xl ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-700">
+            <span aria-live="polite"><span class="text-rose-600" aria-hidden="true">&#9829;</span> <span data-fav-count>0</span> <span data-fav-label>favourites</span><span data-fav-sent hidden> · sent</span></span>
+            <button type="button" data-fav-open class="rounded-full bg-gray-900 px-4 py-1.5 font-semibold text-white hover:bg-gray-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-gray-500 dark:bg-white dark:text-gray-900">Send to {{ $photographerName }}</button>
+        </div>
+        <dialog id="favourites-dialog" aria-labelledby="favourites-title"
+                class="portfolio-neutral w-[min(32rem,calc(100%-2rem))] rounded-card bg-white p-0 text-gray-900 shadow-2xl backdrop:bg-black/50 dark:bg-gray-900 dark:text-gray-100">
+            <form method="dialog" data-fav-form class="space-y-4 p-6">
+                <h2 id="favourites-title" class="text-lg font-semibold">Send your favourites</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ $photographerName }} will see the <span data-fav-count>0</span> photos you've hearted. You can keep changing them and send again.</p>
+                <div>
+                    <label for="fav-name" class="block text-sm font-medium">Your name <span class="font-normal text-gray-500">(optional)</span></label>
+                    <input id="fav-name" name="name" maxlength="100" autocomplete="name" class="mt-1 w-full rounded-control border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+                </div>
+                <div>
+                    <label for="fav-email" class="block text-sm font-medium">Your email <span class="font-normal text-gray-500">(optional)</span></label>
+                    <input id="fav-email" name="email" type="email" maxlength="255" autocomplete="email" class="mt-1 w-full rounded-control border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+                </div>
+                <div>
+                    <label for="fav-note" class="block text-sm font-medium">A note <span class="font-normal text-gray-500">(optional)</span></label>
+                    <textarea id="fav-note" name="note" rows="3" maxlength="2000" class="mt-1 w-full rounded-control border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-800" placeholder="e.g. these for the album, the first one as a large print"></textarea>
+                </div>
+                <p data-fav-status role="status" class="text-sm"></p>
+                <div class="flex justify-end gap-3">
+                    <button type="button" data-fav-close class="rounded-control px-4 py-2 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800">Close</button>
+                    <button type="submit" value="send" class="rounded-control bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900">Send favourites</button>
+                </div>
+            </form>
+        </dialog>
+        <script>
+        (function () {
+            var stateUrl = @js(route('favourites.show', $collection));
+            var toggleUrl = @js(url('/collections/'.$collection->id.'/favourites')) + '/';
+            var submitUrl = @js(route('favourites.submit', $collection));
+            var csrf = document.querySelector('meta[name="csrf-token"]').content;
+            var ids = new Set();
+            var bar = document.getElementById('favourites-bar');
+            var dialog = document.getElementById('favourites-dialog');
+            var form = dialog.querySelector('[data-fav-form]');
+            var status = dialog.querySelector('[data-fav-status]');
+            var field = function (name) { return form.elements.namedItem(name); };
+
+            function request(url, body) {
+                return fetch(url, {
+                    method: body ? 'POST' : 'GET',
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: body ? JSON.stringify(body) : undefined,
+                    credentials: 'same-origin',
+                }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.message || 'Something went wrong. Please try again.'); return d; }); });
+            }
+            function apply(state) {
+                ids = new Set(state.ids || []);
+                document.querySelectorAll('[data-fav-count]').forEach(function (el) { el.textContent = ids.size; });
+                bar.querySelector('[data-fav-label]').textContent = ids.size === 1 ? 'favourite' : 'favourites';
+                bar.querySelector('[data-fav-sent]').hidden = !state.submitted_at;
+                bar.hidden = ids.size === 0;
+                sync(document);
+                if (state.name !== undefined) {
+                    field('name').value = field('name').value || state.name || '';
+                    field('email').value = field('email').value || state.email || '';
+                    field('note').value = field('note').value || state.note || '';
+                }
+            }
+            function sync(root) {
+                root.querySelectorAll('[data-favourite]').forEach(function (b) {
+                    b.setAttribute('aria-pressed', ids.has(b.getAttribute('data-favourite')) ? 'true' : 'false');
+                });
+            }
+            // The grid copies photos into columns as it lays them out: keep new hearts in step.
+            new MutationObserver(function (records) {
+                records.forEach(function (r) { r.addedNodes.forEach(function (n) { if (n.querySelectorAll) sync(n); }); });
+            }).observe(document.body, { childList: true, subtree: true });
+
+            document.addEventListener('click', function (e) {
+                var b = e.target.closest('[data-favourite]');
+                if (!b) return;
+                e.preventDefault();
+                e.stopPropagation();
+                b.disabled = true;
+                request(toggleUrl + encodeURIComponent(b.getAttribute('data-favourite')), {})
+                    .then(apply)
+                    .catch(function (err) { window.showErrorToast ? window.showErrorToast(err.message) : alert(err.message); })
+                    .finally(function () { b.disabled = false; });
+            }, true);
+            bar.querySelector('[data-fav-open]').addEventListener('click', function () { status.textContent = ''; dialog.showModal(); });
+            dialog.querySelector('[data-fav-close]').addEventListener('click', function () { dialog.close(); });
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                status.textContent = 'Sending…';
+                status.className = 'text-sm';
+                request(submitUrl, { name: field('name').value, email: field('email').value, note: field('note').value })
+                    .then(function (d) { apply(d); status.textContent = d.message; status.className = 'text-sm text-green-700 dark:text-green-400'; })
+                    .catch(function (err) { status.textContent = err.message; status.className = 'text-sm text-red-700 dark:text-red-400'; });
+            });
+            request(stateUrl).then(apply).catch(function () {});
+        })();
+        </script>
+    @endif
 </x-collection-layout>

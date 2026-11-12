@@ -254,7 +254,7 @@
                     <ul role="list" class="mt-6 space-y-2 text-stone-700 dark:text-stone-300">
                         <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-1 size-4 shrink-0 text-green-700 dark:text-green-400" />Password-protected galleries</li>
                         <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-1 size-4 shrink-0 text-green-700 dark:text-green-400" />Hidden from your public portfolio</li>
-                        <li class="flex gap-2"><x-ui.icon name="clock" variant="m" class="mt-1 size-4 shrink-0 text-amber-700 dark:text-amber-400" /><span>Clients pick favourites <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Coming soon</span></span></li>
+                        <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-1 size-4 shrink-0 text-green-700 dark:text-green-400" />Clients heart their favourites and send you the list, ready for Lightroom</li>
                     </ul>
                 </div>
                 <div class="rounded-2xl bg-stone-100 p-4 shadow-sm ring-1 ring-stone-200 sm:p-6 dark:bg-stone-800 dark:ring-stone-700"
@@ -288,7 +288,7 @@
                         </div>
                     </div>
                     <p x-show="unlocked" x-cloak class="mt-3 text-sm text-stone-600 dark:text-stone-400" aria-live="polite">
-                        <span x-text="picks.length"></span> favourites picked. A preview: client favourites are coming soon.
+                        <span x-text="picks.length"></span> favourites picked. In a real gallery, clients send their picks to you.
                     </p>
                 </div>
             </section>
