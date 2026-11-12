@@ -147,4 +147,18 @@ class PrintSaleWebhookTest extends TestCase
         $this->send(['type' => 'account.application.deauthorized', 'account' => 'acct_other', 'data' => ['object' => ['id' => 'ca_1', 'object' => 'application']]])->assertOk();
         $this->assertNull($other->fresh()->stripe_connect_id);
     }
+
+    public function test_both_endpoint_secrets_are_accepted(): void
+    {
+        config(['services.portfolio_connect.webhook_secret' => 'whsec_platform, whsec_connected']);
+        $user = User::factory()->create(['stripe_connect_id' => 'acct_9']);
+        $event = ['type' => 'account.updated', 'account' => 'acct_9', 'data' => ['object' => [
+            'id' => 'acct_9', 'object' => 'account', 'charges_enabled' => true, 'payouts_enabled' => true,
+        ]]];
+
+        $this->send($event, 'whsec_other')->assertForbidden();
+        $this->send($event, 'whsec_connected')->assertOk();
+        $this->assertTrue($user->fresh()->stripe_connect_enabled);
+        $this->send($this->paymentEvent('payment_intent.payment_failed'), 'whsec_platform')->assertOk();
+    }
 }
