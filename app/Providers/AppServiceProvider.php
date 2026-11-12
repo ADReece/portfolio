@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(\App\CustomDomains\DnsResolver::class, \App\CustomDomains\SystemDnsResolver::class);
         $this->app->singleton(\App\CustomDomains\DomainRegistry::class);
+        $this->app->bind(\App\Videos\MultipartUploads::class, \App\Videos\S3MultipartUploads::class);
+        $this->app->bind(\App\Videos\VideoProbe::class, \App\Videos\FfmpegProbe::class);
 
         // routes/web.php defines Cashier's payment and webhook routes itself
         // (the webhook uses App\Http\Controllers\WebhookController). Cashier's

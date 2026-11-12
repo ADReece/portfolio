@@ -143,7 +143,8 @@ class HomePageTest extends TestCase
     {
         $html = $this->get('/')->getContent();
 
-        $this->assertMatchesRegularExpression('#Video galleries\s*<span[^>]*>Coming soon#', $html);
+        // Video galleries have shipped: no longer labelled.
+        $this->assertDoesNotMatchRegularExpression('#Video galleries\s*<span[^>]*>Coming soon#', $html);
         $this->assertMatchesRegularExpression('#Sell prints\s*<span[^>]*>Coming soon#', $html);
         $this->assertStringContainsString('Use your own domain, like yourname.com', $html);
     }

@@ -44,6 +44,11 @@ class Set extends Model
         return $this->hasMany(Photo::class);
     }
 
+    public function videos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Video::class)->orderBy('sort_order')->orderBy('created_at');
+    }
+
     public function templates(): BelongsToMany
     {
         return $this->belongsToMany(Template::class, 'set_templates')->withTimestamps();

@@ -10,6 +10,8 @@
 
         @livewire('set-photos', ['setId' => $set->id], key('photos-'.$set->id))
 
+        @include('videos.manage', ['set' => $set])
+
         <div x-data="{
                        selected: @js($set->templates->pluck('id')->map(fn ($id) => (string) $id)->values()),
                        saving: false,

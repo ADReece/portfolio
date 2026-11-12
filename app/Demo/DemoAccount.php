@@ -83,6 +83,7 @@ class DemoAccount
         }
         $this->covers($collections);
         $this->templates($user, $collections);
+        $this->film($user, $collections);
         $this->prints($user);
 
         return $user;
@@ -406,6 +407,48 @@ class DemoAccount
         foreach ($collections['portraits']->sets as $set) {
             $set->templates()->syncWithoutDetaching([$template->id]);
         }
+    }
+
+    /**
+     * A short film in the Weddings collection (DEMO_VIDEO_URL), stored and
+     * processed like an upload. Kept once added.
+     *
+     * @param  array<string, Collection>  $collections
+     */
+    private function film(User $user, array $collections): void
+    {
+        $url = config('demo.video_url');
+        $set = $collections['weddings']->sets->first();
+        if (! $url || ! $set) {
+            return;
+        }
+        $existing = \App\Models\Video::query()->where('user_id', $user->id)->where('original_filename', 'demo-film.mp4')->first();
+        if ($existing?->isReady()) {
+            $existing->update(['set_id' => $set->id, 'title' => config('demo.video_title')]);
+
+            return;
+        }
+        $existing?->delete();
+
+        $path = tempnam(sys_get_temp_dir(), 'demo-film');
+        $response = Http::timeout(300)->sink($path)->get($url);
+        if (! $response->successful()) {
+            @unlink($path);
+            throw new RuntimeException("Couldn't download the demo film (HTTP {$response->status()}).");
+        }
+        $video = new \App\Models\Video([
+            'user_id' => $user->id, 'set_id' => $set->id, 'title' => config('demo.video_title'),
+            'original_filename' => 'demo-film.mp4', 'mime' => 'video/mp4', 'size' => filesize($path), 'status' => \App\Models\Video::PROCESSING,
+        ]);
+        $video->id = (string) Str::uuid();
+        $video->key = 'videos/'.$user->id.'/'.$video->id.'.mp4';
+        $stream = fopen($path, 'rb');
+        Storage::disk('s3')->writeStream($video->key, $stream);
+        fclose($stream);
+        @unlink($path);
+        $video->save();
+        (new \App\Jobs\ProcessVideo($video->id))->handle(app(\App\Videos\VideoProbe::class));
+        ($this->log)('Film: '.$video->fresh()->status.'.');
     }
 
     /** Every active catalogue product, at the catalogue's default prices. */

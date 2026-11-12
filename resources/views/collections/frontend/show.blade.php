@@ -1,6 +1,10 @@
 @php
     $photographerName = $user->name ?: $user->username;
     $photoCount = $collection->sets->sum(fn ($set) => $set->photos->count());
+    // Films (Videographer plan): ready ones in this collection's sets.
+    $films = $user->hasFeature('video_upload')
+        ? \App\Models\Video::ready()->whereIn('set_id', $collection->sets->pluck('id'))->orderBy('sort_order')->orderBy('created_at')->get()
+        : collect();
 @endphp
 <x-collection-layout :user="$user"
                      :title="$collection->name.' · '.$photographerName"
@@ -53,6 +57,33 @@
             </div>
         </div>
     </header>
+
+    @if($films->isNotEmpty())
+        <section id="films" aria-labelledby="films-heading" class="gallery-section scroll-mt-4 px-4 pt-12 sm:px-8" style="background-color: var(--portfolio-bg-light, #F9FAFB); color: var(--portfolio-text-light, #1F2937);">
+            <div class="mx-auto max-w-7xl">
+                <h2 id="films-heading" class="text-2xl font-semibold">{{ $films->count() === 1 ? 'Film' : 'Films' }}</h2>
+                <ul role="list" class="mt-4 grid gap-6 md:grid-cols-2">
+                    @foreach($films as $film)
+                        <li>
+                            <figure>
+                                <video controls preload="none" playsinline class="aspect-video w-full rounded-lg bg-black object-contain shadow-lg"
+                                       @if($film->posterUrl()) poster="{{ $film->posterUrl() }}" @endif
+                                       @if($user->copy_protection) controlslist="nodownload" oncontextmenu="return false;" @endif
+                                       aria-label="{{ $film->displayTitle() }}">
+                                    <source src="{{ $film->playbackUrl() }}">
+                                    Your browser can't play this film.
+                                </video>
+                                <figcaption class="mt-2 flex justify-between gap-3 text-sm">
+                                    <span class="font-medium">{{ $film->displayTitle() }}</span>
+                                    @if($film->durationLabel())<span class="opacity-70">{{ $film->durationLabel() }}</span>@endif
+                                </figcaption>
+                            </figure>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </section>
+    @endif
 
     <!-- Photo Gallery Section -->
     <div id="gallery" class="gallery-section scroll-mt-4 py-12 px-4 sm:px-8" style="background-color: var(--portfolio-bg-light, #F9FAFB); color: var(--portfolio-text-light, #1F2937);">

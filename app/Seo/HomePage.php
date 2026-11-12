@@ -111,7 +111,7 @@ class HomePage
         ];
         $faqs[] = [
             'q' => 'Is video supported?',
-            'a' => "Video galleries are coming soon on the Videographer plan. For now, every plan shows photos.",
+            'a' => "Yes, on the Videographer plan. Upload films and highlight reels (MP4 or MOV) to any collection, including private client galleries, and clients watch them next to your photos.",
         ];
         $faqs[] = [
             'q' => 'Can my clients buy prints?',
