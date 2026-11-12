@@ -30,9 +30,8 @@ return [
         ],
         'film' => [
             'title' => 'Film & video',
-            'blurb' => 'Stills from shoots now, with video galleries coming soon.',
+            'blurb' => 'Stills and films side by side: video galleries are on the Videographer plan.',
             'photos' => 6,
-            'coming_soon' => 'Video galleries are coming soon on the Videographer plan',
         ],
     ],
 ];

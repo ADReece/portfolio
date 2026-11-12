@@ -115,6 +115,13 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile/logo', [ProfileController::class, 'removeLogo'])->name('profile.logo.remove');
 
+    // Films: the browser uploads straight to the bucket (App\Http\Controllers\VideoController).
+    Route::post('/videos/uploads', [App\Http\Controllers\VideoController::class, 'start'])->middleware('throttle:30,1')->name('videos.start');
+    Route::post('/videos/{video}/parts', [App\Http\Controllers\VideoController::class, 'parts'])->name('videos.parts');
+    Route::post('/videos/{video}/complete', [App\Http\Controllers\VideoController::class, 'complete'])->name('videos.complete');
+    Route::post('/videos/{video}/abort', [App\Http\Controllers\VideoController::class, 'abort'])->name('videos.abort');
+    Route::patch('/videos/{video}', [App\Http\Controllers\VideoController::class, 'update'])->name('videos.update');
+    Route::delete('/videos/{video}', [App\Http\Controllers\VideoController::class, 'destroy'])->name('videos.destroy');
     Route::get('/profile/downloads', [DigitalSalesSettingsController::class, 'edit'])->name('profile.digital-sales.edit');
     Route::patch('/profile/downloads', [DigitalSalesSettingsController::class, 'update'])->name('profile.digital-sales.update');
     Route::get('/collections/{collection}/client-favourites', [App\Http\Controllers\ClientFavouritesController::class, 'index'])->name('collections.client-favourites.index');

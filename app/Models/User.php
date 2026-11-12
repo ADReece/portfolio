@@ -203,6 +203,28 @@ class User extends Authenticatable
         return (int) ($plans[$this->subscriptionPlan?->slug] ?? 0);
     }
 
+    /**
+     * Video upload limits in bytes, or null when the plan has no video.
+     *
+     * @return array{max_file: int, max_total: int}|null
+     */
+    public function videoLimits(): ?array
+    {
+        if (! $this->hasFeature('video_upload')) {
+            return null;
+        }
+        $limits = ($this->is_admin || $this->isFeatureOverrideActive())
+            ? config('videos.unlimited')
+            : (config('videos.plans.'.$this->subscriptionPlan?->slug) ?? config('videos.plans.videographer'));
+
+        return ['max_file' => $limits['max_file_mb'] * 1048576, 'max_total' => $limits['max_total_mb'] * 1048576];
+    }
+
+    public function videos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Video::class);
+    }
+
     /** The public demo photographer: can't log in, never charged, checkouts and emails off. */
     public function isDemo(): bool
     {

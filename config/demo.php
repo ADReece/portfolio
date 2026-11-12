@@ -27,6 +27,12 @@ return [
     // The password-protected client gallery; shown on the demo so visitors can try it.
     'client_gallery_password' => 'demo',
 
+    // A short film for the demo's video gallery (CC0 or similar; MP4, H.264).
+    // Optional: without it the demo has no films.
+    'video_url' => env('DEMO_VIDEO_URL'),
+    'video_title' => env('DEMO_VIDEO_TITLE', 'Wedding highlights'),
+    'video_credit' => env('DEMO_VIDEO_CREDIT'),
+
     // A domain shown as an example in the "things to try" panel; never connected.
     'example_domain' => 'marlowandfinch.example',
 ];
