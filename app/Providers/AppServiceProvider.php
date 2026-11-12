@@ -24,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
             'stripe_version' => \Laravel\Cashier\Cashier::STRIPE_VERSION,
         ]));
         $this->app->singleton(\App\CustomDomains\DomainRegistry::class);
+        $this->app->bind(\App\Videos\MultipartUploads::class, \App\Videos\S3MultipartUploads::class);
+        $this->app->bind(\App\Videos\VideoProbe::class, \App\Videos\FfmpegProbe::class);
 
         // routes/web.php defines Cashier's payment and webhook routes itself
         // (the webhook uses App\Http\Controllers\WebhookController). Cashier's

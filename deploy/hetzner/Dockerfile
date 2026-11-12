@@ -17,6 +17,7 @@ RUN apk add --no-cache \
         php83-tokenizer php83-ctype php83-fileinfo php83-bcmath php83-zip php83-gd \
         php83-curl php83-openssl php83-session php83-intl php83-exif php83-iconv \
         php83-phar php83-sodium php83-pcntl php83-posix php83-pecl-imagick \
+        ffmpeg \
     && ln -sf /usr/bin/php83 /usr/bin/php \
     && addgroup -g 1000 app && adduser -D -u 1000 -G app -h /var/www app
 

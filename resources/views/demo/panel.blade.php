@@ -18,6 +18,9 @@
         @if($links['landscapes'])
             <li><a href="{{ $links['landscapes'] }}" class="font-medium underline underline-offset-4">See watermarked photos</a> in the landscapes.</li>
         @endif
+        @if(\App\Models\Video::ready()->where('user_id', $user->id)->exists() && $links['weddings'])
+            <li><a href="{{ $links['weddings'] }}#films" class="font-medium underline underline-offset-4">Watch a film</a> in the weddings gallery.</li>
+        @endif
         <li><strong class="font-medium">Your own domain:</strong> a portfolio like this can live at <span class="font-mono">{{ config('demo.example_domain') }}</span> (an example, not connected).</li>
     </ul>
     <p class="mt-3 text-xs text-stone-600 dark:text-stone-400">

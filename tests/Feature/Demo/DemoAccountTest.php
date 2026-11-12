@@ -74,6 +74,9 @@ class DemoAccountTest extends TestCase
             if (str_contains($url, '/download')) {
                 return Http::response(['url' => 'x']);
             }
+            if ($url === 'https://videos.example/film.mp4') {
+                return Http::response('film-bytes', 200, ['Content-Type' => 'video/mp4']);
+            }
             if (str_starts_with($url, 'https://images.unsplash.com/')) {
                 return Http::response($jpeg, 200, ['Content-Type' => 'image/jpeg']);
             }
@@ -126,6 +129,22 @@ class DemoAccountTest extends TestCase
         $this->assertSame(1, Template::where('user_id', $demo->id)->count());
         $this->assertSame(1, $demo->enabledProdigiProducts()->count());
         $this->assertNotNull($demo->logo_path);
+    }
+
+    public function test_demo_film_is_added_when_configured(): void
+    {
+        config(['demo.video_url' => 'https://videos.example/film.mp4']);
+        $this->app->instance(\App\Videos\VideoProbe::class, new \Tests\Feature\Videos\FakeProbe());
+        $demo = $this->seeded();
+
+        $film = \App\Models\Video::where('user_id', $demo->id)->sole();
+        $this->assertTrue($film->isReady());
+        $this->assertSame('Wedding highlights', $film->title);
+        Storage::disk('s3')->assertExists($film->key);
+        $this->get(route('profile.view', 'demo'))->assertSee('Watch a film');
+
+        $this->artisan('portfolio:demo-seed')->assertSuccessful();
+        $this->assertSame(1, \App\Models\Video::where('user_id', $demo->id)->count(), 'kept on re-seed');
     }
 
     public function test_reseeding_updates_in_place(): void
