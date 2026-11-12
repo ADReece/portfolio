@@ -103,10 +103,7 @@ class Photo extends Model
 
     private function s3Url(string $key): string
     {
-        if (app()->isLocal()) {
-            return Storage::disk('s3')->url($key);
-        }
-
+        // Always signed: the bucket (or the local /media route) is private.
         return Storage::disk('s3')->temporaryUrl($key, now()->addMinutes(10));
     }
 

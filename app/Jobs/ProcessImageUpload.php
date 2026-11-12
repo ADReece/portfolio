@@ -29,8 +29,8 @@ class ProcessImageUpload implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
-    // Real photos take 1-5 s. Kept below the queue's retry_after (90 s) so a
-    // slow job is never handed out twice.
+    // Real photos take 1-5 s. Kept below the queue's retry_after so a slow
+    // job is never handed out twice.
     public int $timeout = 80;
     public int $backoff = 30;
 

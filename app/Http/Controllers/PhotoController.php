@@ -299,14 +299,7 @@ class PhotoController extends Controller
 
         $outputUrl = null;
         if ($generatedPrint->isCompleted() && $generatedPrint->output_path) {
-            if (app()->isLocal()) {
-                $outputUrl = Storage::disk('s3')->url($generatedPrint->output_path);
-            } else {
-                $outputUrl = Storage::disk('s3')->temporaryUrl(
-                    $generatedPrint->output_path,
-                    now()->addMinutes(30)
-                );
-            }
+            $outputUrl = Storage::disk('s3')->temporaryUrl($generatedPrint->output_path, now()->addMinutes(30));
         }
 
         return view('photos.download-result', compact('photo', 'generatedPrint', 'outputUrl'));

@@ -17,6 +17,11 @@ class GenerateCollectionArchive implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    // A large collection read back from S3 can take minutes: one attempt,
+    // well within the queue's retry_after (config/queue.php).
+    public int $timeout = 900;
+    public int $tries = 1;
+
     protected $collectionId;
     protected $email;
 
@@ -36,12 +41,8 @@ class GenerateCollectionArchive implements ShouldQueue
     {
         $collection = Collection::findOrFail($this->collectionId);
 
-        // Get all photos from all sets in the collection
-        $photos = $collection->sets()
-            ->with('photos')
-            ->get()
-            ->pluck('photos')
-            ->flatten();
+        // Every ready photo in the collection (not ones still processing or failed).
+        $photos = $collection->photos()->ready()->with('set.collection')->orderBy('photos.created_at')->get();
 
         if ($photos->isEmpty()) {
             // Send email saying no photos found
@@ -58,44 +59,49 @@ class GenerateCollectionArchive implements ShouldQueue
         $filename = 'collection-' . $collection->id . '-' . time() . '.zip';
         $tempPath = sys_get_temp_dir() . '/' . $filename;
 
-        // Create the ZIP archive in temporary directory
+        // Build the ZIP on disk, reading each photo straight from storage (S3
+        // or the local disk), then stream it back up: memory stays flat
+        // whatever the collection's size.
         $zip = new ZipArchive;
+        $files = [];
         if ($zip->open($tempPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($photos as $index => $photo) {
+            $disk = Storage::disk('s3');
+            foreach ($photos->values() as $index => $photo) {
                 try {
-                    // Get the full resolution image URL
-                    $imageUrl = $photo->getUri();
-
-                    // Download the image content
-                    $imageContent = file_get_contents($imageUrl);
-
-                    if ($imageContent !== false) {
-                        // Use original filename or create one
-                        $photoFilename = $photo->original_filename ??
-                                       'photo-' . ($index + 1) . '.' . ($photo->extension ?? 'jpg');
-
-                        // Add to ZIP
-                        $zip->addFromString($photoFilename, $imageContent);
+                    // Watermarked collections give clients the watermarked copies.
+                    $key = \App\Support\GalleryAccess::downloadKey($photo);
+                    $in = $disk->readStream($key);
+                    $local = tempnam(sys_get_temp_dir(), 'arc-');
+                    $out = fopen($local, 'wb');
+                    stream_copy_to_stream($in, $out);
+                    fclose($out);
+                    if (is_resource($in)) {
+                        fclose($in);
                     }
-                } catch (\Exception $e) {
-                    Log::error('Failed to add photo to archive: ' . $e->getMessage(), [
+                    $files[] = $local;
+
+                    $extension = strtolower(pathinfo($key, PATHINFO_EXTENSION)) ?: 'jpg';
+                    $name = 'photo-'.str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT).'.'.$extension;
+                    $zip->addFile($local, $name);
+                    $zip->setCompressionName($name, ZipArchive::CM_STORE); // photos are already compressed
+                } catch (\Throwable $e) {
+                    Log::error('Failed to add photo to archive: '.$e->getMessage(), [
                         'photo_id' => $photo->id,
-                        'collection_id' => $collection->id
+                        'collection_id' => $collection->id,
                     ]);
-                    // Continue with other photos
                 }
             }
 
             $zip->close();
+            foreach ($files as $local) {
+                @unlink($local);
+            }
 
-            // Upload to S3
-            Storage::disk('s3')->put(
-                'archives/' . $filename,
-                file_get_contents($tempPath),
-                'private' // Private visibility
-            );
-
-            // Delete temporary file
+            $stream = fopen($tempPath, 'rb');
+            Storage::disk('s3')->writeStream('archives/'.$filename, $stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
             unlink($tempPath);
 
             // Generate download page URL (valid for 48 hours)

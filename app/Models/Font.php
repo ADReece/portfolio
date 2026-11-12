@@ -35,10 +35,6 @@ class Font extends Model
      */
     public function storageUrl(): string
     {
-        if (app()->isLocal()) {
-            return Storage::disk('s3')->url($this->path);
-        }
-
         return Storage::disk('s3')->temporaryUrl($this->path, now()->addHour());
     }
 

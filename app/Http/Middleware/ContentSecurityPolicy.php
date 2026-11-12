@@ -33,7 +33,7 @@ class ContentSecurityPolicy
     {
         $chatmesh = self::origin(config('services.chatmesh.url'));
         $chatmeshWs = $chatmesh ? preg_replace('#^http#', 'ws', $chatmesh) : null;
-        $s3 = self::origin(config('filesystems.disks.s3.url'));
+        $s3 = self::storageOrigin();
         // Ascend Digital's own tracking (only loaded after cookie consent).
         $google = filled(config('tracking.ga4_measurement_id')) || filled(config('tracking.google_ads_id'));
         $meta = filled(config('tracking.meta_pixel_id'));
@@ -63,6 +63,31 @@ class ContentSecurityPolicy
         return collect($directives)
             ->map(fn ($sources, $name) => $name.' '.implode(' ', array_unique(array_filter($sources))))
             ->implode('; ');
+    }
+
+    /**
+     * Where signed media links point: AWS_URL if set, else the S3 endpoint
+     * (e.g. https://fsn1.your-objectstorage.com, path-style) or the bucket's
+     * own host (virtual-hosted style). Null for the local disk (same origin).
+     */
+    private static function storageOrigin(): ?string
+    {
+        $disk = config('filesystems.disks.s3');
+        if (($disk['driver'] ?? null) !== 's3') {
+            return null;
+        }
+        if ($origin = self::origin($disk['url'] ?? null)) {
+            return $origin;
+        }
+        $endpoint = self::origin($disk['endpoint'] ?? null);
+        if (! $endpoint) {
+            return 'https://*.amazonaws.com';
+        }
+        if ($disk['use_path_style_endpoint'] ?? false) {
+            return $endpoint;
+        }
+
+        return preg_replace('#^(https?://)#', '$1'.($disk['bucket'] ?? '*').'.', $endpoint);
     }
 
     private static function origin(?string $url): ?string

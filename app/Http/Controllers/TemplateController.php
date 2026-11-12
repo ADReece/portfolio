@@ -176,9 +176,7 @@ class TemplateController extends Controller
 
         $outputUrl = null;
         if ($generatedPrint->output_path) {
-            $outputUrl = app()->isLocal()
-                ? Storage::disk('s3')->url($generatedPrint->output_path)
-                : Storage::disk('s3')->temporaryUrl($generatedPrint->output_path, now()->addHour());
+            $outputUrl = Storage::disk('s3')->temporaryUrl($generatedPrint->output_path, now()->addHour());
         }
 
         return view('templates.test-result', compact('template', 'generatedPrint', 'outputUrl'));
