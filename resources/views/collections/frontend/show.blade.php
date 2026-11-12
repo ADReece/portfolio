@@ -20,7 +20,7 @@
             <p class="text-sm font-medium tracking-wide text-white/80 uppercase">
                 Photos by <a href="{{ route('profile.view', $user->username) }}" class="underline-offset-4 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white">{{ $photographerName }}</a>
             </p>
-            <h1 class="mt-2 max-w-4xl text-4xl font-bold text-balance drop-shadow-lg sm:text-6xl">{{ $collection->name }}</h1>
+            <h1 class="portfolio-on-photo mt-2 max-w-4xl text-4xl font-bold text-balance drop-shadow-lg sm:text-6xl">{{ $collection->name }}</h1>
             <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-white/85 sm:text-lg">
                 @if($collection->event_date)<span>{{ $collection->event_date->format('j F Y') }}</span><span aria-hidden="true">·</span>@endif
                 <span>{{ $photoCount }} {{ \Illuminate\Support\Str::plural('photo', $photoCount) }}</span>

@@ -54,6 +54,10 @@ class DownloadPurchaseController extends Controller
             return $redirect;
         }
 
+        if ($collection->user->is_demo) {
+            return back()->withInput()->with('demo', 'This is a demo portfolio, so nothing is charged. On your own portfolio, the client pays by card and gets their photos by email straight away.');
+        }
+
         $validated = $request->validate([
             'photo_ids' => ['required', 'array', 'min:1'],
             'photo_ids.*' => ['string'],

@@ -48,6 +48,7 @@ class Photo extends Model
     }
 
     protected $casts = [
+        'credit' => 'array',
         'private' => 'boolean',
         'watermarked' => 'boolean',
         'purchased' => 'boolean',

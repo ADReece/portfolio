@@ -46,6 +46,8 @@ x-environment: &environment
   AWS_URL: ${AWS_URL:-}
   AWS_ENDPOINT: ${AWS_ENDPOINT:-}
   AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-false}
+  # Only for "php artisan portfolio:demo-seed" (the public demo's Unsplash photos).
+  UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY:-}
 
   MAIL_MAILER: ${MAIL_MAILER:-smtp}
   MAIL_HOST: ${MAIL_HOST:-}

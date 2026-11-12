@@ -11,6 +11,8 @@
         : route('register');
     $primaryLabel = $offerActive && $fromPrice ? "Start for {$currencySymbol}{$fromPrice}/month" : 'Start free';
     $sampleHref = route('examples.show', array_key_first($showcases));
+    // The live demo portfolio (php artisan portfolio:demo-seed), once it exists.
+    $demoUsername = \Illuminate\Support\Facades\Cache::remember('demo:username', 600, fn () => \App\Models\User::query()->where('is_demo', true)->value('username'));
     $galleryKeys = ['weddings-1', 'landscapes-1', 'portraits-1', 'events-1', 'landscapes-2', 'weddings-2', 'portraits-2', 'film-1', 'landscapes-3'];
 @endphp
 <!DOCTYPE html>
@@ -114,9 +116,15 @@
                         <a href="{{ $primaryHref }}" class="rounded-full bg-white px-7 py-3.5 text-base font-semibold text-stone-950 shadow-lg hover:bg-amber-100 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-amber-300">
                             {{ $primaryLabel }}
                         </a>
-                        <a href="{{ $sampleHref }}" class="rounded-full px-5 py-3.5 text-base font-semibold text-white ring-1 ring-white/60 hover:bg-white/10 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-white">
-                            See a sample portfolio
-                        </a>
+                        @if($demoUsername)
+                            <a href="{{ route('profile.view', $demoUsername) }}" class="rounded-full px-5 py-3.5 text-base font-semibold text-white ring-1 ring-white/60 hover:bg-white/10 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-white">
+                                See a live demo
+                            </a>
+                        @else
+                            <a href="{{ $sampleHref }}" class="rounded-full px-5 py-3.5 text-base font-semibold text-white ring-1 ring-white/60 hover:bg-white/10 focus:outline-hidden focus-visible:ring-4 focus-visible:ring-white">
+                                See a sample portfolio
+                            </a>
+                        @endif
                     </div>
                     <p class="mt-4 text-sm text-stone-300">
                         @if($offerActive && $starterPlan)

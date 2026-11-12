@@ -28,7 +28,7 @@ class CrmBackfill extends Command
         }
 
         $count = 0;
-        User::query()->chunkById(100, function ($users) use (&$count) {
+        User::query()->where('is_demo', false)->chunkById(100, function ($users) use (&$count) {
             foreach ($users as $user) {
                 $job = new SendCrmEvent(
                     CrmReporter::createdEventId($user),

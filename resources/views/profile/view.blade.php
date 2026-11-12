@@ -23,6 +23,9 @@
         </div>
     </x-slot>
     <div class="w-full mx-auto sm:px-2 lg:px-4 py-6">
+        @if($user->is_demo)
+            <div class="px-4">@include('demo.panel')</div>
+        @endif
         <livewire:masonry-grid :userId="$user->id" />
     </div>
 </x-profile-layout>

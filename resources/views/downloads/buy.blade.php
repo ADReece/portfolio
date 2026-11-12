@@ -35,6 +35,12 @@
             </ul>
         </div>
 
+        @if($photographer->is_demo)
+            <div class="portfolio-neutral mt-6 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100" role="status">
+                {{ session('demo', 'This is a demo portfolio: pick photos and see the price, but nothing is charged.') }}
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('download-purchase.store', $collection) }}" class="mt-6 lg:grid lg:grid-cols-[1fr_22rem] lg:gap-8">
             @csrf
             <fieldset>
