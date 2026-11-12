@@ -74,9 +74,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/billing/invoices/{invoiceId}', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
 
     // Stripe Connect routes
-    Route::get('/connect/stripe', [BillingController::class, 'connectStripe'])->name('connect.stripe');
-    Route::get('/connect/stripe/callback', [BillingController::class, 'handleConnectCallback'])->name('connect.stripe.callback');
-    Route::post('/connect/stripe/disconnect', [BillingController::class, 'disconnectStripe'])->name('connect.stripe.disconnect');
+    Route::get('/connect/stripe', [\App\Http\Controllers\PayoutsController::class, 'show'])->name('connect.stripe');
+    Route::post('/connect/stripe/onboard', [\App\Http\Controllers\PayoutsController::class, 'onboard'])->name('connect.stripe.onboard');
+    Route::get('/connect/stripe/return', [\App\Http\Controllers\PayoutsController::class, 'returned'])->name('connect.stripe.return');
+    Route::get('/connect/stripe/refresh', [\App\Http\Controllers\PayoutsController::class, 'refresh'])->name('connect.stripe.refresh');
+    Route::post('/connect/stripe/dashboard', [\App\Http\Controllers\PayoutsController::class, 'dashboard'])->name('connect.stripe.dashboard');
+    Route::post('/connect/stripe/disconnect', [\App\Http\Controllers\PayoutsController::class, 'disconnect'])->name('connect.stripe.disconnect');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -222,6 +225,8 @@ Route::get('/orders/{order}/purchase-cancel', [PrintPurchaseController::class, '
 
 // Stripe Webhooks
 Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
+// Portfolio's own Stripe Connect platform (print and download sales, photographer accounts).
+Route::post('/stripe/connect/webhook', \App\Http\Controllers\ConnectWebhookController::class)->name('connect.webhook');
 
 // Cashier payment confirmation (SCA) route
 Route::get('/stripe/payment/{id}', [CashierPaymentController::class, 'show'])

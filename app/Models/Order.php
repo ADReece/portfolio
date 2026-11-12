@@ -45,6 +45,8 @@ class Order extends Model
         'prodigi_submitted_at',
         'prodigi_shipped_at',
         'prodigi_tracking_number',
+        'prodigi_carrier',
+        'prodigi_tracking_url',
         'prodigi_error_message',
     ];
 

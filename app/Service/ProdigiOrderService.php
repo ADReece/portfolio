@@ -187,16 +187,45 @@ class ProdigiOrderService
 
         $response = $this->prodigiService->getOrderStatus($order->prodigi_order_id);
 
-        $stage = self::statusFrom($response['order'] ?? $response);
+        $prodigiOrder = $response['order'] ?? $response;
+        $stage = self::statusFrom($prodigiOrder);
         if ($stage === null) {
             return;
         }
-        $order->update(['prodigi_status' => $stage]);
+
+        $changes = ['prodigi_status' => $stage];
+        $shipment = collect(data_get($prodigiOrder, 'shipments', []))
+            ->first(fn ($s) => filled(data_get($s, 'tracking.number')) || filled(data_get($s, 'tracking.url')))
+            ?? collect(data_get($prodigiOrder, 'shipments', []))->first();
+        if ($shipment) {
+            $changes['prodigi_tracking_number'] = data_get($shipment, 'tracking.number') ?: $order->prodigi_tracking_number;
+            $changes['prodigi_tracking_url'] = self::safeUrl(data_get($shipment, 'tracking.url')) ?: $order->prodigi_tracking_url;
+            $changes['prodigi_carrier'] = data_get($shipment, 'carrier.name') ?: $order->prodigi_carrier;
+        }
+
+        // A shipment with tracking counts as posted, even while other parts are in progress.
+        $posted = $stage === 'shipped' || ($shipment && filled($changes['prodigi_tracking_number'] ?? null));
+        $firstShipped = $posted && ! $order->prodigi_shipped_at;
+        if ($firstShipped) {
+            $changes['prodigi_shipped_at'] = now();
+        }
+
+        $order->update($changes);
+
+        if ($firstShipped && $order->paid_at) {
+            \App\Jobs\SendPrintOrderEmail::dispatch($order->id, \App\Jobs\SendPrintOrderEmail::SHIPPED);
+        }
 
         Log::info('Synced Prodigi order status', [
             'order_id' => $order->id,
             'prodigi_status' => $stage,
         ]);
+    }
+
+    /** Only http(s) links go into the client's email. */
+    private static function safeUrl(mixed $url): ?string
+    {
+        return is_string($url) && preg_match('#^https?://#i', $url) ? \Illuminate\Support\Str::limit($url, 1000, '') : null;
     }
 
     /**

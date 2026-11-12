@@ -37,8 +37,14 @@ return [
         'url' => env('CHATMESH_URL', 'https://chatmesh.ascend-digital.co.uk'),
     ],
 
-    'stripe' => [
-        'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
+    // Portfolio's own Stripe account with Connect (separate from the shared
+    // Ascend Digital account used for subscriptions). Selling prints and
+    // downloads stays off until the secret and webhook secret are set.
+    'portfolio_connect' => [
+        'key' => env('PORTFOLIO_CONNECT_STRIPE_KEY'),
+        'secret' => env('PORTFOLIO_CONNECT_STRIPE_SECRET'),
+        'webhook_secret' => env('PORTFOLIO_CONNECT_STRIPE_WEBHOOK_SECRET'),
+        'country' => env('PORTFOLIO_CONNECT_COUNTRY', 'GB'),
     ],
 
     // Percentage the platform keeps from each client print sale. Shown to

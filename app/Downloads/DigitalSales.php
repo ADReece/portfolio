@@ -23,9 +23,8 @@ class DigitalSales
         return $collection !== null && $owner !== null
             && $collection->digital_sales
             // The demo shows selling without payouts; its checkout is switched off.
-            && ($owner->is_demo || Payouts::available())
+            && Payouts::canPay($owner)
             && $owner->hasFeature('selling')
-            && $owner->stripe_connect_enabled && $owner->stripe_connect_id
             && DigitalPricing::hasPrices(app(DigitalPricing::class)->offerFor($collection, $owner));
     }
 

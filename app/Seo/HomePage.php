@@ -115,7 +115,9 @@ class HomePage
         ];
         $faqs[] = [
             'q' => 'Can my clients buy prints?',
-            'a' => "Print sales are coming soon. When they're ready, clients will order prints from your galleries and you'll be paid the price you set, minus the cost of printing and delivery and our fee.",
+            'a' => \App\Billing\Payouts::available()
+                ? "Yes. Clients order prints straight from your galleries, and we print and deliver them. You set the price, and Stripe pays it into your bank, minus the cost of printing and delivery and our fee. You can sell full-resolution downloads too."
+                : "Print sales are coming soon. When they're ready, clients will order prints from your galleries and you'll be paid the price you set, minus the cost of printing and delivery and our fee.",
         ];
 
         return $faqs;

@@ -366,8 +366,13 @@
                             </div>
                         </div>
                         <div class="px-6 pb-6">
-                            <h3 class="flex flex-wrap items-center gap-2 font-display text-2xl">Sell prints <span class="rounded-full bg-amber-100 px-2 py-0.5 font-body text-xs font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Coming soon</span></h3>
-                            <p class="mt-2 text-stone-600 dark:text-stone-400">Clients will order prints from your galleries. We print and deliver, and you're paid your price minus the print cost and our fee.</p>
+                            @if(\App\Billing\Payouts::available())
+                                <h3 class="font-display text-2xl">Sell prints and downloads</h3>
+                                <p class="mt-2 text-stone-600 dark:text-stone-400">Clients order prints or buy full-resolution downloads from your galleries. We print and deliver, and Stripe pays your price, minus any print cost and our fee, into your bank.</p>
+                            @else
+                                <h3 class="flex flex-wrap items-center gap-2 font-display text-2xl">Sell prints <span class="rounded-full bg-amber-100 px-2 py-0.5 font-body text-xs font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200">Coming soon</span></h3>
+                                <p class="mt-2 text-stone-600 dark:text-stone-400">Clients will order prints from your galleries. We print and deliver, and you're paid your price minus the print cost and our fee.</p>
+                            @endif
                         </div>
                     </article>
                 </div>

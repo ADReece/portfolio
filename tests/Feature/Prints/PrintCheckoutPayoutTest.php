@@ -10,7 +10,7 @@ use App\Models\Set;
 use App\Models\User;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
-use Stripe\StripeClient;
+use Tests\Support\FakeConnectStripe;
 
 /**
  * The client pays the price; Prodigi's cost for their order (quoted for their
@@ -21,12 +21,11 @@ class PrintCheckoutPayoutTest extends PrintCatalogueTestCase
 {
     private Photo $photo;
     private ProdigiProduct $product;
-    public array $sessions = [];
+    private FakeConnectStripe $stripe;
 
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.stripe.connect_client_id' => 'ca_test']);
         \App\Models\Setting::updateOrCreate(['key' => 'default_currency'], ['value' => 'GBP']);
         \App\Support\Currency::flush();
 
@@ -37,24 +36,8 @@ class PrintCheckoutPayoutTest extends PrintCatalogueTestCase
         $this->product = $this->catalogueProduct();
         $owner->prodigiProducts()->attach($this->product->id, ['is_enabled' => true, 'retail_price' => 40]);
 
-        $test = $this;
-        $this->app->instance(StripeClient::class, new class($test) {
-            public object $checkout;
-
-            public function __construct($test)
-            {
-                $this->checkout = (object) ['sessions' => new class($test) {
-                    public function __construct(private $test) {}
-
-                    public function create(array $params)
-                    {
-                        $this->test->sessions[] = $params;
-
-                        return (object) ['id' => 'cs_test', 'url' => 'https://checkout.stripe.test/cs_test'];
-                    }
-                }];
-            }
-        });
+        $owner->forceFill(['stripe_connect_id' => 'acct_photographer', 'stripe_connect_enabled' => true])->save();
+        $this->stripe = FakeConnectStripe::install($this->app);
     }
 
     private function order(string $country = 'GB', int $quantity = 2): \Illuminate\Testing\TestResponse
@@ -85,7 +68,13 @@ class PrintCheckoutPayoutTest extends PrintCatalogueTestCase
         $this->assertEquals(8.00, (float) $order->platform_fee);    // 10%
         $this->assertEquals(46.00, (float) $order->photographer_amount); // 80 − 26 − 8
         $this->assertSame(['color' => 'white'], $order->items()->sole()->prodigi_attributes);
-        $this->assertSame(8000, $this->sessions[0]['line_items'][0]['price_data']['unit_amount'] * $this->sessions[0]['line_items'][0]['quantity']);
+        [$session] = $this->stripe->paramsFor('checkout.sessions.create');
+        $this->assertSame(8000, $session['line_items'][0]['price_data']['unit_amount'] * $session['line_items'][0]['quantity']);
+        // A destination charge: the photographer's £46 goes to their Express
+        // account; Portfolio keeps the print cost and its fee (£34).
+        $this->assertSame('acct_photographer', $session['payment_intent_data']['transfer_data']['destination']);
+        $this->assertSame(3400, $session['payment_intent_data']['application_fee_amount']);
+        $this->assertSame('portfolio', $session['payment_intent_data']['metadata']['app']);
 
         // The quote was for this order: 2 copies, the chosen option, the client's country.
         Http::assertSent(fn (Request $r) => $r['destinationCountryCode'] === 'GB' && $r['currencyCode'] === 'GBP'
@@ -99,7 +88,7 @@ class PrintCheckoutPayoutTest extends PrintCatalogueTestCase
 
         $this->order('US')->assertSessionHasErrors('shipping_country_code');
         $this->assertSame(0, Order::count());
-        $this->assertSame([], $this->sessions);
+        $this->assertSame([], $this->stripe->paramsFor('checkout.sessions.create'));
     }
 
     public function test_no_order_without_a_cost_quote(): void
@@ -108,5 +97,13 @@ class PrintCheckoutPayoutTest extends PrintCatalogueTestCase
 
         $this->order()->assertSessionHasErrors('shipping_country_code');
         $this->assertSame(0, Order::count());
+    }
+
+    public function test_photographers_without_payouts_set_up_cannot_sell(): void
+    {
+        $this->photo->user->forceFill(['stripe_connect_enabled' => false])->save();
+
+        $this->get(route('print-purchase.show', $this->photo))->assertNotFound();
+        $this->order()->assertNotFound();
     }
 }

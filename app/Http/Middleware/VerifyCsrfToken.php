@@ -15,5 +15,6 @@ class VerifyCsrfToken extends Middleware
         // Stripe can't send a CSRF token; the webhook controller checks
         // Stripe's signature instead (STRIPE_WEBHOOK_SECRET).
         'stripe/webhook',
+        'stripe/connect/webhook',
     ];
 }

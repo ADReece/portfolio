@@ -1,6 +1,6 @@
 @php
     $user = auth()->user();
-    $connected = (bool) $user->stripe_connect_enabled;
+    $connected = (bool) $user->stripe_connect_enabled && ! ($comingSoon ?? false);
     $canSell = $user->hasFeature('selling');
     $fee = rtrim(rtrim(number_format(config('services.platform_fee_percent'), 2), '0'), '.');
 @endphp
@@ -16,24 +16,30 @@
                         <x-ui.icon name="check" class="size-6" />
                     </span>
                     <div class="min-w-0 flex-1">
-                        <h2 class="font-semibold text-gray-900 dark:text-gray-100">Stripe is connected</h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">When a client pays for a print, you receive the price minus the print and delivery cost and our {{ $fee }}% fee.</p>
+                        <h2 class="font-semibold text-gray-900 dark:text-gray-100">Payouts are set up</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">When a client buys prints or downloads, you receive the price minus any print and delivery cost and our {{ $fee }}% fee. Stripe pays it into your bank.</p>
                     </div>
                 </div>
                 <div class="mt-5 flex flex-wrap gap-2 border-t border-gray-200 pt-5 dark:border-gray-700">
                     <x-ui.button variant="secondary" icon="shopping-bag" :href="route('profile.prodigi-products.edit')">Print products and prices</x-ui.button>
-                    <form action="{{ route('connect.stripe.disconnect') }}" method="POST"
-                          data-confirm="You won't receive payouts for print sales until you connect Stripe again." data-confirm-title="Disconnect Stripe?" data-confirm-button="Disconnect" data-confirm-danger>
-                        @csrf
-                        <x-ui.button type="submit" variant="ghost">Disconnect Stripe</x-ui.button>
-                    </form>
+                    @unless($user->is_demo)
+                        <form action="{{ route('connect.stripe.dashboard') }}" method="POST">
+                            @csrf
+                            <x-ui.button type="submit" variant="secondary" icon-trailing="arrow-top-right-on-square">Payouts and bank details</x-ui.button>
+                        </form>
+                        <form action="{{ route('connect.stripe.disconnect') }}" method="POST"
+                              data-confirm="Clients won't be able to buy prints or downloads until you set up payouts again. Money already on its way to you still arrives." data-confirm-title="Turn off payouts?" data-confirm-button="Turn off" data-confirm-danger>
+                            @csrf
+                            <x-ui.button type="submit" variant="ghost">Turn off payouts</x-ui.button>
+                        </form>
+                    @endunless
                 </div>
             </x-ui.card>
         @elseif($comingSoon ?? false)
             <x-ui.card title="Selling prints is coming soon">
                 <p class="text-sm text-gray-700 dark:text-gray-300">
                     Soon your clients will be able to order prints straight from your galleries, and you'll be paid the price you set, minus the print and delivery cost and our fee, into your own Stripe account.
-                    We're finishing the payouts side now. Your print products and prices are saved, and you'll be able to connect Stripe here as soon as it's ready.
+                    We're finishing the payouts side now. Your print products and prices are saved, and you'll be able to set up payouts here as soon as it's ready.
                 </p>
             </x-ui.card>
         @else
@@ -44,12 +50,12 @@
                 </x-ui.alert>
             @endunless
 
-            <x-ui.card title="Connect Stripe">
+            <x-ui.card :title="($started ?? false) ? 'Finish setting up payouts' : 'Set up payouts'">
                 <ul role="list" class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
                     @foreach([
-                        'Clients pay by card when they order a print from your galleries.',
+                        'Clients pay by card when they order prints or buy downloads from your galleries.',
                         'We handle printing and delivery.',
-                        "You receive the price you set, minus the print and delivery cost and our {$fee}% fee, in your Stripe account.",
+                        "You receive the price you set, minus any print and delivery cost and our {$fee}% fee.",
                         'Stripe pays out to your bank on its normal schedule.',
                     ] as $point)
                         <li class="flex gap-2"><x-ui.icon name="check" variant="m" class="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-400" />{{ $point }}</li>
@@ -57,8 +63,15 @@
                 </ul>
                 <div class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
                     @if($canSell)
-                        <x-ui.button size="lg" icon-trailing="arrow-top-right-on-square" :href="$connectUrl">Connect with Stripe</x-ui.button>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">You'll sign in to Stripe (or create an account), then come back here.</p>
+                        <form action="{{ route('connect.stripe.onboard') }}" method="POST">
+                            @csrf
+                            <x-ui.button type="submit" size="lg" icon-trailing="arrow-top-right-on-square">{{ ($started ?? false) ? 'Continue setup' : 'Set up payouts' }}</x-ui.button>
+                        </form>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            {{ ($started ?? false)
+                                ? 'Stripe still needs a few details before you can be paid. You\'ll pick up where you left off, then come back here.'
+                                : 'Stripe, our payments partner, asks for your details and bank account (about five minutes), then brings you back here.' }}
+                        </p>
                     @else
                         <x-ui.button :href="route('pricing')">Compare plans</x-ui.button>
                     @endif

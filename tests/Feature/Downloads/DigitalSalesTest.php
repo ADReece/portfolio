@@ -17,16 +17,15 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Testing\TestResponse;
-use Stripe\StripeClient;
+use Tests\Support\FakeConnectStripe;
 use Tests\TestCase;
 
 class DigitalSalesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public array $sessions = [];
+    private FakeConnectStripe $stripe;
 
-    public array $transfers = [];
 
     private User $owner;
 
@@ -38,7 +37,7 @@ class DigitalSalesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.stripe.connect_client_id' => 'ca_test', 'services.platform_fee_percent' => 10, 'prints.stripe_fee_percent' => 2.5, 'prints.stripe_fee_fixed' => 0.20]);
+        config(['services.platform_fee_percent' => 10, 'prints.stripe_fee_percent' => 2.5, 'prints.stripe_fee_fixed' => 0.20]);
         Setting::updateOrCreate(['key' => 'default_currency'], ['value' => 'GBP']);
         Currency::flush();
         Storage::fake('s3');
@@ -52,39 +51,7 @@ class DigitalSalesTest extends TestCase
             $this->photos[] = Photo::create(['user_id' => $this->owner->id, 'set_id' => $set->id, 'url' => "photos/p{$i}.jpg", 'private' => false, 'size' => 10]);
         }
 
-        $test = $this;
-        $this->app->instance(StripeClient::class, new class($test)
-        {
-            public object $checkout;
-
-            public object $transfers;
-
-            public function __construct($test)
-            {
-                $this->checkout = (object) ['sessions' => new class($test)
-                {
-                    public function __construct(private $test) {}
-
-                    public function create(array $params)
-                    {
-                        $this->test->sessions[] = $params;
-
-                        return (object) ['id' => 'cs_dl', 'url' => 'https://checkout.stripe.test/cs_dl'];
-                    }
-                }];
-                $this->transfers = new class($test)
-                {
-                    public function __construct(private $test) {}
-
-                    public function create(array $params, array $opts = [])
-                    {
-                        $this->test->transfers[] = $params;
-
-                        return (object) ['id' => 'tr_1'];
-                    }
-                };
-            }
-        });
+        $this->stripe = FakeConnectStripe::install($this->app);
     }
 
     private function buy(array $photos, array $extra = []): TestResponse
@@ -161,18 +128,21 @@ class DigitalSalesTest extends TestCase
 
     public function test_buying_creates_an_order_and_a_stripe_checkout(): void
     {
-        $this->buy(array_slice($this->photos, 0, 7))->assertRedirect('https://checkout.stripe.test/cs_dl');
+        $this->buy(array_slice($this->photos, 0, 7))->assertRedirect('https://checkout.stripe.test/cs_test');
 
         $order = Order::sole();
         $this->assertTrue($order->isDigital());
         $this->assertSame('30.00', $order->total); // a bundle of 5 + 2 singles
         $this->assertSame('3.00', $order->platform_fee);
         $this->assertSame('27.00', $order->photographer_amount);
-        $this->assertSame('cs_dl', $order->stripe_checkout_session_id);
+        $this->assertSame('cs_test', $order->stripe_checkout_session_id);
         $this->assertSame(7, $order->items()->count());
         $this->assertSame('30.00', number_format((float) $order->items()->sum('price'), 2));
 
-        $session = $this->sessions[0];
+        [$session] = $this->stripe->paramsFor('checkout.sessions.create');
+        // A destination charge: £27 to the photographer's Express account, £3 kept as our fee.
+        $this->assertSame('acct_1', $session['payment_intent_data']['transfer_data']['destination']);
+        $this->assertSame(300, $session['payment_intent_data']['application_fee_amount']);
         $this->assertSame(3000, $session['line_items'][0]['price_data']['unit_amount']);
         $this->assertSame('portfolio', $session['payment_intent_data']['metadata']['app']);
         $this->assertStringContainsString('7 full-resolution photos from Smith Wedding', $session['line_items'][0]['price_data']['product_data']['name']);
@@ -237,9 +207,7 @@ class DigitalSalesTest extends TestCase
         $this->buy(array_slice($this->photos, 0, $photos));
         $order = Order::latest()->first();
         Bus::fake([DeliverDigitalOrder::class]);
-        (new WebhookController)->handlePaymentIntentSucceeded(['data' => ['object' => [
-            'id' => 'pi_dl', 'latest_charge' => 'ch_dl', 'metadata' => ['app' => 'portfolio', 'order_id' => $order->id],
-        ]]]);
+        \App\Billing\SaleEvents::paid(['id' => 'pi_dl', 'transfer' => 'tr_dl', 'metadata' => ['app' => 'portfolio', 'order_id' => $order->id]]);
 
         return $order->fresh();
     }
@@ -250,8 +218,7 @@ class DigitalSalesTest extends TestCase
 
         $this->assertSame('completed', $order->status);
         Bus::assertDispatched(DeliverDigitalOrder::class, fn ($job) => $job->orderId === $order->id);
-        $this->assertSame(1350, $this->transfers[0]['amount']); // £15 − 10%
-        $this->assertSame('acct_1', $this->transfers[0]['destination']);
+        $this->assertSame('tr_dl', $order->stripe_transfer_id); // Stripe's transfer of the photographer's share
     }
 
     public function test_delivery_emails_the_buyer_their_link_once_and_tells_the_photographer(): void
@@ -312,7 +279,7 @@ class DigitalSalesTest extends TestCase
     {
         $order = $this->paid(1);
 
-        $this->get(route('download-purchase.success', $order).'?session_id=cs_dl')->assertOk()->assertSee('Download your photos');
+        $this->get(route('download-purchase.success', $order).'?session_id=cs_test')->assertOk()->assertSee('Download your photos');
         $this->get(route('download-purchase.success', $order).'?session_id=cs_other')->assertOk()->assertDontSee('Download your photos')->assertSee('emailed your download link');
     }
 }
