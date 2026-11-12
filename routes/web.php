@@ -183,6 +183,10 @@ Route::get('/collections/{collection}/download-archive/{filename}', [CollectionC
     ->middleware('signed')
     ->name('collections.download-archive');
 
+// Custom domains: answers our HTTPS check (App\CustomDomains\CertificateCheck) on any host.
+Route::get('/.well-known/portfolio-domain', fn (\Illuminate\Http\Request $request) => response(\App\CustomDomains\CertificateCheck::token($request->getHost()), 200, ['Content-Type' => 'text/plain', 'Cache-Control' => 'no-store']))
+    ->name('custom-domains.check');
+
 // Buying full-resolution downloads from a collection, and the buyer's
 // download links (signed, from the delivery email).
 Route::get('/collections/{collection}/buy', [DownloadPurchaseController::class, 'show'])->name('download-purchase.show');
