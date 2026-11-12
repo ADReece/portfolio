@@ -201,6 +201,7 @@ class DemoAccount
             $collection = Collection::query()->firstOrNew(['user_id' => $user->id, 'name' => $definition['name']]);
             $collection->forceFill($definition['attrs'] + [
                 'status' => 'Published',
+                'favourites_enabled' => true,
                 'event_date' => $definition['event_date'],
                 'private' => false,
                 'watermarked' => false,
@@ -230,6 +231,7 @@ class DemoAccount
             $print->delete();
         });
         Order::query()->where('user_id', $user->id)->delete();
+        \App\Models\FavouriteList::query()->whereIn('collection_id', $user->collections()->pluck('id'))->delete();
     }
 
     /**

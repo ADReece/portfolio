@@ -28,6 +28,7 @@ class Photo extends Model
         'hide_from_portfolio',
         'status',
         'processing_error',
+        'original_filename',
     ];
 
     public const PROCESSING = 'processing';
@@ -64,6 +65,12 @@ class Photo extends Model
                 $model->sort_order = is_null($max) ? 1 : $max + 1;
             }
         });
+    }
+
+    /** The camera's filename, else the stored one (for Lightroom exports). */
+    public function displayFilename(): string
+    {
+        return $this->original_filename ?: basename((string) $this->url);
     }
 
     public function getUri() : string

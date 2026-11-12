@@ -42,6 +42,17 @@
 
                             <!-- Hover Overlay with Buttons -->
                             <div class="absolute inset-0 pointer-events-none bg-black/0 can-hover:group-hover:bg-black/40 transition-all duration-300 flex items-end justify-end p-3 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
+                                @if($favourites)
+                                    <!-- Favourite (proofing): state is kept by the gallery's favourites script -->
+                                    <button type="button" data-favourite="{{ $m->id }}" aria-pressed="false"
+                                            class="favourite-button pointer-events-auto mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform motion-safe:hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+                                            title="Favourite" aria-label="Favourite {{ $m->caption ? Str::limit($m->caption, 40) : 'this photo' }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                        </svg>
+                                    </button>
+                                @endif
+
                                 <!-- Download Request Button (or Buy, when the collection sells downloads) -->
                                 <a href="{{ $buyCollection ? route('download-purchase.show', ['collection' => $buyCollection, 'photo' => $m->id]) : '/photos/'.$m->id.'/download-options' }}"
                                    class="pointer-events-auto mr-2 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-2 shadow-lg transition-transform transform motion-safe:hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
@@ -161,6 +172,17 @@
             opacity: 0;
             transform: translateY(30px);
             transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        /* Client favourites: a filled heart, and a badge that stays visible off hover */
+        .favourite-button[aria-pressed="true"] { color: #e11d48; }
+        .favourite-button[aria-pressed="true"] svg { fill: currentColor; }
+        .masonry-item:has(.favourite-button[aria-pressed="true"]) > div::after {
+            content: '\2665'; position: absolute; top: 8px; left: 8px; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 9999px;
+            background: #fff; color: #e11d48; font-size: 16px; line-height: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,.3); pointer-events: none;
         }
 
         .masonry-item.loaded {

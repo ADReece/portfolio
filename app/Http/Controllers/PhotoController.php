@@ -50,6 +50,8 @@ class PhotoController extends Controller
             $photo = $set->photos()->create([
                 'user_id' => $user->id,
                 'url' => $key,
+                // The camera's name (e.g. DSC_0412.JPG), for exporting favourites to Lightroom.
+                'original_filename' => \Illuminate\Support\Str::limit(basename(str_replace('\\', '/', (string) $uploadedFile->getClientOriginalName())), 250, ''),
                 'private' => $set->collection->private,
                 'size' => $uploadedFile->getSize(),
                 'status' => Photo::PROCESSING,

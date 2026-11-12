@@ -127,6 +127,8 @@ class MasonryGrid extends Component
         return view('livewire.masonry-grid', [
             'media' => $media,
             'buyCollection' => $buyCollection,
+            // Client favourites (proofing) in this gallery.
+            'favourites' => $collection && $collection->favourites_enabled,
             'ownerCanSell' => (\App\Billing\Payouts::available() || $owner?->is_demo) && $owner && $owner->hasFeature('selling') && $owner->enabledProdigiProducts()->exists(),
             'copyProtection' => (bool) ($owner?->copy_protection ?? true),
             'totalCount' => $this->totalCount,
