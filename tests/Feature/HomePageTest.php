@@ -146,7 +146,9 @@ class HomePageTest extends TestCase
         // Video galleries have shipped: no longer labelled.
         $this->assertDoesNotMatchRegularExpression('#Video galleries\s*<span[^>]*>Coming soon#', $html);
         $this->assertMatchesRegularExpression('#Sell prints\s*<span[^>]*>Coming soon#', $html);
-        $this->assertStringContainsString('Use your own domain, like yourname.com', $html);
+        // Custom domains have shipped: no longer labelled.
+        $this->assertStringContainsString('use your own domain, like yourname.com', $html);
+        $this->assertDoesNotMatchRegularExpression('#Coming soon</span>\s*Use your own domain#', $html);
     }
 
     public function test_primary_and_secondary_calls_to_action(): void

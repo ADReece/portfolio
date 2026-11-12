@@ -14,12 +14,26 @@ use Illuminate\Console\Command;
  */
 class VerifyCustomDomains extends Command
 {
-    protected $signature = 'custom-domains:verify {--pending : Only pending domains} {--verified : Only verified domains} {--failing : Only verified domains whose last check failed}';
+    protected $signature = 'custom-domains:verify {--pending : Only pending domains} {--verified : Only verified domains} {--failing : Only verified domains whose last check failed} {--securing : Only verified domains not yet reached over HTTPS}';
 
     protected $description = 'Check custom domains\' DNS and update their status';
 
-    public function handle(DomainVerifier $verifier): int
+    public function handle(DomainVerifier $verifier, \App\CustomDomains\CertificateCheck $certificates): int
     {
+        if ($this->option('securing')) {
+            $secured = 0;
+            CustomDomain::where('status', CustomDomain::VERIFIED)->whereNull('secured_at')->orderBy('id')
+                ->each(function (CustomDomain $domain) use ($certificates, &$secured) {
+                    if ($certificates->check($domain)) {
+                        $secured++;
+                        $this->line("{$domain->hostname}: live over HTTPS");
+                    }
+                });
+            $this->info("Secured {$secured} domain(s).");
+
+            return self::SUCCESS;
+        }
+
         $statuses = match (true) {
             $this->option('pending') => [CustomDomain::PENDING],
             $this->option('verified'), $this->option('failing') => [CustomDomain::VERIFIED],

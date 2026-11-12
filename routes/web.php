@@ -195,6 +195,10 @@ Route::get('/collections/{collection}/download-archive/{filename}', [CollectionC
     ->middleware('signed')
     ->name('collections.download-archive');
 
+// Custom domains: answers our HTTPS check (App\CustomDomains\CertificateCheck) on any host.
+Route::get('/.well-known/portfolio-domain', fn (\Illuminate\Http\Request $request) => response(\App\CustomDomains\CertificateCheck::token($request->getHost()), 200, ['Content-Type' => 'text/plain', 'Cache-Control' => 'no-store']))
+    ->name('custom-domains.check');
+
 // Client favourites (proofing): public, rate-limited, per-browser picks.
 Route::get('/collections/{collection}/favourites', [App\Http\Controllers\FavouriteController::class, 'show'])->middleware('throttle:favourites')->name('favourites.show');
 Route::post('/collections/{collection}/favourites/submit', [App\Http\Controllers\FavouriteController::class, 'submit'])->middleware('throttle:favourites-submit')->name('favourites.submit');

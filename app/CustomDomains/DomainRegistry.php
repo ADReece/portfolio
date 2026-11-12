@@ -22,10 +22,15 @@ class DomainRegistry
     {
         return Cache::remember(self::CACHE_KEY, 60, function () {
             $live = [];
+            $max = (int) config('custom_domains.max_hostnames');
             CustomDomain::query()->where('status', CustomDomain::VERIFIED)->with('user.subscriptionPlan')
+                ->orderBy('verified_at')->orderBy('id') // the server serves at most $max: oldest first
                 ->get()
                 ->filter(fn (CustomDomain $d) => $d->user && $d->user->username && $d->user->customDomainLimit() > 0)
-                ->each(function (CustomDomain $d) use (&$live) {
+                ->each(function (CustomDomain $d) use (&$live, $max) {
+                    if (count($live) + count($d->hostnames()) > $max) {
+                        return;
+                    }
                     foreach ($d->hostnames() as $host) {
                         $live[$host] = [
                             'domain_id' => $d->id,

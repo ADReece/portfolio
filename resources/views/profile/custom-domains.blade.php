@@ -20,13 +20,17 @@
             @php
                 $hosts = $domain->hostnames();
                 $live = $domain->isVerified() && $limit > 0;
+                // Waiting for DNS → securing (DNS right, certificate on its way) → live (reached over HTTPS).
+                $securing = $live && ! $domain->secured_at;
             @endphp
             <x-ui.card>
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
                         <h2 class="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $domain->displayHostname($domain->primaryHostname()) }}</h2>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            @if($live)
+                            @if($securing)
+                                DNS is set up. We're getting its security certificate, which usually takes a few minutes. This page will show “Live” when it's ready.
+                            @elseif($live)
                                 Live. Visitors to {{ collect($hosts)->map(fn ($h) => $domain->displayHostname($h))->implode(' and ') }} see your portfolio.
                             @elseif($domain->status === 'failed')
                                 Not connected. {{ $domain->failure_reason }}
@@ -40,12 +44,14 @@
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Last checked {{ $domain->last_checked_at->diffForHumans() }}.</p>
                         @endif
                     </div>
-                    @if($live)
+                    @if($securing)
+                        <x-ui.badge tone="blue" icon="lock-closed">Securing</x-ui.badge>
+                    @elseif($live)
                         <x-ui.badge tone="green" icon="check">Live</x-ui.badge>
                     @elseif($domain->status === 'failed')
                         <x-ui.badge tone="red">Not connected</x-ui.badge>
                     @else
-                        <x-ui.badge tone="amber">Pending</x-ui.badge>
+                        <x-ui.badge tone="amber">Waiting for DNS</x-ui.badge>
                     @endif
                 </div>
 
@@ -81,6 +87,9 @@
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     An A record to {{ $targetIp }} works for any of these names. Remove any other A or AAAA records for them, or visitors may reach the wrong server.
                 </p>
+                <x-ui.alert title="Using Cloudflare?" class="mt-4">
+                    Set these records to <strong>DNS only</strong> (the grey cloud), not Proxied (orange). Otherwise we can't get your security certificate and the domain won't go live.
+                </x-ui.alert>
 
                 <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
                     <form method="POST" action="{{ route('custom-domains.verify', $domain) }}">
@@ -123,6 +132,10 @@
                     <x-ui.button type="submit">Add domain</x-ui.button>
                 </form>
             </x-ui.card>
+        @endif
+        @if($domains->contains(fn ($d) => $d->isVerified() && ! $d->secured_at))
+            {{-- While a certificate is on its way, check back every minute. --}}
+            <div x-data x-init="setTimeout(() => location.reload(), 60000)"></div>
         @endif
     </div>
 </x-app-layout>
