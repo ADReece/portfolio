@@ -26,6 +26,7 @@ class CustomDomain extends Model
         'ownership_trusted' => 'boolean',
         'primary_www' => 'boolean',
         'verified_at' => 'datetime',
+        'secured_at' => 'datetime',
         'last_checked_at' => 'datetime',
         'failing_since' => 'datetime',
     ];

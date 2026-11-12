@@ -39,6 +39,9 @@ class DomainVerifier
         $viaCname = (bool) array_intersect($cnames, config('custom_domains.cname_targets'));
         $ips = $this->dns->a($host);
 
+        if (! $viaCname && $ips && collect($ips)->every(fn ($ip) => self::isCloudflare($ip))) {
+            return "{$host} goes through Cloudflare's proxy (orange cloud). In Cloudflare's DNS settings, set the record to \"DNS only\" (grey cloud) so we can secure it.";
+        }
         if (! $viaCname && ! in_array($targetIp, $ips, true)) {
             return $ips || $cnames
                 ? "{$host} points somewhere else (".implode(', ', $cnames ?: $ips)."). Point it at {$targetIp}."
@@ -55,6 +58,19 @@ class DomainVerifier
         }
 
         return null;
+    }
+
+    public static function isCloudflare(string $ip): bool
+    {
+        foreach (config('custom_domains.cloudflare_ranges', []) as $range) {
+            [$subnet, $bits] = explode('/', $range);
+            $mask = -1 << (32 - (int) $bits);
+            if ((ip2long($ip) & $mask) === (ip2long($subnet) & $mask)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Runs a check and records the outcome on the domain. */
@@ -76,6 +92,7 @@ class DomainVerifier
                 $domain->failing_since ??= $now;
                 if ($domain->failing_since->addHours(config('custom_domains.grace_hours'))->lte($now)) {
                     $domain->status = CustomDomain::FAILED;
+                    $domain->secured_at = null; // needs securing again if it comes back
                 }
             } elseif ($domain->status === CustomDomain::PENDING
                 && $domain->created_at && $domain->created_at->addDays(config('custom_domains.pending_days'))->lte($now)) {

@@ -39,7 +39,14 @@ return [
     'platform_hosts' => array_filter(array_map('trim', explode(',', env('CUSTOM_DOMAINS_PLATFORM_HOSTS', '')))),
 
     // Domains customers can never add (the platform's own).
-    'reserved_suffixes' => ['ascend-digital.co.uk', 'duckdns.org', 'localhost', 'test', 'example', 'invalid', 'local'],
+    // Refused: our own and other hosted sites on the server (Traefik won't
+    // route them), and names that can't be real customer domains.
+    'reserved_suffixes' => ['ascend-digital.co.uk', 'ascend-customwear.co.uk', 'svtcounselling.co.uk', 'sslip.io', 'duckdns.org', 'localhost', 'test', 'example', 'invalid', 'local'],
+    // The server's sync job serves at most this many hostnames (www counts).
+    'max_hostnames' => (int) env('CUSTOM_DOMAINS_MAX', 500),
+    // Cloudflare's proxy ranges (https://www.cloudflare.com/ips-v4): an
+    // orange-cloud record hides our IP and breaks the certificate check.
+    'cloudflare_ranges' => ['173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13', '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22'],
 
     // A pending domain is re-checked for this many days, then marked failed.
     'pending_days' => 7,

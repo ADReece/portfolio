@@ -39,6 +39,12 @@ class CustomDomainController extends Controller
             throw ValidationException::withMessages(['hostname' => 'Choose a username for your portfolio first.']);
         }
 
+        // The server serves a limited number of hostnames in all.
+        $inUse = CustomDomain::whereIn('status', [CustomDomain::PENDING, CustomDomain::VERIFIED])->get()->sum(fn ($d) => count($d->hostnames()));
+        if ($inUse + 2 > (int) config('custom_domains.max_hostnames')) {
+            throw ValidationException::withMessages(['hostname' => 'We can\'t connect more domains right now. Please contact support.']);
+        }
+
         $parsed = Hostname::normalise($request->input('hostname'));
         if (! $parsed) {
             throw ValidationException::withMessages(['hostname' => 'Enter a domain you own, like yourname.com.']);
@@ -86,6 +92,7 @@ class CustomDomainController extends Controller
         RateLimiter::hit('verify-domain:'.$domain->id, 60);
 
         $verifier->verify($domain);
+        app(\App\CustomDomains\CertificateCheck::class)->check($domain);
 
         return $domain->isVerified()
             ? back()->with('success', 'Verified. Your portfolio will be live on '.$domain->displayHostname($domain->primaryHostname()).' within a few minutes, once its security certificate is issued.')

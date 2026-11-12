@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('custom-domains:verify --pending')->everyTenMinutes()->withoutOverlapping();
         $schedule->command('custom-domains:verify --verified')->daily()->withoutOverlapping();
         $schedule->command('custom-domains:verify --failing')->hourly()->withoutOverlapping();
+        $schedule->command('custom-domains:verify --securing')->everyTwoMinutes()->withoutOverlapping();
     }
 
     /**

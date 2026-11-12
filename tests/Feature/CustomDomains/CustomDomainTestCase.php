@@ -17,6 +17,9 @@ abstract class CustomDomainTestCase extends TestCase
 
     protected FakeDns $dns;
 
+    /** Hosts the HTTPS check reaches (their certificate is issued). */
+    protected array $securedHosts = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -29,6 +32,15 @@ abstract class CustomDomainTestCase extends TestCase
         $this->seed(SubscriptionPlanSeeder::class);
         $this->dns = new FakeDns();
         $this->app->instance(DnsResolver::class, $this->dns);
+        // The HTTPS check (CertificateCheck): not secured unless a test says so.
+        \Illuminate\Support\Facades\Http::fake(function (\Illuminate\Http\Client\Request $request) {
+            $host = parse_url($request->url(), PHP_URL_HOST);
+
+            return in_array($host, $this->securedHosts, true)
+                ? \Illuminate\Support\Facades\Http::response(\App\CustomDomains\CertificateCheck::token($host))
+                : \Illuminate\Support\Facades\Http::response('', 404);
+        });
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
     }
 
     protected function photographer(string $username = 'stephshoots', string $plan = 'photographer'): User
