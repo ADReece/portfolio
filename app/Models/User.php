@@ -83,6 +83,7 @@ class User extends Authenticatable
         'attribution' => 'array',
         'feature_override_expires_at' => 'datetime',
         'is_admin' => 'boolean',
+        'is_demo' => 'boolean',
     ];
 
     protected $with = ['subscriptionPlan'];
@@ -198,6 +199,12 @@ class User extends Authenticatable
         }
 
         return (int) ($plans[$this->subscriptionPlan?->slug] ?? 0);
+    }
+
+    /** The public demo photographer: can't log in, never charged, checkouts and emails off. */
+    public function isDemo(): bool
+    {
+        return (bool) $this->is_demo;
     }
 
     public function isFeatureOverrideActive(): bool

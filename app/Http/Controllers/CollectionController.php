@@ -242,6 +242,13 @@ class CollectionController extends Controller
             ], 403);
         }
 
+        if ($collection->user?->is_demo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This is a demo portfolio, so no emails are sent. On your own portfolio, the client gets a link to download every photo.',
+            ], 422);
+        }
+
         // While the photographer sells downloads, the photos are bought instead.
         if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $collection)) {
             return response()->json([

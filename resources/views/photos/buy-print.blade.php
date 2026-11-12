@@ -24,6 +24,12 @@
         <h1 class="text-3xl font-bold">Order a print</h1>
         <p class="mt-1 mb-8 opacity-80">Printed and shipped for {{ $photographer->name ?? $photographer->username }}. You'll pay securely with Stripe on the next step.</p>
 
+        @if($photographer->is_demo)
+            <div class="portfolio-neutral mb-6 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100" role="status">
+                {{ session('demo', 'This is a demo portfolio: try the options, but nothing is ordered or charged.') }}
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="portfolio-neutral mb-6 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-800 dark:text-red-200" role="alert">
                 Please check the highlighted fields below.

@@ -76,8 +76,9 @@
         @php
             // Theme rules for one colour scheme. Elements inside .portfolio-neutral
             // (checkout forms, order summaries, dialogs) keep the standard readable
-            // styling instead of the photographer's colours.
-            $not = ':not(.portfolio-neutral, .portfolio-neutral *)';
+            // styling instead of the photographer's colours, and text set over a
+            // photo (.portfolio-on-photo, e.g. collection titles) stays white.
+            $not = ':not(.portfolio-neutral, .portfolio-neutral *, .portfolio-on-photo)';
             $schemeCss = function (string $s) use ($not) {
                 $isDark = $s === 'dark';
                 return "

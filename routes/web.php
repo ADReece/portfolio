@@ -161,6 +161,14 @@ Route::prefix('/@{username}')->group(function () {
         ->middleware('throttle:10,1')
         ->name('profile.collection.unlock');
     Route::get('/print-products', [ProdigiProductSettingsController::class, 'listForPortfolio'])->name('profile.print-products');
+    // Credits for stock photos (the demo portfolio's Unsplash photos).
+    Route::get('/photo-credits', function (string $username) {
+        $user = \App\Models\User::where('username', $username)->firstOrFail();
+        $photos = $user->photos()->whereNotNull('credit')->where('private', false)->ready()->orderBy('created_at')->get();
+        abort_if($photos->isEmpty(), 404);
+
+        return view('demo.credits', ['user' => $user, 'photos' => $photos]);
+    })->name('profile.photo-credits');
 });
 
 // Client "download all" archives. Clients don't have accounts: requesting an

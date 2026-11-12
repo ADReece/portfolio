@@ -69,7 +69,7 @@ class CrmReporter
     /** Debounced: a burst of edits sends one account.updated with the latest details. */
     public function updated(User $user): void
     {
-        if (! self::enabled()) {
+        if (! self::enabled() || $user->is_demo) {
             return;
         }
         $token = (string) Str::uuid();
@@ -81,7 +81,7 @@ class CrmReporter
 
     private function send(User $user, string $type, ?string $eventId = null, ?array $extra = null): void
     {
-        if (! self::enabled()) {
+        if (! self::enabled() || $user->is_demo) {
             return;
         }
 

@@ -19,6 +19,9 @@
     </x-slot>
 
     <div class="w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 overflow-x-hidden">
+        @if($user->is_demo)
+            @include('demo.panel')
+        @endif
         @if($collections->isEmpty())
             <div class="text-center py-16">
                 <p class="opacity-70">No collections to show yet.</p>
@@ -51,7 +54,7 @@
 
                             <!-- Title bar with enhanced hover state -->
                             <div class="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-                                <h3 class="text-white text-lg font-semibold mb-1 transition-all duration-200">
+                                <h3 class="portfolio-on-photo text-white text-lg font-semibold mb-1 transition-all duration-200">
                                     {{ $collection->name }}
                                 </h3>
                                 @if($collection->event_date)

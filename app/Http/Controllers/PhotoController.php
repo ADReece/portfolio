@@ -158,6 +158,10 @@ class PhotoController extends Controller
     {
         abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
 
+        if ($photo->user?->is_demo) {
+            return response()->json(['success' => false, 'message' => 'This is a demo portfolio, so no emails are sent. On your own portfolio, the client gets this by email.'], 422);
+        }
+
         if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $photo->set?->collection)) {
             return response()->json([
                 'success' => false,
@@ -204,6 +208,10 @@ class PhotoController extends Controller
     public function requestPurchase(Request $request, Photo $photo): JsonResponse
     {
         abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+
+        if ($photo->user?->is_demo) {
+            return response()->json(['success' => false, 'message' => 'This is a demo portfolio, so no emails are sent. On your own portfolio, the client gets this by email.'], 422);
+        }
 
         $validated = $request->validate([
             'email' => 'required|email|max:255',
@@ -277,6 +285,17 @@ class PhotoController extends Controller
         $printData = [];
         foreach ($template->fields as $field) {
             $printData[$field['key']] = $request->input('fields.' . $field['key'], '');
+        }
+
+        // The public demo keeps visitors' designs for two hours only.
+        if ($photo->user?->is_demo) {
+            GeneratedPrint::query()->where('template_id', $template->id)->where('created_at', '<', now()->subHours(2))->get()
+                ->each(function (GeneratedPrint $old) {
+                    if ($old->output_path) {
+                        Storage::disk('s3')->delete($old->output_path);
+                    }
+                    $old->delete();
+                });
         }
 
         $generatedPrint = GeneratedPrint::create([

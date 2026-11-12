@@ -41,7 +41,10 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // The public demo account can't be logged into, whatever the password.
+        $isDemo = \App\Models\User::query()->where('email', $this->input('email'))->where('is_demo', true)->exists();
+
+        if ($isDemo || ! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

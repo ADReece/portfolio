@@ -45,6 +45,10 @@ class PrintPurchaseController extends Controller
 
         abort_if(!$this->isPhotoPurchasable($request, $photo), 404);
 
+        if ($photographer->is_demo) {
+            return back()->withInput()->with('demo', 'This is a demo portfolio, so prints can\'t be ordered here. On your own portfolio, the client pays by card and the print is made and posted to them.');
+        }
+
         $validated = $request->validate([
             'prodigi_product_id' => ['required', 'integer', 'exists:prodigi_products,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:10'],
@@ -243,7 +247,7 @@ class PrintPurchaseController extends Controller
         $photographer = $photo->user;
         $collection = $photo->set?->collection;
 
-        if (! \App\Billing\Payouts::available()
+        if (! (\App\Billing\Payouts::available() || $photographer?->is_demo)
             || ! $photo->isReady()
             || ! $photographer || ! $collection
             || ! $photographer->hasFeature('selling')
