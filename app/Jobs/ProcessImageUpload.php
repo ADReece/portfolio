@@ -139,6 +139,11 @@ class ProcessImageUpload implements ShouldQueue
 
     public static function derivativeKey(string $originalKey, string $folder): string
     {
+        // A derived copy must never land on the original's key (it would overwrite it).
+        if (! str_starts_with($originalKey, 'photos/')) {
+            throw new \InvalidArgumentException("Can't derive a {$folder} copy for a photo stored outside photos/: {$originalKey}");
+        }
+
         return preg_replace('#^photos/#', $folder.'/', $originalKey);
     }
 

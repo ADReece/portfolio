@@ -25,7 +25,8 @@ class MakeDisplayCopies extends Command
 
             return self::SUCCESS;
         }
-        $query = Photo::query()->where('status', Photo::READY)->where('has_display', false)->orderBy('created_at', 'desc');
+        // Only photos stored under photos/ (their copies have their own keys).
+        $query = Photo::query()->where('status', Photo::READY)->where('has_display', false)->where('url', 'like', 'photos/%')->orderBy('created_at', 'desc');
         if ($limit = (int) $this->option('limit')) {
             $query->limit($limit);
         }
