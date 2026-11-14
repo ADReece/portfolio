@@ -24,7 +24,7 @@
                         <div class="relative group overflow-hidden rounded-lg shadow-xs hover:shadow-xl transition-shadow duration-300">
                             <!-- Image (clickable for lightbox) -->
                             <a href="{{ $m->getUri() }}"
-                               data-fslightbox="gallery"
+                               data-lightbox="gallery"
                                data-type="image"
                                data-caption="{{ $m->caption ?? '' }}"
                                class="block"
@@ -355,7 +355,7 @@
                     }
 
                     // Clone items and move them to the visible grid
-                    const clonedItems = items.map(item => item.cloneNode(true));
+                    const clonedItems = items.map(item => this.cloneForGrid(item));
 
                     // Create columns structure with cloned items
                     this.createColumns(grid, clonedItems);
@@ -370,6 +370,17 @@
                         grid.setAttribute('data-masonry-initialized', 'true');
                         refreshFsLightbox();
                     });
+                },
+
+                /*
+                 * A copy of a hidden template item for the visible grid. Only
+                 * the copies join the photo viewer (data-fslightbox), so it
+                 * counts each photo once, not once per copy.
+                 */
+                cloneForGrid(item) {
+                    const cloned = item.cloneNode(true);
+                    cloned.querySelectorAll('[data-lightbox]').forEach(link => link.setAttribute('data-fslightbox', link.getAttribute('data-lightbox')));
+                    return cloned;
                 },
 
                 createColumns(grid, existingItems) {
@@ -464,7 +475,7 @@
                     if (newTemplateItems.length > 0) {
                         // Clone the new items
                         const newItems = newTemplateItems.map(item => {
-                            const cloned = item.cloneNode(true);
+                            const cloned = this.cloneForGrid(item);
                             // Ensure animation styles are set BEFORE adding to DOM
                             cloned.classList.remove('loaded');
                             cloned.style.opacity = '0';
