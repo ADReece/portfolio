@@ -42,61 +42,11 @@ class ApplyTemplateToPrint implements ShouldQueue
             $image = $manager->make($photoContent);
             $image->orientate();
 
-            // Composite the overlay (PNG with transparency) on top of the photo
-            if ($template->overlay_path) {
-                $overlayContent = Storage::disk('s3')->get($template->overlay_path);
-                $overlay = $manager->make($overlayContent);
-                $overlay->resize($image->width(), $image->height());
-                $image->insert($overlay, 'top-left', 0, 0);
-            }
-
-            // Render each text field
-            $defaultFontPath = public_path('fonts/OpenSans-Bold.ttf');
-            $tempFontFiles   = []; // temp files to clean up after
-
-            foreach ($template->fields as $field) {
-                $value = trim($data[$field['key']] ?? '');
-                if ($value === '') {
-                    continue;
-                }
-
-                $x = (int) round(($field['x'] / 100) * $image->width());
-                $y = (int) round(($field['y'] / 100) * $image->height());
-
-                $fontSize = (int) ($field['font_size'] ?? 60);
-                $color    = $field['color'] ?? '#ffffff';
-                $align    = $field['align'] ?? 'center';
-
-                // Resolve font: custom uploaded font or fall back to default
-                $fontPath = $defaultFontPath;
-                if (!empty($field['font_id'])) {
-                    $font = Font::find($field['font_id']);
-                    if ($font) {
-                        $tmp = $font->downloadToTemp();
-                        $tempFontFiles[] = $tmp;
-                        $fontPath = $tmp;
-                    }
-                }
-
-                $image->text($value, $x, $y, function ($f) use ($fontPath, $fontSize, $color, $align) {
-                    if (file_exists($fontPath)) {
-                        $f->file($fontPath);
-                    }
-                    $f->size($fontSize);
-                    $f->color($color);
-                    $f->align($align);
-                    $f->valign('middle');
-                });
-            }
+            \App\Prints\TemplateRenderer::apply($image, $template, $data);
 
             // Save the generated print to S3
             $outputKey = 'prints/' . $this->generatedPrint->id . '.jpg';
             Storage::disk('s3')->put($outputKey, (string) $image->encode('jpg', 92));
-
-            // Clean up any temp font files
-            foreach ($tempFontFiles as $tmp) {
-                @unlink($tmp);
-            }
 
             $this->generatedPrint->update([
                 'output_path' => $outputKey,

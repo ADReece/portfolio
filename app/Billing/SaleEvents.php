@@ -52,7 +52,10 @@ class SaleEvents
         if ($order->isDigital()) {
             DeliverDigitalOrder::dispatch($order->id);
         } elseif ($order->hasPrintItems()) {
-            SubmitOrderToProdigi::dispatch($order);
+            // Personalised prints are drawn first, then the order goes to Prodigi.
+            $order->items()->whereNotNull('template_id')->exists()
+                ? \Illuminate\Support\Facades\Bus::chain([new \App\Jobs\RenderPersonalisedPrints($order->id), new SubmitOrderToProdigi($order)])->dispatch()
+                : SubmitOrderToProdigi::dispatch($order);
             SendPrintOrderEmail::dispatch($order->id, SendPrintOrderEmail::CONFIRMED);
         }
 

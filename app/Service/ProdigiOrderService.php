@@ -95,7 +95,7 @@ class ProdigiOrderService
                 'copies' => (int) $item->quantity,
                 'sizing' => 'fillPrintArea',
                 'assets' => [
-                    ['printArea' => 'default', 'url' => $this->getProductImageUrl($product)],
+                    ['printArea' => 'default', 'url' => $this->getItemImageUrl($item)],
                 ],
             ];
             if (! empty($item->prodigi_attributes)) {
@@ -124,6 +124,20 @@ class ProdigiOrderService
         ];
 
         return $skuMap[$product->type] ?? 'POSTER_A2_GLOSS';
+    }
+
+    /** What Prodigi prints for a line: the personalised image if there is one, else the photo. */
+    private function getItemImageUrl(OrderItem $item): string
+    {
+        if ($item->isPersonalised()) {
+            if (! $item->print_asset_path) {
+                throw new \Exception('Personalised print for item '.$item->id.' has not been made yet');
+            }
+
+            return \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl($item->print_asset_path, now()->addDays(7));
+        }
+
+        return $this->getProductImageUrl($item->product);
     }
 
     /**

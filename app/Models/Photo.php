@@ -30,6 +30,8 @@ class Photo extends Model
         'processing_error',
         'original_filename',
         'has_display',
+        'width',
+        'height',
     ];
 
     public const PROCESSING = 'processing';
@@ -97,6 +99,29 @@ class Photo extends Model
         // Only show watermark if explicitly marked, not based on privacy
         return $this->watermarked ||
                ($this->set && $this->set->collection && $this->set->collection->watermarked);
+    }
+
+    /**
+     * The original's width and height (the right way up). Photos processed
+     * before sizes were recorded have theirs read once, from the original.
+     *
+     * @return array{0: int, 1: int}
+     */
+    public function originalSize(): array
+    {
+        if (! $this->width || ! $this->height) {
+            $path = \App\Jobs\ProcessImageUpload::downloadOriginal($this->url);
+            try {
+                [$width, $height] = \App\Jobs\ProcessImageUpload::originalSize($path);
+            } finally {
+                @unlink($path);
+            }
+            if ($width && $height) {
+                $this->forceFill(['width' => $width, 'height' => $height])->saveQuietly();
+            }
+        }
+
+        return [(int) $this->width, (int) $this->height];
     }
 
     public function getAwsMedia()

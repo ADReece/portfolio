@@ -32,7 +32,7 @@ class SendPrintOrderEmail implements ShouldQueue
 
     public function handle(): void
     {
-        $order = Order::with('user', 'items.product.photo')->find($this->orderId);
+        $order = Order::with('user', 'items.product.photo', 'items.template')->find($this->orderId);
         if (! $order || ! $order->paid_at || ! $order->hasPrintItems()) {
             return;
         }

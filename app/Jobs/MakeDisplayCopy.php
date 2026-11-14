@@ -37,10 +37,11 @@ class MakeDisplayCopy implements ShouldQueue
         $original = ProcessImageUpload::downloadOriginal($photo->url);
         try {
             Storage::disk('s3')->put(ProcessImageUpload::derivativeKey($photo->url, 'display'), ProcessImageUpload::makeDisplay($original));
+            [$width, $height] = ProcessImageUpload::originalSize($original);
         } finally {
             @unlink($original);
         }
 
-        Photo::whereKey($photo->id)->update(['has_display' => true]);
+        Photo::whereKey($photo->id)->update(['has_display' => true] + ($width && $height ? ['width' => $width, 'height' => $height] : []));
     }
 }

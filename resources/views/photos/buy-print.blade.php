@@ -13,7 +13,34 @@
             get unit() { return this.prices[this.product] ?? 0 },
             get total() { return this.unit * Math.max(1, Math.min(10, this.quantity || 1)) },
             money(v) { return this.symbol + v.toFixed(2) },
-         }">
+            // Personalising with one of the photographer's templates.
+            template: @js((string) old('template_id', '')),
+            preview: null,
+            previewing: false,
+            previewError: '',
+            async makePreview() {
+                const form = this.$root.querySelector('form');
+                const data = new FormData();
+                data.append('template_id', this.template);
+                form.querySelectorAll('[name^=template_fields]:not(:disabled)').forEach(i => data.append(i.name, i.value));
+                this.previewing = true;
+                this.previewError = '';
+                try {
+                    const r = await fetch(@js(route('print-purchase.preview', ['photo' => $photo->id])), {
+                        method: 'POST', body: data, credentials: 'same-origin',
+                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'image/jpeg, application/json' },
+                    });
+                    if (!r.ok) throw new Error(r.status === 429 ? 'Too many previews at once. Please wait a moment.' : 'We couldn\'t make a preview just now. Please try again.');
+                    if (this.preview) URL.revokeObjectURL(this.preview);
+                    this.preview = URL.createObjectURL(await r.blob());
+                } catch (e) {
+                    this.previewError = e.message;
+                } finally {
+                    this.previewing = false;
+                }
+            },
+         }"
+         x-effect="template; if (!template && preview) { URL.revokeObjectURL(preview); preview = null }">
         @if($returnUrl)
             <a href="{{ $returnUrl }}" class="mb-4 inline-flex items-center gap-1 text-sm opacity-80 hover:underline hover:opacity-100">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -78,6 +105,60 @@
                         @error('quantity')<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
                     </div>
                 </fieldset>
+
+                @if($templates->isNotEmpty())
+                    <fieldset class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4">
+                        <legend class="sr-only">Personalise your print</legend>
+                        <div>
+                            <h2 class="text-lg font-semibold" aria-hidden="true">Personalise <span class="text-sm font-normal text-gray-500 dark:text-gray-400">(optional)</span></h2>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">Add a design and your own words, made by {{ $photographer->name ?? $photographer->username }}.</p>
+                        </div>
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <label class="flex cursor-pointer items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700 has-checked:border-indigo-500 has-checked:ring-1 has-checked:ring-indigo-500">
+                                <input type="radio" name="template_id" value="" x-model="template" class="text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-sm font-medium">No personalisation</span>
+                            </label>
+                            @foreach($templates as $template)
+                                <label class="flex cursor-pointer items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700 has-checked:border-indigo-500 has-checked:ring-1 has-checked:ring-indigo-500">
+                                    <input type="radio" name="template_id" value="{{ $template->id }}" x-model="template" class="text-indigo-600 focus:ring-indigo-500">
+                                    @if($template->overlayUrl())
+                                        <img src="{{ $template->overlayUrl() }}" alt="" class="size-10 shrink-0 rounded bg-gray-100 object-contain dark:bg-gray-900">
+                                    @endif
+                                    <span class="min-w-0 text-sm">
+                                        <span class="block font-medium">{{ $template->name }}</span>
+                                        @if($template->description)<span class="block truncate text-gray-500 dark:text-gray-400">{{ $template->description }}</span>@endif
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('template_id')<p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
+
+                        @foreach($templates as $template)
+                            @if(! empty($template->fields))
+                                <div x-show="template === @js((string) $template->id)" x-cloak class="space-y-3">
+                                    @foreach($template->fields as $field)
+                                        <div>
+                                            <label for="tf-{{ $template->id }}-{{ $field['key'] }}" class="{{ $labelClass }}">{{ $field['label'] ?? $field['key'] }}</label>
+                                            <input id="tf-{{ $template->id }}-{{ $field['key'] }}" type="text" maxlength="120"
+                                                   name="template_fields[{{ $field['key'] }}]" value="{{ old('template_id') === (string) $template->id ? old('template_fields.'.$field['key']) : '' }}"
+                                                   :disabled="template !== @js((string) $template->id)" class="{{ $inputClass }}">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        @endforeach
+                        @error('template_fields')<p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
+
+                        <div x-show="template" x-cloak class="flex flex-wrap items-center gap-3">
+                            <button type="button" x-on:click="makePreview()" x-bind:disabled="previewing"
+                                    class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60 dark:border-gray-600 dark:hover:bg-gray-700">
+                                <span x-text="previewing ? 'Making preview…' : (preview ? 'Update preview' : 'Preview')">Preview</span>
+                            </button>
+                            <p class="text-sm text-gray-600 dark:text-gray-300">The preview is watermarked and smaller; your print won't be.</p>
+                            <p x-show="previewError" x-text="previewError" role="alert" class="w-full text-sm text-red-600 dark:text-red-400"></p>
+                        </div>
+                    </fieldset>
+                @endif
 
                 <fieldset class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <legend class="sr-only">Your details</legend>
@@ -146,7 +227,12 @@
 
             <aside class="portfolio-neutral text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4 lg:sticky lg:top-6" aria-labelledby="summary-heading">
                 <h2 id="summary-heading" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Order summary</h2>
-                <img src="{{ $photo->getAwsThumbnail() }}" alt="{{ $photo->caption ? 'Photo: '.$photo->caption : 'The photo you are ordering' }}" class="rounded-md w-full max-h-64 object-contain bg-gray-100 dark:bg-gray-900" />
+                <img src="{{ $photo->getAwsThumbnail() }}" x-bind:src="preview || @js($photo->getAwsThumbnail())"
+                     alt="{{ $photo->caption ? 'Photo: '.$photo->caption : 'The photo you are ordering' }}" x-bind:alt="preview ? 'Preview of your personalised print' : @js($photo->caption ? 'Photo: '.$photo->caption : 'The photo you are ordering')"
+                     class="rounded-md w-full max-h-64 object-contain bg-gray-100 dark:bg-gray-900" />
+                @if($templates->isNotEmpty())
+                    <p x-show="template" x-cloak class="text-sm text-gray-600 dark:text-gray-300">Personalised: <span class="font-medium" x-text="(@js($templates->mapWithKeys(fn ($t) => [(string) $t->id => $t->name])))[template] || ''"></span></p>
+                @endif
                 <dl class="text-sm space-y-2" aria-live="polite">
                     <div class="flex justify-between gap-4"><dt class="text-gray-600 dark:text-gray-300">Price per print</dt><dd class="tabular-nums text-gray-900 dark:text-gray-100" x-text="unit ? money(unit) : '–'">–</dd></div>
                     <div class="flex justify-between gap-4"><dt class="text-gray-600 dark:text-gray-300">Quantity</dt><dd class="tabular-nums text-gray-900 dark:text-gray-100" x-text="quantity || 1">1</dd></div>

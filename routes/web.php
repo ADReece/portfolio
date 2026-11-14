@@ -241,6 +241,7 @@ Route::post('/photos/{photo}/request-download', [PhotoController::class, 'reques
 Route::post('/photos/{photo}/request-purchase', [PhotoController::class, 'requestPurchase'])->middleware('throttle:5,1')->name('photos.request-purchase');
 Route::get('/photos/{photo}/buy-print', [PrintPurchaseController::class, 'show'])->name('print-purchase.show');
 Route::post('/photos/{photo}/buy-print', [PrintPurchaseController::class, 'store'])->name('print-purchase.store');
+Route::post('/photos/{photo}/buy-print/preview', [PrintPurchaseController::class, 'preview'])->middleware('throttle:print-preview')->name('print-purchase.preview');
 Route::get('/orders/{order}/purchase-success', [PrintPurchaseController::class, 'success'])->name('print-purchase.success');
 Route::get('/orders/{order}/purchase-cancel', [PrintPurchaseController::class, 'cancel'])->name('print-purchase.cancel');
 
