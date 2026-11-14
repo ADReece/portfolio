@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('videos:clean-uploads')->daily()->withoutOverlapping();
         // Web-sized copies for photos uploaded before they existed, a batch at a time.
         $schedule->command('photos:make-display-copies --limit=500')->hourly()->withoutOverlapping();
+        $schedule->command('downloads:prune')->hourly()->withoutOverlapping();
         $schedule->command('custom-domains:verify --pending')->everyTenMinutes()->withoutOverlapping();
         $schedule->command('custom-domains:verify --verified')->daily()->withoutOverlapping();
         $schedule->command('custom-domains:verify --failing')->hourly()->withoutOverlapping();

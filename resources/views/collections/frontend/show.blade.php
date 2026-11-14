@@ -53,9 +53,9 @@
                         <x-ui.icon name="shopping-bag" class="size-5" /> Buy photos
                     </a>
                 @endif
-                @if($collection->private && \App\Downloads\DigitalSales::freeDownloadsAllowed(request(), $collection))
-                    <button type="button" onclick="requestArchive()"
-                            class="inline-flex items-center gap-2 rounded-control bg-white/15 px-5 py-3 font-semibold text-white ring-1 ring-white/40 backdrop-blur hover:bg-white/25 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white">
+                @if($photoCount > 0 && \App\Downloads\DigitalSales::freeDownloadsAllowed(request(), $collection))
+                    <button type="button" data-download='@json(['collection_id' => $collection->id])'
+                            class="inline-flex items-center gap-2 rounded-control bg-white/15 px-5 py-3 font-semibold text-white ring-1 ring-white/40 backdrop-blur hover:bg-white/25 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white disabled:opacity-60">
                         <x-ui.icon name="arrow-down-tray" class="size-5" /> Download all
                     </button>
                 @endif
@@ -93,6 +93,7 @@
     <!-- Photo Gallery Section -->
     <div id="gallery" class="gallery-section scroll-mt-4 py-12 px-4 sm:px-8" style="background-color: var(--portfolio-bg-light, #F9FAFB); color: var(--portfolio-text-light, #1F2937);">
         <div class="max-w-7xl mx-auto">
+            <x-gallery.downloads :collection="$collection" />
             <livewire:masonry-grid :collectionId="$collection->id" />
         </div>
     </div>
@@ -126,53 +127,13 @@
     @endif
 
 
-    <script>
-        // Request archive download
-        function requestArchive() {
-            window.promptUser({
-                title: 'Request Download Archive',
-                message: 'Enter your email address to receive the download link when the archive is ready:',
-                placeholder: 'your@email.com',
-                inputType: 'email',
-                confirmText: 'Request Archive',
-                onConfirm: (email) => {
-                    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-                        window.showErrorToast('Please enter a valid email address');
-                        return;
-                    }
-
-                    // Show loading toast
-                    window.showInfoToast('Processing your request...');
-
-                    fetch('{{ route("collections.request-archive", $collection->id) }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ email: email })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.showSuccessToast("We're preparing your photos. We'll email " + email + ' a download link when they are ready.');
-                        } else {
-                            window.showErrorToast(data.message || 'Failed to request archive');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        window.showErrorToast("We couldn't start your download. Check your connection and try again.");
-                    });
-                }
-            });
-        }
-    </script>
     @if($collection->favourites_enabled)
         {{-- Client favourites (proofing): hearts on the photos, a bar with the count, and a form to send them. --}}
         <div id="favourites-bar" hidden class="portfolio-neutral fixed inset-x-0 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-full bg-white px-4 py-2 text-sm text-gray-900 shadow-xl ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-700">
             <span aria-live="polite"><span class="text-rose-600" aria-hidden="true">&#9829;</span> <span data-fav-count>0</span> <span data-fav-label>favourites</span><span data-fav-sent hidden> · sent</span></span>
+            @if(\App\Downloads\DigitalSales::freeDownloadsAllowed(request(), $collection))
+                <button type="button" data-fav-download aria-label="Download your favourites" class="rounded-full px-3 py-1.5 font-semibold hover:bg-gray-100 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-gray-500 dark:hover:bg-gray-800">Download</button>
+            @endif
             <button type="button" data-fav-open class="rounded-full bg-gray-900 px-4 py-1.5 font-semibold text-white hover:bg-gray-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-gray-500 dark:bg-white dark:text-gray-900">Send to {{ $photographerName }}</button>
         </div>
         <dialog id="favourites-dialog" aria-labelledby="favourites-title"
@@ -254,6 +215,10 @@
                     .catch(function (err) { window.showErrorToast ? window.showErrorToast(err.message) : alert(err.message); })
                     .finally(function () { b.disabled = false; });
             }, true);
+            var favDownload = bar.querySelector('[data-fav-download]');
+            if (favDownload) favDownload.addEventListener('click', function () {
+                window.portfolioDownload({ collection_id: @js($collection->id), photo_ids: Array.from(ids) }, favDownload);
+            });
             bar.querySelector('[data-fav-open]').addEventListener('click', function () { status.textContent = ''; dialog.showModal(); });
             dialog.querySelector('[data-fav-close]').addEventListener('click', function () { dialog.close(); });
             form.addEventListener('submit', function (e) {

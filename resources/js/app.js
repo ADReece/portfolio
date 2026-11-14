@@ -1,5 +1,6 @@
 import '../css/app.css';
 import './components/modal';
+import './components/downloads';
 
 import imagesLoaded from 'imagesloaded';
 import * as FilePond from 'filepond';

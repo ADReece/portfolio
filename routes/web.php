@@ -186,6 +186,20 @@ Route::prefix('/@{username}')->group(function () {
     })->name('profile.photo-credits');
 });
 
+// Downloading several photos as one ZIP (selections, sets, collections,
+// favourites). Visitors don't need accounts: preparing checks the gallery is
+// open to them, and the links it hands back are signed and expire.
+Route::post('/downloads/prepare', [\App\Http\Controllers\BulkDownloadController::class, 'prepare'])
+    ->middleware('throttle:bulk-downloads')->name('bulk-downloads.prepare');
+Route::middleware('signed')->group(function () {
+    Route::get('/downloads/zip/{archive}', [\App\Http\Controllers\BulkDownloadController::class, 'stream'])
+        ->middleware('throttle:bulk-downloads-stream')->name('bulk-downloads.stream');
+    Route::get('/downloads/archives/{archive}', [\App\Http\Controllers\BulkDownloadController::class, 'archive'])->name('bulk-downloads.archive');
+    Route::post('/downloads/archives/{archive}/email', [\App\Http\Controllers\BulkDownloadController::class, 'email'])
+        ->middleware('throttle:6,1')->name('bulk-downloads.archive.email');
+    Route::get('/downloads/archives/{archive}/file', [\App\Http\Controllers\BulkDownloadController::class, 'file'])->name('bulk-downloads.archive.file');
+});
+
 // Client "download all" archives. Clients don't have accounts: requesting an
 // archive needs an unlocked gallery, and the emailed links are signed.
 Route::post('/collections/{collection}/request-archive', [CollectionController::class, 'requestArchive'])

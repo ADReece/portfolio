@@ -40,8 +40,15 @@
                                 />
                             </a>
 
+                            <!-- Selection tick (only in "Select" mode: resources/js/components/downloads.js) -->
+                            <button type="button" data-select-photo="{{ $m->id }}" aria-pressed="false"
+                                    class="select-check absolute top-2 left-2 z-10 size-8 items-center justify-center rounded-full border-2 border-white bg-black/30 text-white shadow-lg backdrop-blur-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+                                    aria-label="Select {{ $m->caption ? Str::limit($m->caption, 40) : 'photo '.($index + 1) }}">
+                                <svg class="size-5 opacity-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>
+                            </button>
+
                             <!-- Hover Overlay with Buttons -->
-                            <div class="absolute inset-0 pointer-events-none bg-black/0 can-hover:group-hover:bg-black/40 transition-all duration-300 flex items-end justify-end p-3 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
+                            <div class="photo-actions absolute inset-0 pointer-events-none bg-black/0 can-hover:group-hover:bg-black/40 transition-all duration-300 flex items-end justify-end p-3 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 group-focus-within:opacity-100">
                                 @if($favourites)
                                     <!-- Favourite (proofing): state is kept by the gallery's favourites script -->
                                     <button type="button" data-favourite="{{ $m->id }}" aria-pressed="false"

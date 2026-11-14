@@ -97,6 +97,23 @@ test('client: favourites in a private gallery', async ({ page }) => {
     await expectNoViolations(page, 'favourites dialog');
 });
 
+test('client: choosing photos to download in a private gallery', async ({ page }) => {
+    await logIn(page);
+    await page.goto('/collections?show=private');
+    await page.locator("main ul[role=list] a").first().click();
+    const link = await page.locator('#collection-link').inputValue();
+    await page.context().clearCookies();
+    await page.goto(link);
+    await page.fill('input[name=password]', 'wedding');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#masonry .masonry-item').first()).toBeVisible(); // the grid's script has run
+    await page.getByRole('button', { name: 'Select photos' }).click();
+    await page.locator('#masonry [data-select-photo]').first().click();
+    await expect(page.getByRole('region', { name: 'Selected photos' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download selected (1)' })).toBeEnabled();
+    await expectNoViolations(page, 'gallery in select mode');
+});
+
 test('app: admin edit print product', async ({ page }) => {
     await logIn(page);
     await page.goto('/admin/print-catalogue');

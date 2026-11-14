@@ -121,3 +121,15 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* Choosing photos in a gallery to download together (resources/js/components/downloads.js). */
+.select-check { display: none; }
+body.pf-selecting .select-check { display: flex; }
+body.pf-selecting .photo-actions,
+body.pf-selecting #favourites-bar { display: none !important; }
+body.pf-selecting #masonry .masonry-item { cursor: pointer; }
+body.pf-selecting #masonry .masonry-item img { transition: transform 150ms ease, opacity 150ms ease; }
+body.pf-selecting #masonry .masonry-item.is-selected img { transform: scale(0.94); }
+body.pf-selecting #masonry .masonry-item.is-selected > div { outline: 3px solid var(--portfolio-accent, #4f46e5); outline-offset: 2px; }
+.select-check[aria-pressed="true"] { background-color: var(--portfolio-accent, #4f46e5); color: #fff; border-color: #fff; }
+.select-check[aria-pressed="true"] svg { opacity: 1; }
