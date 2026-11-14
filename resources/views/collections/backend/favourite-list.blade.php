@@ -7,7 +7,10 @@
                           :description="$photos->count().' '.\Illuminate\Support\Str::plural('photo', $photos->count()).' from '.$collection->name.($list->submitted_at ? ', sent '.$list->submitted_at->format('j F Y, H:i') : ', not sent yet')"
                           :back="route('collections.client-favourites.index', $collection->id)" back-label="Client favourites">
             <x-slot:actions>
-                <x-ui.button icon="arrow-down-tray" :href="route('collections.client-favourites.export', [$collection->id, $list->id])">Download filenames</x-ui.button>
+                @if($photos->isNotEmpty())
+                    <x-ui.button variant="secondary" icon="arrow-down-tray" data-download="{{ json_encode(['collection_id' => (string) $collection->id, 'photo_ids' => $photos->pluck('id')->map(fn ($id) => (string) $id)->values()]) }}">Download photos</x-ui.button>
+                @endif
+                <x-ui.button icon="document-text" :href="route('collections.client-favourites.export', [$collection->id, $list->id])">Download filenames</x-ui.button>
             </x-slot:actions>
         </x-ui.page-header>
 

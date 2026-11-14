@@ -51,6 +51,13 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('favourites', fn (Request $request) => Limit::perMinute(120)->by('fav:'.$request->ip()));
         RateLimiter::for('favourites-submit', fn (Request $request) => Limit::perMinute(6)->by('fav-submit:'.$request->ip()));
 
+        // Downloading several photos as a ZIP: per visitor, and per gallery.
+        RateLimiter::for('bulk-downloads', fn (Request $request) => [
+            Limit::perMinute(10)->by('dl:'.$request->ip()),
+            Limit::perHour(60)->by('dl:'.$request->ip().'|'.($request->input('collection_id') ?: $request->input('set_id') ?: 'photos')),
+        ]);
+        RateLimiter::for('bulk-downloads-stream', fn (Request $request) => Limit::perMinute(10)->by('dl-stream:'.$request->ip()));
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });

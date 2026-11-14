@@ -34,6 +34,14 @@
                                class="size-4 rounded-sm border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900">
                         Select all
                     </label>
+                    <x-ui.button variant="secondary" size="sm" icon="arrow-down-tray" x-show="selected.length" x-cloak
+                                 x-on:click="window.portfolioDownload({ set_id: @js((string) $set->id), photo_ids: [...selected] }, $el)">
+                        <span x-text="`Download ${selected.length} selected`"></span>
+                    </x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" icon="arrow-down-tray" x-show="!selected.length"
+                                 data-download="{{ json_encode(['set_id' => (string) $set->id]) }}">
+                        Download set
+                    </x-ui.button>
                     <x-ui.button variant="danger" size="sm" icon="trash" x-show="selected.length" x-cloak x-on:click="deleteSelected()">
                         <span x-text="`Delete ${selected.length} selected`"></span>
                     </x-ui.button>
