@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ac7d55c6e9df2e5dd341f8cc7332d045",
+    "content-hash": "659374b79d7e309cb3e6b8c2ee9a4b75",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1690,16 +1690,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.71.0",
+            "version": "v12.72.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "64dc24f5d965add4d402b4b8b64f59b561112af5"
+                "reference": "b089d3020e508f49b3625726ab4a2c897f1b78d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/64dc24f5d965add4d402b4b8b64f59b561112af5",
-                "reference": "64dc24f5d965add4d402b4b8b64f59b561112af5",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/b089d3020e508f49b3625726ab4a2c897f1b78d5",
+                "reference": "b089d3020e508f49b3625726ab4a2c897f1b78d5",
                 "shasum": ""
             },
             "require": {
@@ -1908,7 +1908,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-11-03T15:08:25+00:00"
+            "time": "2026-11-10T15:45:11+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -1970,16 +1970,16 @@
         },
         {
             "name": "laravel/sanctum",
-            "version": "v4.3.3",
+            "version": "v4.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sanctum.git",
-                "reference": "fee27a573d1a013af3721d86153a65e0b11927e6"
+                "reference": "a28ea5d4c2b123420562d6a3a233414f84b70774"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sanctum/zipball/fee27a573d1a013af3721d86153a65e0b11927e6",
-                "reference": "fee27a573d1a013af3721d86153a65e0b11927e6",
+                "url": "https://api.github.com/repos/laravel/sanctum/zipball/a28ea5d4c2b123420562d6a3a233414f84b70774",
+                "reference": "a28ea5d4c2b123420562d6a3a233414f84b70774",
                 "shasum": ""
             },
             "require": {
@@ -1992,6 +1992,7 @@
                 "symfony/console": "^7.0|^8.0"
             },
             "require-dev": {
+                "jasonmccreary/double": "^1.0",
                 "mockery/mockery": "^1.6",
                 "orchestra/testbench": "^9.15|^10.8|^11.0",
                 "phpstan/phpstan": "^1.10"
@@ -2029,20 +2030,20 @@
                 "issues": "https://github.com/laravel/sanctum/issues",
                 "source": "https://github.com/laravel/sanctum"
             },
-            "time": "2026-06-23T18:26:55+00:00"
+            "time": "2026-11-02T15:42:32+00:00"
         },
         {
             "name": "laravel/serializable-closure",
-            "version": "v2.1.0",
+            "version": "v2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/serializable-closure.git",
-                "reference": "2d5869a838bbcf37e0d8b0568fc41914e81374b5"
+                "reference": "2bfb44e8af009b553ed2c060c94b0bc3c67b4769"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/2d5869a838bbcf37e0d8b0568fc41914e81374b5",
-                "reference": "2d5869a838bbcf37e0d8b0568fc41914e81374b5",
+                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/2bfb44e8af009b553ed2c060c94b0bc3c67b4769",
+                "reference": "2bfb44e8af009b553ed2c060c94b0bc3c67b4769",
                 "shasum": ""
             },
             "require": {
@@ -2090,37 +2091,36 @@
                 "issues": "https://github.com/laravel/serializable-closure/issues",
                 "source": "https://github.com/laravel/serializable-closure"
             },
-            "time": "2026-09-22T14:32:34+00:00"
+            "time": "2026-10-14T21:20:29+00:00"
         },
         {
             "name": "laravel/tinker",
-            "version": "v2.11.1",
+            "version": "v3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/tinker.git",
-                "reference": "c9f80cc835649b5c1842898fb043f8cc098dd741"
+                "reference": "5fab2518167975b302e10d1fdf9a8c8113849201"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/tinker/zipball/c9f80cc835649b5c1842898fb043f8cc098dd741",
-                "reference": "c9f80cc835649b5c1842898fb043f8cc098dd741",
+                "url": "https://api.github.com/repos/laravel/tinker/zipball/5fab2518167975b302e10d1fdf9a8c8113849201",
+                "reference": "5fab2518167975b302e10d1fdf9a8c8113849201",
                 "shasum": ""
             },
             "require": {
-                "illuminate/console": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0",
-                "illuminate/contracts": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0",
-                "illuminate/support": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0",
-                "php": "^7.2.5|^8.0",
-                "psy/psysh": "^0.11.1|^0.12.0",
-                "symfony/var-dumper": "^4.3.4|^5.0|^6.0|^7.0|^8.0"
+                "illuminate/console": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/contracts": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1",
+                "psy/psysh": "^0.12.19",
+                "symfony/var-dumper": "^5.4|^6.0|^7.0|^8.0"
             },
             "require-dev": {
-                "mockery/mockery": "~1.3.3|^1.4.2",
                 "phpstan/phpstan": "^1.10",
-                "phpunit/phpunit": "^8.5.8|^9.3.3|^10.0"
+                "phpunit/phpunit": "^10.5|^11.5|^12.5|^13.4"
             },
             "suggest": {
-                "illuminate/database": "The Illuminate Database package (^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0)."
+                "illuminate/database": "The Illuminate Database package (^8.0|^9.0|^10.0|^11.0|^12.0|^13.0)."
             },
             "type": "library",
             "extra": {
@@ -2128,6 +2128,9 @@
                     "providers": [
                         "Laravel\\Tinker\\TinkerServiceProvider"
                     ]
+                },
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
                 }
             },
             "autoload": {
@@ -2154,9 +2157,9 @@
             ],
             "support": {
                 "issues": "https://github.com/laravel/tinker/issues",
-                "source": "https://github.com/laravel/tinker/tree/v2.11.1"
+                "source": "https://github.com/laravel/tinker/tree/v3.1.0"
             },
-            "time": "2026-02-06T14:12:35+00:00"
+            "time": "2026-10-16T11:13:33+00:00"
         },
         {
             "name": "league/commonmark",
@@ -2775,16 +2778,16 @@
         },
         {
             "name": "livewire/livewire",
-            "version": "v3.8.11",
+            "version": "v4.4.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/livewire.git",
-                "reference": "faee62c6a55e87befd24231bbdadca2aeca1cae5"
+                "reference": "8d7f8fc6138274a2f3384c9db354ca012215a259"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/livewire/zipball/faee62c6a55e87befd24231bbdadca2aeca1cae5",
-                "reference": "faee62c6a55e87befd24231bbdadca2aeca1cae5",
+                "url": "https://api.github.com/repos/livewire/livewire/zipball/8d7f8fc6138274a2f3384c9db354ca012215a259",
+                "reference": "8d7f8fc6138274a2f3384c9db354ca012215a259",
                 "shasum": ""
             },
             "require": {
@@ -2839,7 +2842,7 @@
             "description": "A front-end framework for Laravel.",
             "support": {
                 "issues": "https://github.com/livewire/livewire/issues",
-                "source": "https://github.com/livewire/livewire/tree/v3.8.11"
+                "source": "https://github.com/livewire/livewire/tree/v4.4.8"
             },
             "funding": [
                 {
@@ -2847,7 +2850,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-21T01:43:35+00:00"
+            "time": "2026-10-21T12:53:46+00:00"
         },
         {
             "name": "maennchen/zipstream-php",
@@ -8002,16 +8005,16 @@
         },
         {
             "name": "laravel/sail",
-            "version": "v1.69.0",
+            "version": "v1.70.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sail.git",
-                "reference": "3587ac9d68e8f2eaf36bd9fb003a4555861dca9d"
+                "reference": "56c1c94117ef12ee707d50433273228ebee7138e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sail/zipball/3587ac9d68e8f2eaf36bd9fb003a4555861dca9d",
-                "reference": "3587ac9d68e8f2eaf36bd9fb003a4555861dca9d",
+                "url": "https://api.github.com/repos/laravel/sail/zipball/56c1c94117ef12ee707d50433273228ebee7138e",
+                "reference": "56c1c94117ef12ee707d50433273228ebee7138e",
                 "shasum": ""
             },
             "require": {
@@ -8061,7 +8064,7 @@
                 "issues": "https://github.com/laravel/sail/issues",
                 "source": "https://github.com/laravel/sail"
             },
-            "time": "2026-10-08T20:06:52+00:00"
+            "time": "2026-10-15T08:53:46+00:00"
         },
         {
             "name": "mockery/mockery",
@@ -10587,5 +10590,5 @@
         "php": "^8.0.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
