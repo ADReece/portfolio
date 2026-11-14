@@ -85,6 +85,7 @@ class SetPhotos extends Component
         Storage::disk('s3')->delete($photo->url);
         Storage::disk('s3')->delete(str_replace('photos/', 'thumbnails/', $photo->url));
         Storage::disk('s3')->delete(str_replace('photos/', 'watermarked/', $photo->url));
+        Storage::disk('s3')->delete(str_replace('photos/', 'display/', $photo->url));
 
         $photo->delete();
 
@@ -102,6 +103,7 @@ class SetPhotos extends Component
             Storage::disk('s3')->delete($photo->url);
             Storage::disk('s3')->delete(str_replace('photos/', 'thumbnails/', $photo->url));
             Storage::disk('s3')->delete(str_replace('photos/', 'watermarked/', $photo->url));
+            Storage::disk('s3')->delete(str_replace('photos/', 'display/', $photo->url));
             $photo->delete();
         }
 

@@ -50,7 +50,7 @@ case "$role" in
         ;;
     queue)
         wait_for_db
-        exec php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --memory=96
+        exec php artisan queue:work --queue=default,background --sleep=3 --tries=3 --max-time=3600 --memory=96
         ;;
     scheduler)
         wait_for_db

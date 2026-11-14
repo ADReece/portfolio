@@ -13,7 +13,12 @@
                      :noindex="(bool) $collection->private">
     <header class="relative isolate flex min-h-[70svh] w-full items-end overflow-hidden">
         @if($collection->coverPhoto)
-            <img src="{{ $collection->coverPhoto->getUri() }}" alt="" fetchpriority="high"
+            @php
+                $cover = $collection->coverPhoto;
+                $coverSized = $cover->has_display || $cover->shouldShowWatermark();
+            @endphp
+            <img src="{{ $cover->getUri() }}" alt="" fetchpriority="high"
+                 @if($coverSized) srcset="{{ $cover->getAwsThumbnail() }} 800w, {{ $cover->getUri() }} 2048w" sizes="100vw" @endif
                  class="absolute inset-0 -z-10 size-full object-cover" style="object-position: {{ $collection->coverObjectPosition() }}">
             <div class="absolute inset-0 -z-10 bg-linear-to-t from-black/75 via-black/25 to-black/10"></div>
         @else

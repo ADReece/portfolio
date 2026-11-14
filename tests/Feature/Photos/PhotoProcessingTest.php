@@ -81,7 +81,8 @@ class PhotoProcessingTest extends TestCase
         (new ProcessImageUpload($photo->id))->handle();
 
         $this->assertSame(Photo::READY, $photo->fresh()->status);
-        foreach (['thumbnails' => 800, 'watermarked' => ProcessImageUpload::DISPLAY_EDGE] as $folder => $edge) {
+        $this->assertTrue($photo->fresh()->has_display);
+        foreach (['thumbnails' => 800, 'watermarked' => ProcessImageUpload::DISPLAY_EDGE, 'display' => ProcessImageUpload::DISPLAY_EDGE] as $folder => $edge) {
             $key = ProcessImageUpload::derivativeKey($photo->url, $folder);
             Storage::disk('s3')->assertExists($key);
             $im = new \Imagick();
