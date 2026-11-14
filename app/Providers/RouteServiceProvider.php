@@ -58,6 +58,9 @@ class RouteServiceProvider extends ServiceProvider
         ]);
         RateLimiter::for('bulk-downloads-stream', fn (Request $request) => Limit::perMinute(10)->by('dl-stream:'.$request->ip()));
 
+        // Previews of personalised prints are drawn on the server.
+        RateLimiter::for('print-preview', fn (Request $request) => Limit::perMinute(20)->by('print-preview:'.$request->ip()));
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });

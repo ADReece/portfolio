@@ -36,7 +36,44 @@ class PrintPurchaseController extends Controller
             'photo' => $photo,
             'photographer' => $photographer,
             'enabledProducts' => $enabledProducts,
+            'templates' => $this->templatesFor($photo),
         ]);
+    }
+
+    /**
+     * A watermarked preview of the print personalised with one of the
+     * photographer's templates (a small JPEG, never stored).
+     */
+    public function preview(Request $request, Photo $photo): \Symfony\Component\HttpFoundation\Response
+    {
+        abort_if(! $this->isPhotoPurchasable($request, $photo), 404);
+        $validated = $request->validate([
+            'template_id' => ['required', 'string'],
+            'template_fields' => ['nullable', 'array'],
+            'template_fields.*' => ['nullable', 'string', 'max:120'],
+        ]);
+        $template = $this->templatesFor($photo)->firstWhere('id', $validated['template_id']);
+        abort_unless($template, 404);
+
+        try {
+            $jpeg = \App\Prints\TemplateRenderer::preview($photo, $template, \App\Prints\TemplateRenderer::cleanValues($template, $validated['template_fields'] ?? []));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'We couldn\'t make a preview just now. Please try again.'], 500);
+        }
+
+        return response($jpeg, 200, ['Content-Type' => 'image/jpeg', 'Cache-Control' => 'private, no-store']);
+    }
+
+    /** The photographer's active templates offered for this photo's set. */
+    private function templatesFor(Photo $photo): \Illuminate\Support\Collection
+    {
+        if (! $photo->set) {
+            return collect();
+        }
+
+        return $photo->set->templates()->where('active', true)->where('templates.user_id', $photo->user_id)->orderBy('name')->get();
     }
 
     public function store(Request $request, Photo $photo): RedirectResponse
@@ -62,7 +99,24 @@ class PrintPurchaseController extends Controller
             'shipping_county' => ['required', 'string', 'max:255'],
             'shipping_postcode' => ['required', 'string', 'max:32'],
             'shipping_country_code' => ['required', 'string', 'size:2', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::LIST))],
+            'template_id' => ['nullable', 'string'],
+            'template_fields' => ['nullable', 'array'],
+            'template_fields.*' => ['nullable', 'string', 'max:120'],
         ]);
+
+        // Personalising with one of the photographer's templates (optional).
+        $template = null;
+        $templateData = null;
+        if (filled($validated['template_id'] ?? null)) {
+            $template = $this->templatesFor($photo)->firstWhere('id', $validated['template_id']);
+            if (! $template) {
+                return back()->withErrors(['template_id' => 'That design isn\'t available for this photo.'])->withInput();
+            }
+            $templateData = \App\Prints\TemplateRenderer::cleanValues($template, $validated['template_fields'] ?? []);
+            if (collect($templateData)->filter()->isEmpty() && ! empty($template->fields)) {
+                return back()->withErrors(['template_fields' => 'Add your text to personalise the print, or choose “No personalisation”.'])->withInput();
+            }
+        }
 
         $prodigiProduct = $this->sellableProducts($photographer)->firstWhere('id', (int) $validated['prodigi_product_id']);
         if (! $prodigiProduct) {
@@ -107,7 +161,7 @@ class PrintPurchaseController extends Controller
             return back()->withErrors(['shipping_country_code' => 'Sorry, this print can\'t be delivered to '.(\App\Support\Countries::LIST[$country] ?? $country).' at this price.'])->withInput();
         }
 
-        $order = DB::transaction(function () use ($photographer, $photo, $prodigiProduct, $validated, $quantity, $unitPrice, $total, $platformFee, $photographerAmount, $attributes, $printCost) {
+        $order = DB::transaction(function () use ($photographer, $photo, $prodigiProduct, $validated, $quantity, $unitPrice, $total, $platformFee, $photographerAmount, $attributes, $printCost, $template, $templateData) {
             $product = Product::query()->firstOrCreate(
                 [
                     'user_id' => $photographer->id,
@@ -151,6 +205,8 @@ class PrintPurchaseController extends Controller
                 'quantity' => $quantity,
                 'price' => $unitPrice,
                 'prodigi_attributes' => $attributes ?: null,
+                'template_id' => $template?->id,
+                'template_data' => $templateData,
             ]);
 
             return $order;
@@ -184,7 +240,7 @@ class PrintPurchaseController extends Controller
                         'currency' => \App\Support\Currency::stripeCode(),
                         'unit_amount' => (int) round($unitPrice * 100),
                         'product_data' => [
-                            'name' => $prodigiProduct->name,
+                            'name' => $prodigiProduct->name.($template ? ' – personalised ('.$template->name.')' : ''),
                             'description' => 'Print of photo by @' . $photographer->username,
                             'metadata' => [
                                 'prodigi_sku' => $prodigiProduct->sku,

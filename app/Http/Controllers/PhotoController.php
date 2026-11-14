@@ -268,15 +268,19 @@ class PhotoController extends Controller
             return redirect()->route('download-purchase.show', ['collection' => $collection, 'photo' => $photo->id]);
         }
 
-        $set       = $photo->set?->load('templates.generatedPrints');
-        $templates = $set?->templates ?? collect();
+        // Personalising with a template is part of ordering a print; only the
+        // photographer can make template downloads here (e.g. to check a design).
+        $isOwner = $request->user() && $request->user()->id === $photo->user_id;
+        $templates = $isOwner ? ($photo->set?->load('templates')->templates ?? collect()) : collect();
 
         return view('photos.download-options', compact('photo', 'templates'));
     }
 
     public function downloadWithTemplate(Request $request, Photo $photo, Template $template)
     {
-        abort_unless(GalleryAccess::canViewPhoto($request, $photo), 404);
+        // Clients personalise a photo by ordering a print of it; a free
+        // download of the personalised (unwatermarked) image is the photographer's only.
+        abort_unless($request->user() && $request->user()->id === $photo->user_id, 404);
         if (! \App\Downloads\DigitalSales::freeDownloadsAllowed($request, $photo->set?->collection)) {
             return redirect()->route('download-purchase.show', ['collection' => $photo->set->collection, 'photo' => $photo->id]);
         }

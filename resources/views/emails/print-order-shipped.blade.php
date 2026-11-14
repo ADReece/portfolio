@@ -24,6 +24,9 @@
                 <tr>
                     <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
                         {{ $item->quantity }} × {{ $item->product?->name ?? 'Print' }}
+                        @if($item->template)
+                            <span style="color:#6b7280;">– personalised ({{ $item->template->name }})</span>
+                        @endif
                         @if($item->prodigi_attributes)
                             <span style="color:#6b7280;">({{ collect($item->prodigi_attributes)->map(fn ($v, $k) => \App\Models\ProdigiProduct::labelAttribute($k).': '.$v)->implode(', ') }})</span>
                         @endif

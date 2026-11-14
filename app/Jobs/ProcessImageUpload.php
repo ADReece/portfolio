@@ -51,6 +51,7 @@ class ProcessImageUpload implements ShouldQueue
         }
 
         $original = self::downloadOriginal($photo->url);
+        [$width, $height] = self::originalSize($original);
 
         try {
             $derivatives = self::makeDerivatives($original, $photo->user->watermark_text ?: '@'.$photo->user->username);
@@ -61,7 +62,7 @@ class ProcessImageUpload implements ShouldQueue
             @unlink($original);
         }
 
-        $photo->update(['status' => Photo::READY, 'processing_error' => null, 'has_display' => true]);
+        $photo->update(['status' => Photo::READY, 'processing_error' => null, 'has_display' => true, 'width' => $width ?: null, 'height' => $height ?: null]);
     }
 
     /** After the last attempt: mark the photo failed so the owner sees why. */
@@ -145,6 +146,30 @@ class ProcessImageUpload implements ShouldQueue
         }
 
         return preg_replace('#^photos/#', $folder.'/', $originalKey);
+    }
+
+    /**
+     * The image's size the right way up (EXIF rotation applied), read from
+     * its header without decoding it.
+     *
+     * @return array{0: int, 1: int}
+     */
+    public static function originalSize(string $path): array
+    {
+        try {
+            $im = new \Imagick();
+            $im->pingImage($path.'[0]');
+            $size = [$im->getImageWidth(), $im->getImageHeight()];
+            $sideways = in_array($im->getImageOrientation(), [
+                \Imagick::ORIENTATION_LEFTTOP, \Imagick::ORIENTATION_RIGHTTOP,
+                \Imagick::ORIENTATION_RIGHTBOTTOM, \Imagick::ORIENTATION_LEFTBOTTOM,
+            ], true);
+            $im->clear();
+
+            return $sideways ? [$size[1], $size[0]] : $size;
+        } catch (\Throwable) {
+            return [0, 0];
+        }
     }
 
     /** Caps Imagick's native memory so one image can't take the container down. */

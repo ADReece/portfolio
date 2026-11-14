@@ -16,12 +16,16 @@ class OrderItem extends Model
         'quantity',
         'price',
         'prodigi_attributes',
+        'template_id',
+        'template_data',
+        'print_asset_path',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'decimal:2',
         'prodigi_attributes' => 'array',
+        'template_data' => 'array',
     ];
 
     public function order(): BelongsTo
@@ -32,6 +36,17 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** The photographer's template this print is personalised with, if any. */
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(Template::class);
+    }
+
+    public function isPersonalised(): bool
+    {
+        return $this->template_id !== null;
     }
 
     public function getSubtotal(): float
