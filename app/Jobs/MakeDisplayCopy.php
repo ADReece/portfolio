@@ -29,7 +29,8 @@ class MakeDisplayCopy implements ShouldQueue
     public function handle(): void
     {
         $photo = Photo::find($this->photoId);
-        if (! $photo || $photo->has_display || $photo->status !== Photo::READY) {
+        // Photos stored outside photos/ have no separate key for a copy: leave them be.
+        if (! $photo || $photo->has_display || $photo->status !== Photo::READY || ! str_starts_with((string) $photo->url, 'photos/')) {
             return;
         }
 

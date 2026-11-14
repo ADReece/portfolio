@@ -89,7 +89,7 @@ class Photo extends Model
         }
 
         // The web-sized copy (2048 px) rather than the camera original, once it exists.
-        return $this->has_display ? $this->getAwsDisplay() : $this->getAwsMedia();
+        return $this->has_display && str_starts_with((string) $this->url, 'photos/') ? $this->getAwsDisplay() : $this->getAwsMedia();
     }
 
     public function shouldShowWatermark() : bool

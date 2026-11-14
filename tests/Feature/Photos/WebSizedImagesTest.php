@@ -91,4 +91,16 @@ class WebSizedImagesTest extends TestCase
             ->assertSee('800w', false)
             ->assertSee('2048w', false);
     }
+
+    public function test_photos_stored_outside_photos_folder_are_never_overwritten_by_a_copy(): void
+    {
+        $this->photo->update(['url' => 'legacy/a.jpg']);
+        Storage::disk('s3')->put('legacy/a.jpg', 'the original');
+
+        $this->artisan('photos:make-display-copies', ['--now' => true])->expectsOutputToContain('Made 0 web-sized copies')->assertSuccessful();
+        (new \App\Jobs\MakeDisplayCopy($this->photo->id))->handle();
+
+        $this->assertSame('the original', Storage::disk('s3')->get('legacy/a.jpg'));
+        $this->assertFalse($this->photo->fresh()->has_display);
+    }
 }
