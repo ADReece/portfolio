@@ -12,6 +12,7 @@
                 <x-ui.button variant="secondary" icon="heart" :href="route('collections.client-favourites.index', $collection->id)">
                     Client favourites @if($favouriteCount = $collection->favouriteLists()->whereNotNull('submitted_at')->count())<x-ui.badge tone="brand">{{ $favouriteCount }}</x-ui.badge>@endif
                 </x-ui.button>
+                <x-ui.button variant="secondary" icon="arrow-down-tray" data-download="{{ json_encode(['collection_id' => (string) $collection->id]) }}">Download all</x-ui.button>
                 @if($isPublished)
                     <x-ui.button variant="secondary" icon="eye" :href="$shareUrl" target="_blank" rel="noopener">View as client</x-ui.button>
                 @endif

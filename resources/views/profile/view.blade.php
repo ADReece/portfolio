@@ -26,6 +26,7 @@
         @if($user->is_demo)
             <div class="px-4">@include('demo.panel')</div>
         @endif
+        <x-gallery.downloads class="px-4" scroll-to="" />
         <livewire:masonry-grid :userId="$user->id" />
     </div>
 </x-profile-layout>
