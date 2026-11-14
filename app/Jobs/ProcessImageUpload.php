@@ -50,17 +50,18 @@ class ProcessImageUpload implements ShouldQueue
             return; // deleted meanwhile, or already done
         }
 
-        $original = $this->downloadOriginal($photo->url);
+        $original = self::downloadOriginal($photo->url);
 
         try {
             $derivatives = self::makeDerivatives($original, $photo->user->watermark_text ?: '@'.$photo->user->username);
             Storage::disk('s3')->put(self::derivativeKey($photo->url, 'thumbnails'), $derivatives['thumbnail']);
             Storage::disk('s3')->put(self::derivativeKey($photo->url, 'watermarked'), $derivatives['watermarked']);
+            Storage::disk('s3')->put(self::derivativeKey($photo->url, 'display'), $derivatives['display']);
         } finally {
             @unlink($original);
         }
 
-        $photo->update(['status' => Photo::READY, 'processing_error' => null]);
+        $photo->update(['status' => Photo::READY, 'processing_error' => null, 'has_display' => true]);
     }
 
     /** After the last attempt: mark the photo failed so the owner sees why. */
@@ -75,11 +76,11 @@ class ProcessImageUpload implements ShouldQueue
     }
 
     /**
-     * The thumbnail and watermarked display copy for an image file. The
-     * original is decoded once, at reduced size, into the display copy; the
-     * thumbnail is made from that copy.
+     * The thumbnail, the web-sized display copy and its watermarked twin for
+     * an image file. The original is decoded once, at reduced size, into the
+     * display copy; the others are made from that copy.
      *
-     * @return array{thumbnail: string, watermarked: string} encoded images
+     * @return array{thumbnail: string, display: string, watermarked: string} encoded images
      */
     public static function makeDerivatives(string $path, string $watermarkText): array
     {
@@ -90,16 +91,50 @@ class ProcessImageUpload implements ShouldQueue
 
         $thumb = clone $display;
         $thumb->thumbnailImage(self::THUMB_EDGE, self::THUMB_EDGE, true);
-        $thumb->setImageCompressionQuality(82);
-        $thumbnail = $thumb->getImageBlob();
+        $thumbnail = self::webJpeg($thumb, 80);
         $thumb->clear();
+
+        $clean = clone $display;
+        $web = self::webJpeg($clean, 82);
+        $clean->clear();
 
         $image = (new ImageManager(['driver' => 'imagick']))->make($display);
         self::applyTextWatermark($image, $watermarkText);
         $watermarked = (string) $image->stream(null, 85);
         $image->destroy();
 
-        return ['thumbnail' => $thumbnail, 'watermarked' => $watermarked];
+        return ['thumbnail' => $thumbnail, 'display' => $web, 'watermarked' => $watermarked];
+    }
+
+    /** The web-sized copy alone (for photos uploaded before display copies existed). */
+    public static function makeDisplay(string $path): string
+    {
+        self::limitImagick();
+        $display = self::load($path, self::DISPLAY_EDGE);
+        $display->thumbnailImage(self::DISPLAY_EDGE, self::DISPLAY_EDGE, true);
+        $web = self::webJpeg($display, 82);
+        $display->clear();
+
+        return $web;
+    }
+
+    /** A progressive sRGB JPEG: small, and shows a full preview while it loads. */
+    private static function webJpeg(\Imagick $image, int $quality): string
+    {
+        if ($image->getImageColorspace() === \Imagick::COLORSPACE_CMYK) {
+            $image->transformImageColorspace(\Imagick::COLORSPACE_SRGB);
+        }
+        if ($image->getImageAlphaChannel()) {
+            // JPEG has no transparency: put transparent PNGs on white, not black.
+            $image->setImageBackgroundColor('white');
+            $image->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
+        }
+        $image->setImageFormat('jpeg');
+        $image->setImageCompressionQuality($quality);
+        $image->setInterlaceScheme(\Imagick::INTERLACE_PLANE);
+        $image->setOption('jpeg:sampling-factor', '4:2:0'); // as cameras save them: smaller files
+
+        return $image->getImageBlob();
     }
 
     public static function derivativeKey(string $originalKey, string $folder): string
@@ -133,7 +168,7 @@ class ProcessImageUpload implements ShouldQueue
     }
 
     /** Streams the original to a temporary file (never into PHP memory). */
-    private function downloadOriginal(string $key): string
+    public static function downloadOriginal(string $key): string
     {
         $path = tempnam(sys_get_temp_dir(), 'photo-');
         $in = Storage::disk('s3')->readStream($key);

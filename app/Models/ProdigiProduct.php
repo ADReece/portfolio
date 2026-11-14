@@ -117,8 +117,8 @@ class ProdigiProduct extends Model
             return null;
         }
 
-        // Signed: the bucket (or the local /media route) is private.
-        return Storage::disk('s3')->temporaryUrl($path, now()->addHour());
+        // Signed (the bucket is private), and stable for hours so browsers cache it.
+        return \App\Support\MediaUrl::signed($path);
     }
 
     public function hasUploadedImage(): bool

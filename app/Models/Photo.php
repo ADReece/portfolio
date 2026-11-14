@@ -29,6 +29,7 @@ class Photo extends Model
         'status',
         'processing_error',
         'original_filename',
+        'has_display',
     ];
 
     public const PROCESSING = 'processing';
@@ -49,6 +50,7 @@ class Photo extends Model
     }
 
     protected $casts = [
+        'has_display' => 'boolean',
         'credit' => 'array',
         'private' => 'boolean',
         'watermarked' => 'boolean',
@@ -82,7 +84,12 @@ class Photo extends Model
         $shouldWatermark = $this->watermarked ||
                           ($this->set && $this->set->collection && $this->set->collection->watermarked);
 
-        return $shouldWatermark ? $this->getAwsWatermarked() : $this->getAwsMedia();
+        if ($shouldWatermark) {
+            return $this->getAwsWatermarked();
+        }
+
+        // The web-sized copy (2048 px) rather than the camera original, once it exists.
+        return $this->has_display ? $this->getAwsDisplay() : $this->getAwsMedia();
     }
 
     public function shouldShowWatermark() : bool
@@ -103,6 +110,12 @@ class Photo extends Model
         return $this->s3Url($key);
     }
 
+    /** The unwatermarked web-sized copy: 2048 px on the long edge. */
+    public function getAwsDisplay()
+    {
+        return $this->s3Url(str_replace('photos/', 'display/', $this->url));
+    }
+
     public function getAwsWatermarked()
     {
         $key = str_replace('photos/', 'watermarked/', $this->url);
@@ -111,8 +124,7 @@ class Photo extends Model
 
     private function s3Url(string $key): string
     {
-        // Always signed: the bucket (or the local /media route) is private.
-        return Storage::disk('s3')->temporaryUrl($key, now()->addMinutes(10));
+        return \App\Support\MediaUrl::signed($key);
     }
 
     public function user() : BelongsTo
