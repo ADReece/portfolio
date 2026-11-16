@@ -33,7 +33,10 @@ x-environment: &environment
   SESSION_DRIVER: database
   SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
   SESSION_SECURE_COOKIE: "true"
-  CACHE_DRIVER: file
+  # Shared by web, scheduler and the queue workers (which run on another
+  # server): a file cache is per container, so they wouldn't see each other's values.
+  CACHE_STORE: database
+  CACHE_DRIVER: database
   BROADCAST_DRIVER: log
   FILESYSTEM_DISK: local
 
