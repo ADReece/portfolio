@@ -64,8 +64,9 @@ contains no secrets.
 
 - **Database:** Coolify's managed MariaDB/MySQL. Set `DB_HOST`, `DB_PORT`,
   `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD`. The app bundles no database.
-- **Redis:** not needed. The queue and sessions use the database, and the
-  cache uses files.
+- **Redis:** not needed. The queue, sessions and the cache use the database
+  (`CACHE_STORE=database`), so web, scheduler and the queue workers (on
+  another server) share one cache. A file cache would be per container.
 - **Uploads:** the `storage` named volume at `storage/app`, shared by web
   (which receives uploads) and queue (which processes them). Setting
   `AWS_BUCKET` (with the other `AWS_*` variables) switches to S3-compatible

@@ -154,6 +154,41 @@ class CrmReportingTest extends TestCase
         $this->assertSame('Second', $updates[0]['account']['name']);
     }
 
+    /**
+     * The website stores the debounce token; the queue worker, a different
+     * container on another server, must read the same token. With the
+     * database cache they share it, so the update is sent.
+     */
+    public function test_a_debounced_update_sends_from_another_container_when_its_token_matches(): void
+    {
+        config(['cache.default' => 'database']);
+        $this->app->forgetInstance('cache');
+        \Illuminate\Support\Facades\Cache::clearResolvedInstances();
+        Queue::fake();
+        $user = User::factory()->create();
+
+        $user->update(['name' => 'Latest']); // the website: token stored, job delayed
+        $job = Queue::pushed(SendCrmEvent::class, fn ($job) => $job->type === 'account.updated')->sole();
+        $this->assertDatabaseHas('cache', ['key' => config('cache.prefix').'crm:update:'.$user->id]);
+
+        // The worker: its own cache instance, reading from the shared table.
+        $this->app->forgetInstance('cache');
+        \Illuminate\Support\Facades\Cache::clearResolvedInstances();
+        $job->handle();
+
+        $updates = collect($this->sent())->where('type', 'account.updated')->values();
+        $this->assertCount(1, $updates);
+        $this->assertSame('Latest', $updates[0]['account']['name']);
+    }
+
+    public function test_production_uses_a_cache_every_container_shares(): void
+    {
+        $compose = file_get_contents(base_path('deploy/hetzner/docker-compose.yml'));
+
+        $this->assertStringContainsString('CACHE_STORE: database', $compose);
+        $this->assertStringNotContainsString('CACHE_DRIVER: file', $compose);
+    }
+
     public function test_jobs_are_queued_after_commit_with_backoff(): void
     {
         Queue::fake();

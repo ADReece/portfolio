@@ -15,7 +15,8 @@ return [
     |
     */
 
-    'default' => env('CACHE_DRIVER', 'file'),
+    // CACHE_STORE is Laravel 11+'s name; CACHE_DRIVER still works.
+    'default' => env('CACHE_STORE', env('CACHE_DRIVER', 'file')),
 
     /*
     |--------------------------------------------------------------------------
@@ -45,8 +46,9 @@ return [
         'database' => [
             'driver' => 'database',
             'table' => 'cache',
-            'connection' => null,
-            'lock_connection' => null,
+            'connection' => env('DB_CACHE_CONNECTION'),
+            'lock_connection' => env('DB_CACHE_LOCK_CONNECTION'),
+            'lock_table' => 'cache_locks',
         ],
 
         'file' => [
